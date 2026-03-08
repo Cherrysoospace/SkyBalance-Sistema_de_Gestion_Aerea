@@ -1,0 +1,1 @@
+# DTO de entrada/salida para datos de un vuelo individual

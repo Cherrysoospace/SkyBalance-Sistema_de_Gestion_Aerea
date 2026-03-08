@@ -1,0 +1,1 @@
+# Endpoints para gestionar la cola de inserciones pendientes

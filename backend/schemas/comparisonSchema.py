@@ -1,0 +1,1 @@
+# DTO para comparar el AVL vs BST tras carga en modo inserción

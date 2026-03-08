@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>SkyBalance AVL — Diagrama de Clases Backend</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1525;
+    --surface: #141c2e;
+    --surface2: #1a2540;
+    --border: #1e2d4a;
+    --accent: #00c2ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --model-color: #00c2ff;
+    --tree-color: #7c3aed;
+    --service-color: #10b981;
+    --schema-color: #f59e0b;
+    --router-color: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  header {
+    padding: 32px 48px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  header h1 span { color: var(--accent); }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    font-size: 0.7rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+  }
+
+  .canvas {
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    min-width: 1400px;
+  }
+
+  /* Section labels */
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding: 4px 10px;
+    display: inline-block;
+    border-radius: 3px;
+  }
+
+  .section-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  /* Class card */
+  .class-card {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    min-width: 280px;
+    max-width: 340px;
+    flex: 1;
+    background: var(--surface);
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .class-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+
+  .class-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  /* Color themes per layer */
+  .layer-model .class-card::before { background: var(--model-color); }
+  .layer-model .class-header { border-bottom-color: rgba(0,194,255,0.2); }
+  .layer-model .class-header .stereotype { color: var(--model-color); }
+  .layer-model .class-name { color: var(--model-color); }
+
+  .layer-tree .class-card::before { background: var(--tree-color); }
+  .layer-tree .class-header { border-bottom-color: rgba(124,58,237,0.2); }
+  .layer-tree .class-header .stereotype { color: var(--tree-color); }
+  .layer-tree .class-name { color: var(--tree-color); }
+
+  .layer-service .class-card::before { background: var(--service-color); }
+  .layer-service .class-header { border-bottom-color: rgba(16,185,129,0.2); }
+  .layer-service .class-header .stereotype { color: var(--service-color); }
+  .layer-service .class-name { color: var(--service-color); }
+
+  .layer-schema .class-card::before { background: var(--schema-color); }
+  .layer-schema .class-header { border-bottom-color: rgba(245,158,11,0.2); }
+  .layer-schema .class-header .stereotype { color: var(--schema-color); }
+  .layer-schema .class-name { color: var(--schema-color); }
+
+  .layer-router .class-card::before { background: var(--router-color); }
+  .layer-router .class-header { border-bottom-color: rgba(239,68,68,0.2); }
+  .layer-router .class-header .stereotype { color: var(--router-color); }
+  .layer-router .class-name { color: var(--router-color); }
+
+  .class-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .stereotype {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .class-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .class-file {
+    font-size: 0.6rem;
+    color: var(--text3);
+    margin-top: 3px;
+  }
+
+  /* Attributes section */
+  .section-title {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 8px 16px 4px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .attr-list, .method-list {
+    padding: 6px 0;
+  }
+
+  .attr-item, .method-item {
+    padding: 3px 16px;
+    font-size: 0.68rem;
+    color: var(--text2);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    line-height: 1.6;
+  }
+
+  .attr-item:hover, .method-item:hover {
+    background: rgba(255,255,255,0.03);
+    color: var(--text);
+  }
+
+  .visibility {
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 10px;
+    flex-shrink: 0;
+  }
+
+  .vis-private { color: #ef4444; }
+  .vis-protected { color: #f59e0b; }
+  .vis-public { color: #10b981; }
+
+  .attr-name { color: var(--text); font-weight: 600; }
+  .attr-type { color: var(--text3); font-style: italic; font-size: 0.63rem; }
+
+  .method-name { color: #93c5fd; font-weight: 600; }
+  .method-return { color: var(--text3); font-size: 0.63rem; font-style: italic; }
+  .method-params { color: var(--text3); font-size: 0.63rem; }
+
+  /* Relations diagram */
+  .relations-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    position: relative;
+  }
+
+  .relations-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--text2);
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  svg.rel-diagram {
+    width: 100%;
+    overflow: visible;
+  }
+
+  /* Relation legend */
+  .rel-legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .rel-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.65rem;
+    color: var(--text2);
+  }
+
+  .rel-line {
+    width: 32px;
+    height: 2px;
+    position: relative;
+  }
+
+  /* Layer group */
+  .layer-group {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    background: rgba(255,255,255,0.01);
+  }
+
+  .layer-group-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    margin-bottom: 16px;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✈ Sky<span>Balance</span> AVL — Diagrama de Clases <span style="color:var(--text3);font-weight:400;font-size:0.9rem">/ Backend Python</span></h1>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--model-color)"></div>models/</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--tree-color)"></div>tree/</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--service-color)"></div>services/</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--schema-color)"></div>schemas/</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--router-color)"></div>routers/</div>
+  </div>
+</header>
+
+<div class="canvas">
+
+  <!-- ══════════════════════════════════════════════════════ MODELS -->
+  <div class="layer-group layer-model">
+    <div class="layer-group-label" style="background:rgba(0,194,255,0.1);color:var(--model-color)">📦 models/ — Entidades de Dominio</div>
+    <div class="section-row">
+
+      <!-- Vuelo -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«dataclass»</div>
+          <div class="class-name">Vuelo</div>
+          <div class="class-file">models/vuelo.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">codigo</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">origen</span><span class="attr-type">: str</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">destino</span><span class="attr-type">: str</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">hora_salida</span><span class="attr-type">: str</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">precio_base</span><span class="attr-type">: float</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">precio_final</span><span class="attr-type">: float</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">pasajeros</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">promocion</span><span class="attr-type">: bool</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">alerta</span><span class="attr-type">: bool</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">prioridad</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">nodo_critico</span><span class="attr-type">: bool = False</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">calcular_rentabilidad</span><span class="method-params">()</span><span class="method-return"> → float</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">to_dict</span><span class="method-params">()</span><span class="method-return"> → dict</span></div>
+        </div>
+      </div>
+
+      <!-- NodoAVL -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«dataclass»</div>
+          <div class="class-name">NodoAVL</div>
+          <div class="class-file">models/nodo_avl.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">vuelo</span><span class="attr-type">: Vuelo</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">izquierdo</span><span class="attr-type">: Optional[NodoAVL]</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">derecho</span><span class="attr-type">: Optional[NodoAVL]</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">altura</span><span class="attr-type">: int = 1</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">factor_equilibrio</span><span class="attr-type">: int = 0</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">profundidad</span><span class="attr-type">: int = 0</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">es_hoja</span><span class="method-params">()</span><span class="method-return"> → bool</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">to_dict</span><span class="method-params">()</span><span class="method-return"> → dict</span></div>
+        </div>
+      </div>
+
+      <!-- NodoBST -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«dataclass»</div>
+          <div class="class-name">NodoBST</div>
+          <div class="class-file">models/nodo_bst.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">vuelo</span><span class="attr-type">: Vuelo</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">izquierdo</span><span class="attr-type">: Optional[NodoBST]</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">derecho</span><span class="attr-type">: Optional[NodoBST]</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">altura</span><span class="attr-type">: int = 1</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">profundidad</span><span class="attr-type">: int = 0</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">es_hoja</span><span class="method-params">()</span><span class="method-return"> → bool</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">to_dict</span><span class="method-params">()</span><span class="method-return"> → dict</span></div>
+        </div>
+      </div>
+
+      <!-- Version -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«dataclass»</div>
+          <div class="class-name">Version</div>
+          <div class="class-file">models/version.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">nombre</span><span class="attr-type">: str</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">snapshot</span><span class="attr-type">: Optional[NodoAVL]</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">timestamp</span><span class="attr-type">: datetime</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">descripcion</span><span class="attr-type">: str = ""</span></div>
+          <div class="attr-item"><span class="visibility vis-public">+</span><span class="attr-name">metricas</span><span class="attr-type">: dict</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">to_dict</span><span class="method-params">()</span><span class="method-return"> → dict</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ TREE -->
+  <div class="layer-group layer-tree">
+    <div class="layer-group-label" style="background:rgba(124,58,237,0.1);color:var(--tree-color)">🌳 tree/ — Estructuras de Datos Núcleo</div>
+    <div class="section-row">
+
+      <!-- AVLTree -->
+      <div class="class-card" style="max-width:380px">
+        <div class="class-header">
+          <div class="stereotype">«class»</div>
+          <div class="class-name">AVLTree</div>
+          <div class="class-file">tree/avl_tree.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">raiz</span><span class="attr-type">: Optional[NodoAVL]</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">rotaciones</span><span class="attr-type">: dict[str, int]  # LL,RR,LR,RL</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">modo_estres</span><span class="attr-type">: bool = False</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">profundidad_critica</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">cancelaciones_masivas</span><span class="attr-type">: int = 0</span></div>
+        </div>
+        <div class="section-title">— Rotaciones</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_rotar_derecha</span><span class="method-params">(nodo)</span><span class="method-return"> → NodoAVL</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_rotar_izquierda</span><span class="method-params">(nodo)</span><span class="method-return"> → NodoAVL</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_balancear</span><span class="method-params">(nodo)</span><span class="method-return"> → NodoAVL</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_actualizar_altura</span><span class="method-params">(nodo)</span><span class="method-return"> → void</span></div>
+        </div>
+        <div class="section-title">— Operaciones CRUD</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">insertar</span><span class="method-params">(vuelo: Vuelo)</span><span class="method-return"> → NodoAVL</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">eliminar</span><span class="method-params">(codigo: int)</span><span class="method-return"> → NodoAVL</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">cancelar</span><span class="method-params">(codigo: int)</span><span class="method-return"> → NodoAVL  ⚠ + descendientes</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">buscar</span><span class="method-params">(codigo: int)</span><span class="method-return"> → Optional[NodoAVL]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">modificar</span><span class="method-params">(codigo, datos)</span><span class="method-return"> → NodoAVL</span></div>
+        </div>
+        <div class="section-title">— Recorridos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">in_orden</span><span class="method-params">()</span><span class="method-return"> → List[Vuelo]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">pre_orden</span><span class="method-params">()</span><span class="method-return"> → List[Vuelo]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">post_orden</span><span class="method-params">()</span><span class="method-return"> → List[Vuelo]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">por_niveles</span><span class="method-params">()</span><span class="method-return"> → List[List[Vuelo]]</span></div>
+        </div>
+        <div class="section-title">— Modo Estrés</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">activar_estres</span><span class="method-params">()</span><span class="method-return"> → void</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">rebalanceo_global</span><span class="method-params">()</span><span class="method-return"> → dict  # stats</span></div>
+        </div>
+        <div class="section-title">— Métricas</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_altura</span><span class="method-params">()</span><span class="method-return"> → int</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">contar_hojas</span><span class="method-params">()</span><span class="method-return"> → int</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_menor_rentabilidad</span><span class="method-params">()</span><span class="method-return"> → NodoAVL</span></div>
+        </div>
+      </div>
+
+      <!-- BSTTree -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«class»</div>
+          <div class="class-name">BSTTree</div>
+          <div class="class-file">tree/bst_tree.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">raiz</span><span class="attr-type">: Optional[NodoBST]</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">insertar</span><span class="method-params">(vuelo: Vuelo)</span><span class="method-return"> → NodoBST</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">buscar</span><span class="method-params">(codigo: int)</span><span class="method-return"> → Optional[NodoBST]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">in_orden</span><span class="method-params">()</span><span class="method-return"> → List[Vuelo]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_altura</span><span class="method-params">()</span><span class="method-return"> → int</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">contar_hojas</span><span class="method-params">()</span><span class="method-return"> → int</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_raiz_codigo</span><span class="method-params">()</span><span class="method-return"> → int</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">to_dict</span><span class="method-params">()</span><span class="method-return"> → dict</span></div>
+        </div>
+      </div>
+
+      <!-- ActionStack -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«class» «pila»</div>
+          <div class="class-name">ActionStack</div>
+          <div class="class-file">tree/action_stack.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">_pila</span><span class="attr-type">: list[NodoAVL]  # deepcopy snapshots</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">_max_size</span><span class="attr-type">: int = 50</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">push</span><span class="method-params">(snapshot: NodoAVL)</span><span class="method-return"> → void</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">pop</span><span class="method-params">()</span><span class="method-return"> → Optional[NodoAVL]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">peek</span><span class="method-params">()</span><span class="method-return"> → Optional[NodoAVL]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">is_empty</span><span class="method-params">()</span><span class="method-return"> → bool</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">size</span><span class="method-params">()</span><span class="method-return"> → int</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">clear</span><span class="method-params">()</span><span class="method-return"> → void</span></div>
+        </div>
+      </div>
+
+      <!-- InsertionQueue -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«class» «cola»</div>
+          <div class="class-name">InsertionQueue</div>
+          <div class="class-file">tree/insertion_queue.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">_cola</span><span class="attr-type">: deque[Vuelo]</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">encolar</span><span class="method-params">(vuelo: Vuelo)</span><span class="method-return"> → void</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">desencolar</span><span class="method-params">()</span><span class="method-return"> → Optional[Vuelo]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">procesar_siguiente</span><span class="method-params">(avl: AVLTree)</span><span class="method-return"> → dict</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">procesar_todos</span><span class="method-params">(avl: AVLTree)</span><span class="method-return"> → List[dict]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">peek</span><span class="method-params">()</span><span class="method-return"> → Optional[Vuelo]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">size</span><span class="method-params">()</span><span class="method-return"> → int</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">listar</span><span class="method-params">()</span><span class="method-return"> → List[Vuelo]</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ SERVICES -->
+  <div class="layer-group layer-service">
+    <div class="layer-group-label" style="background:rgba(16,185,129,0.1);color:var(--service-color)">⚙️ services/ — Lógica de Negocio</div>
+    <div class="section-row">
+
+      <!-- TreeService -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«service» «singleton»</div>
+          <div class="class-name">TreeService</div>
+          <div class="class-file">services/tree_service.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">avl</span><span class="attr-type">: AVLTree</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">action_stack</span><span class="attr-type">: ActionStack</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">queue</span><span class="attr-type">: InsertionQueue</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">insertar_vuelo</span><span class="method-params">(dto)</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">eliminar_vuelo</span><span class="method-params">(codigo)</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">cancelar_vuelo</span><span class="method-params">(codigo)</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">modificar_vuelo</span><span class="method-params">(codigo, dto)</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">deshacer</span><span class="method-params">()</span><span class="method-return"> → TreeResponseSchema  # Ctrl+Z</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_arbol</span><span class="method-params">()</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">eliminar_menor_rentabilidad</span><span class="method-params">()</span><span class="method-return"> → TreeResponseSchema</span></div>
+        </div>
+      </div>
+
+      <!-- PersistenceService -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«service»</div>
+          <div class="class-name">PersistenceService</div>
+          <div class="class-file">services/persistence_service.py</div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">cargar_json</span><span class="method-params">(file)</span><span class="method-return"> → AVLTree | ComparisonSchema</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_detectar_tipo</span><span class="method-params">(data: dict)</span><span class="method-return"> → str  # "TOPOLOGIA"|"INSERCION"</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_reconstruir_topologia</span><span class="method-params">(data)</span><span class="method-return"> → NodoAVL</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_reconstruir_insercion</span><span class="method-params">(data)</span><span class="method-return"> → ComparisonSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">exportar_json</span><span class="method-params">(avl: AVLTree)</span><span class="method-return"> → dict</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_serializar_nodo</span><span class="method-params">(nodo)</span><span class="method-return"> → dict</span></div>
+        </div>
+      </div>
+
+      <!-- VersioningService -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«service»</div>
+          <div class="class-name">VersioningService</div>
+          <div class="class-file">services/versioning_service.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">_versiones</span><span class="attr-type">: dict[str, Version]</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">guardar_version</span><span class="method-params">(nombre, avl)</span><span class="method-return"> → Version</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">restaurar_version</span><span class="method-params">(nombre)</span><span class="method-return"> → AVLTree</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">listar_versiones</span><span class="method-params">()</span><span class="method-return"> → List[Version]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">eliminar_version</span><span class="method-params">(nombre)</span><span class="method-return"> → bool</span></div>
+        </div>
+      </div>
+
+      <!-- MetricsService -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«service»</div>
+          <div class="class-name">MetricsService</div>
+          <div class="class-file">services/metrics_service.py</div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_metricas</span><span class="method-params">(avl)</span><span class="method-return"> → MetricsSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_rotaciones</span><span class="method-params">(avl)</span><span class="method-return"> → dict[str,int]</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">get_recorridos</span><span class="method-params">(avl)</span><span class="method-return"> → dict</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">comparar_avl_bst</span><span class="method-params">(avl, bst)</span><span class="method-return"> → ComparisonSchema</span></div>
+        </div>
+      </div>
+
+      <!-- PenaltyService -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«service»</div>
+          <div class="class-name">PenaltyService</div>
+          <div class="class-file">services/penalty_service.py</div>
+        </div>
+        <div class="section-title">— Atributos</div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">_profundidad_critica</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="visibility vis-private">−</span><span class="attr-name">_factor_penalizacion</span><span class="attr-type">: float = 0.25</span></div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">set_profundidad</span><span class="method-params">(prof: int)</span><span class="method-return"> → void</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">recalcular_precios</span><span class="method-params">(avl)</span><span class="method-return"> → void</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_aplicar_penalizacion</span><span class="method-params">(nodo, prof_actual)</span><span class="method-return"> → void</span></div>
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">es_critico</span><span class="method-params">(profundidad)</span><span class="method-return"> → bool</span></div>
+        </div>
+      </div>
+
+      <!-- AuditService -->
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«service»</div>
+          <div class="class-name">AuditService</div>
+          <div class="class-file">services/audit_service.py</div>
+        </div>
+        <div class="section-title">— Métodos</div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">+</span><span class="method-name">verificar_avl</span><span class="method-params">(avl)</span><span class="method-return"> → AuditReportSchema</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_verificar_nodo</span><span class="method-params">(nodo)</span><span class="method-return"> → list[str]  # errores</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_validar_factor</span><span class="method-params">(nodo)</span><span class="method-return"> → bool</span></div>
+          <div class="method-item"><span class="visibility vis-private">−</span><span class="method-name">_validar_altura</span><span class="method-params">(nodo)</span><span class="method-return"> → bool</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ SCHEMAS -->
+  <div class="layer-group layer-schema">
+    <div class="layer-group-label" style="background:rgba(245,158,11,0.1);color:var(--schema-color)">📄 schemas/ — DTOs Pydantic (Request / Response)</div>
+    <div class="section-row">
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«BaseModel»</div>
+          <div class="class-name">VueloSchema</div>
+          <div class="class-file">schemas/vuelo_schema.py</div>
+        </div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="attr-name">codigo</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">origen</span><span class="attr-type">: str</span></div>
+          <div class="attr-item"><span class="attr-name">destino</span><span class="attr-type">: str</span></div>
+          <div class="attr-item"><span class="attr-name">precio_base</span><span class="attr-type">: float</span></div>
+          <div class="attr-item"><span class="attr-name">pasajeros</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">prioridad</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">promocion</span><span class="attr-type">: bool</span></div>
+          <div class="attr-item"><span class="attr-name">alerta</span><span class="attr-type">: bool</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«BaseModel»</div>
+          <div class="class-name">TreeResponseSchema</div>
+          <div class="class-file">schemas/tree_response_schema.py</div>
+        </div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="attr-name">raiz</span><span class="attr-type">: Optional[NodoSchema]</span></div>
+          <div class="attr-item"><span class="attr-name">altura</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">hojas</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">total_nodos</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">modo_estres</span><span class="attr-type">: bool</span></div>
+          <div class="attr-item"><span class="attr-name">profundidad_critica</span><span class="attr-type">: int</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«BaseModel»</div>
+          <div class="class-name">ComparisonSchema</div>
+          <div class="class-file">schemas/comparison_schema.py</div>
+        </div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="attr-name">avl</span><span class="attr-type">: TreeResponseSchema</span></div>
+          <div class="attr-item"><span class="attr-name">bst</span><span class="attr-type">: TreeResponseSchema</span></div>
+          <div class="attr-item"><span class="attr-name">avl_raiz</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">bst_raiz</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">rotaciones_avl</span><span class="attr-type">: dict[str,int]</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«BaseModel»</div>
+          <div class="class-name">MetricsSchema</div>
+          <div class="class-file">schemas/metrics_schema.py</div>
+        </div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="attr-name">altura</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">hojas</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">total_nodos</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">rotaciones</span><span class="attr-type">: dict[str,int]</span></div>
+          <div class="attr-item"><span class="attr-name">cancelaciones_masivas</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">recorrido_inorden</span><span class="attr-type">: List[int]</span></div>
+          <div class="attr-item"><span class="attr-name">recorrido_niveles</span><span class="attr-type">: List[List[int]]</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«BaseModel»</div>
+          <div class="class-name">AuditReportSchema</div>
+          <div class="class-file">schemas/audit_schema.py</div>
+        </div>
+        <div class="attr-list">
+          <div class="attr-item"><span class="attr-name">es_valido_avl</span><span class="attr-type">: bool</span></div>
+          <div class="attr-item"><span class="attr-name">nodos_inconsistentes</span><span class="attr-type">: List[int]  # codigos</span></div>
+          <div class="attr-item"><span class="attr-name">errores</span><span class="attr-type">: List[str]</span></div>
+          <div class="attr-item"><span class="attr-name">total_revisados</span><span class="attr-type">: int</span></div>
+          <div class="attr-item"><span class="attr-name">reporte_detallado</span><span class="attr-type">: dict</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ ROUTERS -->
+  <div class="layer-group layer-router">
+    <div class="layer-group-label" style="background:rgba(239,68,68,0.1);color:var(--router-color)">🔌 routers/ — Endpoints FastAPI</div>
+    <div class="section-row">
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«APIRouter»</div>
+          <div class="class-name">TreeRouter</div>
+          <div class="class-file">routers/tree_router.py  ·  /api/tree</div>
+        </div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">GET</span><span class="method-name">/</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/node</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">PUT</span><span class="method-name">/node/{codigo}</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">DEL</span><span class="method-name">/node/{codigo}</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">DEL</span><span class="method-name">/cancel/{codigo}</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/undo</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">PUT</span><span class="method-name">/stress</span><span class="method-return"> → dict</span></div>
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/rebalance</span><span class="method-return"> → dict</span></div>
+          <div class="method-item"><span class="visibility vis-public">DEL</span><span class="method-name">/min-profit</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">PUT</span><span class="method-name">/critical-depth</span><span class="method-return"> → TreeResponseSchema</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«APIRouter»</div>
+          <div class="class-name">PersistenceRouter</div>
+          <div class="class-file">routers/persistence_router.py  ·  /api/file</div>
+        </div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/load</span><span class="method-return"> → TreeResponseSchema | ComparisonSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">GET</span><span class="method-name">/export</span><span class="method-return"> → FileResponse (JSON)</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«APIRouter»</div>
+          <div class="class-name">VersionRouter</div>
+          <div class="class-file">routers/version_router.py  ·  /api/versions</div>
+        </div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">GET</span><span class="method-name">/</span><span class="method-return"> → List[Version]</span></div>
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/</span><span class="method-return"> → Version</span></div>
+          <div class="method-item"><span class="visibility vis-public">PUT</span><span class="method-name">/{nombre}</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">DEL</span><span class="method-name">/{nombre}</span><span class="method-return"> → dict</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«APIRouter»</div>
+          <div class="class-name">QueueRouter</div>
+          <div class="class-file">routers/queue_router.py  ·  /api/queue</div>
+        </div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">GET</span><span class="method-name">/</span><span class="method-return"> → List[VueloSchema]</span></div>
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/add</span><span class="method-return"> → dict</span></div>
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/process-next</span><span class="method-return"> → TreeResponseSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">POST</span><span class="method-name">/process-all</span><span class="method-return"> → List[TreeResponseSchema]</span></div>
+        </div>
+      </div>
+
+      <div class="class-card">
+        <div class="class-header">
+          <div class="stereotype">«APIRouter»</div>
+          <div class="class-name">MetricsRouter</div>
+          <div class="class-file">routers/metrics_router.py  ·  /api/metrics</div>
+        </div>
+        <div class="method-list">
+          <div class="method-item"><span class="visibility vis-public">GET</span><span class="method-name">/</span><span class="method-return"> → MetricsSchema</span></div>
+          <div class="method-item"><span class="visibility vis-public">GET</span><span class="method-name">/traversals</span><span class="method-return"> → dict</span></div>
+          <div class="method-item"><span class="visibility vis-public">GET</span><span class="method-name">/audit</span><span class="method-return"> → AuditReportSchema  ⚠ solo modo estrés</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ RELACIONES -->
+  <div class="relations-section">
+    <div class="relations-title">🔗 Mapa de Relaciones entre Capas</div>
+    <svg class="rel-diagram" viewBox="0 0 1200 260" height="260">
+      <defs>
+        <marker id="arrow-comp" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00c2ff" opacity="0.8"/>
+        </marker>
+        <marker id="arrow-use" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#7c3aed" opacity="0.8"/>
+        </marker>
+        <marker id="arrow-dep" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#10b981" opacity="0.8"/>
+        </marker>
+      </defs>
+
+      <!-- Boxes -->
+      <!-- models -->
+      <rect x="20" y="80" width="120" height="40" rx="6" fill="#0f1525" stroke="#00c2ff" stroke-width="1.5"/>
+      <text x="80" y="105" text-anchor="middle" fill="#00c2ff" font-size="11" font-family="JetBrains Mono" font-weight="600">models/</text>
+
+      <!-- tree -->
+      <rect x="230" y="80" width="120" height="40" rx="6" fill="#0f1525" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="290" y="105" text-anchor="middle" fill="#7c3aed" font-size="11" font-family="JetBrains Mono" font-weight="600">tree/</text>
+
+      <!-- services -->
+      <rect x="440" y="80" width="130" height="40" rx="6" fill="#0f1525" stroke="#10b981" stroke-width="1.5"/>
+      <text x="505" y="105" text-anchor="middle" fill="#10b981" font-size="11" font-family="JetBrains Mono" font-weight="600">services/</text>
+
+      <!-- schemas -->
+      <rect x="660" y="80" width="120" height="40" rx="6" fill="#0f1525" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="720" y="105" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="JetBrains Mono" font-weight="600">schemas/</text>
+
+      <!-- routers -->
+      <rect x="875" y="80" width="120" height="40" rx="6" fill="#0f1525" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="935" y="105" text-anchor="middle" fill="#ef4444" font-size="11" font-family="JetBrains Mono" font-weight="600">routers/</text>
+
+      <!-- main -->
+      <rect x="1070" y="80" width="110" height="40" rx="6" fill="#0f1525" stroke="#64748b" stroke-width="1.5"/>
+      <text x="1125" y="105" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="JetBrains Mono" font-weight="600">main.py</text>
+
+      <!-- arrows -->
+      <!-- models → tree (composición) -->
+      <line x1="140" y1="100" x2="226" y2="100" stroke="#00c2ff" stroke-width="1.5" marker-end="url(#arrow-comp)" opacity="0.8"/>
+      <text x="183" y="93" text-anchor="middle" fill="#00c2ff" font-size="8.5" font-family="JetBrains Mono" opacity="0.7">composición</text>
+
+      <!-- tree → services (usa) -->
+      <line x1="350" y1="100" x2="436" y2="100" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-use)" opacity="0.8"/>
+      <text x="393" y="93" text-anchor="middle" fill="#7c3aed" font-size="8.5" font-family="JetBrains Mono" opacity="0.7">usa</text>
+
+      <!-- services → schemas (retorna) -->
+      <line x1="570" y1="100" x2="656" y2="100" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-dep)" opacity="0.8"/>
+      <text x="613" y="93" text-anchor="middle" fill="#10b981" font-size="8.5" font-family="JetBrains Mono" opacity="0.7">retorna</text>
+
+      <!-- schemas → routers (inyecta) -->
+      <line x1="780" y1="100" x2="871" y2="100" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-dep)" opacity="0.8"/>
+      <text x="826" y="93" text-anchor="middle" fill="#f59e0b" font-size="8.5" font-family="JetBrains Mono" opacity="0.7">inyecta</text>
+
+      <!-- routers → main -->
+      <line x1="995" y1="100" x2="1066" y2="100" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arrow-dep)" opacity="0.8"/>
+      <text x="1030" y="93" text-anchor="middle" fill="#ef4444" font-size="8.5" font-family="JetBrains Mono" opacity="0.7">registra</text>
+
+      <!-- models → services (directo también, via schemas) -->
+      <path d="M80,120 Q80,200 505,200 Q505,120 505,120" fill="none" stroke="#00c2ff" stroke-width="1" stroke-dasharray="4,3" opacity="0.3" marker-end="url(#arrow-comp)"/>
+      <text x="290" y="218" text-anchor="middle" fill="#64748b" font-size="8" font-family="JetBrains Mono">models también usados directamente en services</text>
+
+    </svg>
+
+    <div class="rel-legend">
+      <div class="rel-item">
+        <svg width="32" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#00c2ff" stroke-width="2" marker-end="url(#arrow-comp)"/></svg>
+        Composición (contiene/usa instancia)
+      </div>
+      <div class="rel-item">
+        <svg width="32" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#7c3aed" stroke-width="2"/></svg>
+        Asociación (usa operaciones)
+      </div>
+      <div class="rel-item">
+        <svg width="32" height="12"><line x1="0" y1="6" x2="28" y2="6" stroke="#10b981" stroke-width="2" stroke-dasharray="4,2"/></svg>
+        Dependencia (retorna / recibe)
+      </div>
+      <div class="rel-item" style="margin-left:auto; color:var(--text3); font-size:0.6rem">
+        + visibility: &nbsp;<span style="color:#10b981">+ public</span> &nbsp;
+        <span style="color:#ef4444">− private</span> &nbsp;
+        <span style="color:#f59e0b"># protected</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1 @@
+# DTO con el reporte de verificación de la propiedad AVL

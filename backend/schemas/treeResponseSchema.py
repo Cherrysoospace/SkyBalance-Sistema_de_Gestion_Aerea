@@ -1,0 +1,1 @@
+# DTO de respuesta con el árbol AVL serializado y sus propiedades

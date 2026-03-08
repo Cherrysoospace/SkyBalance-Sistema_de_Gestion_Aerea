@@ -1,0 +1,1 @@
+# DTO con métricas analíticas del árbol en tiempo real

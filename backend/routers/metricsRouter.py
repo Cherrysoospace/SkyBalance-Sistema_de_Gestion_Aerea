@@ -1,0 +1,1 @@
+# Endpoints para consultar métricas y auditoría del árbol
