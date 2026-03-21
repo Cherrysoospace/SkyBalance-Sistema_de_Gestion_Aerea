@@ -1,0 +1,326 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap");
+
+:root {
+  --bg-top: #e8f1ff;
+  --bg-mid: #f3f8ff;
+  --bg-bot: #eff6ff;
+  --panel: #ffffffcc;
+  --panel-solid: #ffffff;
+  --line: #d0dff3;
+  --ink: #10274a;
+  --muted: #4f6488;
+  --primary: #0a4ea3;
+  --primary-dark: #083a79;
+  --primary-soft: #dbeafe;
+  --accent-gold: #f59e0b;
+  --danger: #be123c;
+  --shadow: 0 14px 34px rgba(10, 40, 84, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Sora", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 20%, #dcebff 0%, transparent 35%),
+    radial-gradient(circle at 85% 75%, #e0efff 0%, transparent 28%),
+    linear-gradient(160deg, var(--bg-top) 0%, var(--bg-mid) 45%, var(--bg-bot) 100%);
+  animation: fadeInBody 500ms ease-out;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  min-height: 100vh;
+}
+
+.panel {
+  backdrop-filter: blur(8px);
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.brand {
+  margin: 4px 0 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff 0%, #edf5ff 70%, #f3fbff 100%);
+  box-shadow: var(--shadow);
+}
+
+.brandTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.brandLogo {
+  width: 110px;
+  height: auto;
+  object-fit: contain;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #f5d08a;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 23px;
+  letter-spacing: -0.03em;
+  color: var(--primary);
+}
+
+.brand p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.panel section {
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--panel-solid);
+  box-shadow: 0 4px 12px rgba(16, 49, 91, 0.08);
+  opacity: 0;
+  transform: translateY(6px);
+  animation: revealCard 420ms ease-out forwards;
+}
+
+.panel section:nth-of-type(2) { animation-delay: 40ms; }
+.panel section:nth-of-type(3) { animation-delay: 70ms; }
+.panel section:nth-of-type(4) { animation-delay: 100ms; }
+.panel section:nth-of-type(5) { animation-delay: 130ms; }
+.panel section:nth-of-type(6) { animation-delay: 160ms; }
+
+.panel h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+input,
+button,
+select {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-family: "Sora", sans-serif;
+  font-size: 12px;
+}
+
+input,
+select {
+  border: 1px solid var(--line);
+  background: #fcfffe;
+  color: var(--ink);
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid #90e0d1;
+  outline-offset: 1px;
+}
+
+button {
+  border: 0;
+  background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+button:hover {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+#cancelBtn,
+#leastProfitableBtn {
+  background: linear-gradient(135deg, var(--danger) 0%, #e11d48 100%);
+}
+
+#loadJsonBtn,
+#rebalanceBtn,
+#processQueueBtn,
+#saveVersionBtn {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, #f97316 100%);
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+pre {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #0f172a;
+  color: #c9f3e7;
+  padding: 10px;
+  font: 11px/1.45 "JetBrains Mono", monospace;
+}
+
+.canvasWrap {
+  padding: 18px;
+  overflow: auto;
+}
+
+.hero {
+  position: relative;
+  width: min(100%, 1180px);
+  min-height: 190px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: 0 16px 32px rgba(11, 42, 89, 0.14);
+  background-image:
+    linear-gradient(105deg, rgba(11, 35, 78, 0.82) 0%, rgba(11, 35, 78, 0.54) 45%, rgba(11, 35, 78, 0.18) 70%, rgba(11, 35, 78, 0) 100%),
+    var(--hero-banner);
+  background-size: cover;
+  background-position: center;
+}
+
+.heroCopy {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+  padding: 26px;
+  color: #ffffff;
+}
+
+.heroCopy h3 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.heroCopy p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #dbeafe;
+}
+
+#treeSvg {
+  width: min(100%, 1180px);
+  height: 760px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 20% 10%, #ffffff 0%, #f4f9ff 40%, #eaf3ff 100%);
+  box-shadow: 0 16px 34px rgba(19, 41, 49, 0.08);
+}
+
+.link {
+  fill: none;
+  stroke: #7290b6;
+  stroke-width: 1.7px;
+}
+
+@keyframes revealCard {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInBody {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1220px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  #treeSvg {
+    min-width: 980px;
+  }
+
+  .hero {
+    min-width: 980px;
+  }
+}
+
+@media (max-width: 720px) {
+  .panel {
+    padding: 12px;
+  }
+
+  .brand h1 {
+    font-size: 21px;
+  }
+
+  #treeSvg {
+    min-width: 880px;
+    height: 680px;
+  }
+
+  .hero {
+    min-width: 880px;
+    min-height: 160px;
+  }
+
+  .heroCopy h3 {
+    font-size: 27px;
+  }
+}
