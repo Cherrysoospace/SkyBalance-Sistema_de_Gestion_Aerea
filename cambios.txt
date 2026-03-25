@@ -1,0 +1,139 @@
+CAMBIOS REALIZADOS EN CLASES DE LA CARPETA tree
+Proyecto: FAC Airways AVL
+Fecha: 20-03-2026
+
+Este documento resume UNICAMENTE los cambios aplicados en los archivos de la carpeta backend/tree, partiendo de un codigo previo que ya tenia funcionalidades base.
+
+==================================================
+1) backend/tree/nodo.py
+==================================================
+Estado original:
+- Nodo basico con: value, parent, leftChild, rightChild.
+- Getters/setters estructurales del arbol.
+- No tenia setValue.
+- No tenia datos de vuelo asociados al nodo.
+
+Cambios aplicados:
+- Se agrego soporte de payload de vuelo dentro del nodo:
+  - codigo
+  - origen
+  - destino
+  - pasajeros
+  - precioBase
+  - precioFinal
+  - promocion
+  - prioridad
+  - critico
+  - alerta
+- Se agrego el metodo setValue(value), necesario para operaciones de eliminacion y reemplazo por predecesor.
+- Se agrego copyPayloadFrom(otherNode) para copiar solo datos de negocio sin romper referencias parent/children.
+- Se agrego toFlightDict() para facilitar serializacion y respuestas API.
+- Se mantuvieron los metodos estructurales originales (set/get parent, left, right, value) para no romper compatibilidad con AVL/BST.
+
+==================================================
+2) backend/tree/avlTree.py
+==================================================
+Estado original:
+- Clase AVL existente con insert/search/delete/recorridos.
+- Rotaciones LL y RR presentes.
+- LR y RL sin implementar (lanzaban excepcion).
+- Bug en RR (uso de variable incorrecta).
+- No tenia cancelacion de subarbol completa.
+- No tenia serializacion integral para UI D3.
+- No tenia modo estres, rebalance global, auditoria AVL ni penalizacion por profundidad.
+
+Cambios aplicados:
+- Se reestructuro la clase para dejar un AVL funcional y estable con enfoque academico.
+
+Insercion y busqueda:
+- Se mantuvo comportamiento base de insercion BST + rebalanceo AVL.
+- Se ajusto para que el rebalanceo se pueda desactivar en modo estres.
+
+Eliminacion:
+- Se implemento flujo robusto con casos:
+  - hoja
+  - un hijo
+  - dos hijos (usando predecesor inorden)
+- En caso de dos hijos se copia payload del predecesor al nodo objetivo.
+
+Rotaciones y balanceo:
+- Se corrigio la rotacion RR.
+- Se implementaron completamente LR y RL.
+- Se mantuvieron LL y RR como rotaciones simples.
+- Se dejo conteo de rotaciones por tipo: LL, RR, LR, RL.
+
+Cancelacion masiva:
+- Se agrego cancelSubtree(value):
+  - elimina el nodo objetivo con toda su descendencia.
+  - cuenta cantidad removida.
+  - incrementa contador de cancelaciones masivas.
+
+Metrica y recorridos:
+- Se mantuvieron BFS, DFS (pre/in/post), altura y balance factor.
+- Se agrego countLeaves().
+- Se agrego getMetrics() con estructura util para frontend.
+
+Persistencia/serializacion:
+- Se agrego toDict() para serializar el arbol completo con atributos de vuelo y estructura izquierdo/derecho.
+- Se agrego loadFromInsertionList(vuelos).
+- Se agrego loadFromTopology(data) para reconstruccion por topologia.
+
+Modo estres y funciones extendidas:
+- setStressMode(enabled) para activar/desactivar rebalance automatico.
+- rebalanceGlobal() para reparar estructura completa.
+- applyDepthPenalty(depthLimit) para marcar nodos criticos y ajustar precio final (+25%).
+- verifyAVLProperty() para reporte de nodos inconsistentes.
+- removeLeastProfitableSubtree() para eliminar subarbol de menor rentabilidad.
+
+Utilidades:
+- clear() para reinicio de estado.
+- print_tree() mantenido para inspeccion textual.
+
+==================================================
+3) backend/tree/actionStack.py
+==================================================
+Estado original:
+- Solo comentario de placeholder.
+
+Cambios aplicados:
+- Se implemento clase ActionStack (pila LIFO) para deshacer (undo).
+- Metodos:
+  - push(snapshot)
+  - pop()
+  - peek()
+  - clear()
+  - is_empty()
+  - size()
+- Se usa deepcopy para evitar efectos por referencia en snapshots.
+
+==================================================
+4) backend/tree/insertionQueue.py
+==================================================
+Estado original:
+- Solo comentario de placeholder.
+
+Cambios aplicados:
+- Se implemento clase InsertionQueue (cola FIFO) para inserciones diferidas.
+- Metodos:
+  - enqueue(payload)
+  - dequeue()
+  - is_empty()
+  - size()
+  - clear()
+  - to_list()
+- Se usa deepcopy para conservar datos encolados de forma segura.
+
+==================================================
+5) backend/tree/bstTree.py
+==================================================
+Estado durante esta intervencion:
+- NO se hicieron cambios directos en bstTree.py dentro de este bloque.
+- Se respeto su estructura existente para no introducir regresiones no solicitadas.
+
+==================================================
+RESUMEN FINAL
+==================================================
+- Se fortalecio la base de datos de nodos (Node) para modelar vuelos reales.
+- Se completo y estabilizo AVL (rotaciones, eliminacion, cancelacion y serializacion).
+- Se implementaron las estructuras faltantes de soporte (stack y queue).
+- Se mantuvo enfoque simple, explicable y reutilizable para sustentacion.

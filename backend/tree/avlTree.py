@@ -1,461 +1,498 @@
-# Clase árbol AVL para la administración de los nodos
+from tree.nodo import Node
+
+
+# AVL tree used as the core structure for SkyBalance.
 class AVL:
 
-  # Constructor del árbol
   def __init__(self):
     self.root = None
+    self.stressMode = False
+    self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.massCancelations = 0
 
-  # método para obtener la raiz del árbol
   def getRoot(self):
     return self.root
 
-  # Método que permite insertar un nodo en el árbol
+  def setStressMode(self, enabled):
+    self.stressMode = bool(enabled)
+
+  def getStressMode(self):
+    return self.stressMode
+
+  # Inserts a node and rebalances unless stress mode is enabled.
   def insert(self, node):
-    # verificar si existe una raiz en el árbol
     if self.root is None:
       self.root = node
-    else:
-      # si existe una raiz, se inicia el proceso de inserción
-      self.__insert(self.root, node)
+      return
 
-  # Método privado que maneja del recursividad de insertar en el árbol
+    inserted = self.__insert(self.root, node)
+    if not self.stressMode:
+      self.__checkBalance(inserted)
+
   def __insert(self, currentRoot, node):
-    # Verificar si el valor es igual
-    if(node.getValue() == currentRoot.getValue()):
+    if node.getValue() == currentRoot.getValue():
       raise Exception(f"El valor {node.getValue()} ya existe en el árbol.")
-    else:
-      # Se verifica si el valor a insertar es mayor que el actual raiz
-      if(node.getValue() > currentRoot.getValue()):
-        # Si no tiene hijo derecho, se asigna el nuevo nodo como hijo derecho,
-        # y el padre de ese nuevo nodo será el actual raiz
-        if(currentRoot.getRightChild() is None):
-          # se asigna en nodo como hijo derecho
-          currentRoot.setRightChild(node)
-          # asignar el padre
-          node.setParent(currentRoot)
-          # verificar el balance del árbol
-          self.__checkBalance(node)
-        else:
-          # Si tiene hijo derecho, se llama recursivamente al hijo derecho para la inserción del nuevo nodo
-          self.__insert(currentRoot.getRightChild(), node)
-      else:
-        #el valor del nodo a insertar es menor que la actual raiz
-        # Si no tiene hijo izquierdo, se asigna el nuevo nodo como hijo izquierdo,
-        if currentRoot.getLeftChild() is None:
-          # asignar nuevo nodo como hijo isquierdo
-          currentRoot.setLeftChild(node)
-          # asignar el padre
-          node.setParent(currentRoot)
-          # verificar el balance del árbol
-          self.__checkBalance(node)
-        else:
-          # Si tiene hijo izquierdo, se llama recursivamente a __insert con el hijo izquierdo como nueva raiz
-          self.__insert(currentRoot.getLeftChild(), node)
 
-  # Método de búsqueda de un nodo con base en su valor
+    if node.getValue() < currentRoot.getValue():
+      if currentRoot.getLeftChild() is None:
+        currentRoot.setLeftChild(node)
+        node.setParent(currentRoot)
+        return node
+      return self.__insert(currentRoot.getLeftChild(), node)
+
+    if currentRoot.getRightChild() is None:
+      currentRoot.setRightChild(node)
+      node.setParent(currentRoot)
+      return node
+    return self.__insert(currentRoot.getRightChild(), node)
+
   def search(self, value):
     if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__search(self.root, value)
+      return None
+    return self.__search(self.root, value)
 
-  # Método para la búsqueda de manera recursiva
   def __search(self, currentRoot, value):
+    if currentRoot is None:
+      return None
     if value == currentRoot.getValue():
       return currentRoot
-    if value > currentRoot.getValue():
-      if currentRoot.getRightChild() is None:
-        return None
-      else:
-        return self.__search(currentRoot.getRightChild(), value)
-    else:
-      if currentRoot.getLeftChild() is None:
-        return None
-      else:
-        return self.__search(currentRoot.getLeftChild(), value)
+    if value < currentRoot.getValue():
+      return self.__search(currentRoot.getLeftChild(), value)
+    return self.__search(currentRoot.getRightChild(), value)
 
-  # Método para eliminar un nodo
-  # Se deben considerar los 3 casos: no hoja, no con un hijo y nodo con 2 hijos
+  # Standard AVL deletion using predecessor when the node has two children.
   def delete(self, value):
-    # Verificar si el árbol tiene al menos la raiz
-    if self.root is None:
-      print("El árbol está vacío.")
+    target = self.search(value)
+    if target is None:
+      return False
+    self.__deleteNode(target)
+    return True
+
+  def __deleteNode(self, node):
+    if node.getLeftChild() is not None and node.getRightChild() is not None:
+      predecessor = self.__getPredecessor(node)
+      node.copyPayloadFrom(predecessor)
+      node = predecessor
+
+    parent = node.getParent()
+    replacement = node.getLeftChild() if node.getLeftChild() is not None else node.getRightChild()
+
+    if replacement is not None:
+      replacement.setParent(parent)
+
+    if parent is None:
+      self.root = replacement
+    elif parent.getLeftChild() == node:
+      parent.setLeftChild(replacement)
     else:
-      # Se busca el nodo con el valor
-      node = self.search(value)
-      # Si no se encuentra el nodo, se debe mostrar el mensaje de error
-      if node is None:
-        print(f"El nodo con valor {value} no existe en el árbol")
-      else:
-        self.__delete(node)
+      parent.setRightChild(replacement)
 
-  # Método para identificar el caso y eiminar el nodo
-  def __delete(self, node):
-    deletionCase = self.__identifyDeletionCase(node)
-    match deletionCase:
-      case 1:
-        self.__deleteLeafNode(node)
-
-      case 2:
-        self.__deleteNodeWithOneChild(node)
-
-      case 3:
-        self.__deleteNodeWithTwoChildren(node)
-
-  # Método para eliminar un nodo que tiene dos hijos (caso 3)
-  def __deleteNodeWithTwoChildren(self, node):
-
-    # se obtiene el predecesor del nodo a eliminar
-    predecessor = self.__getPredecessor(node)
-
-    # se copia el valor del predecesor en el nodo actual
-    node.setValue(predecessor.getValue())
-
-    # se identifica el caso de eliminación del predecesor
-    predecessorCase = self.__identifyDeletionCase(predecessor)
-
-    # si el predecesor es hoja
-    if predecessorCase == 1:
-      self.__deleteLeafNode(predecessor)
-
-    # si el predecesor tiene un hijo
-    else:
-      self.__deleteNodeWithOneChild(predecessor)
-
-
-  # Método para obtener el predecesor inorden de un nodo
-  # el predecesor es el mayor valor del subárbol izquierdo
-  def __getPredecessor(self, node):
-
-    # se inicia desde el hijo izquierdo del nodo
-    current = node.getLeftChild()
-
-    # se avanza hacia la derecha hasta encontrar el mayor valor
-    # del subárbol izquierdo
-    while current.getRightChild() is not None:
-      current = current.getRightChild()
-
-    # se retorna el nodo predecesor encontrado
-    return current
-
-
-  # Método para eliminar un nodo que tiene un solo hijo (caso 2)
-  def __deleteNodeWithOneChild(self, node):
-
-    # se obtiene el hijo del nodo a eliminar
-    if node.getLeftChild() is not None:
-      childNode = node.getLeftChild()
-    else:
-      childNode = node.getRightChild()
-
-    # se obtiene el padre del nodo que se va a eliminar
-    parentNode = node.getParent()
-
-    # si el nodo a eliminar es la raiz, el hijo pasa a ser la nueva raiz
-    if parentNode is None:
-      self.root = childNode
-      childNode.setParent(None)
-
-    else:
-
-      # se verifica si el nodo a eliminar es hijo izquierdo o derecho
-      if parentNode.getLeftChild() == node:
-        parentNode.setLeftChild(childNode)
-      else:
-        parentNode.setRightChild(childNode)
-
-      # se reasigna el padre del hijo
-      childNode.setParent(parentNode)
-
-    # se eliminan las referencias del nodo eliminado
     node.setLeftChild(None)
     node.setRightChild(None)
     node.setParent(None)
 
+    if not self.stressMode:
+      self.__checkBalance(parent if parent is not None else self.root)
 
-  # Método para eliminar un nodo hoja (caso 1)
-  def __deleteLeafNode(self, node):
-    if node.getValue() == self.root.getValue():
+  def __getPredecessor(self, node):
+    current = node.getLeftChild()
+    while current.getRightChild() is not None:
+      current = current.getRightChild()
+    return current
+
+  # Removes a node and every descendant under it.
+  def cancelSubtree(self, value):
+    target = self.search(value)
+    if target is None:
+      return {"removed": 0}
+
+    removedCount = self.__countNodes(target)
+    parent = target.getParent()
+
+    if parent is None:
       self.root = None
+    elif parent.getLeftChild() == target:
+      parent.setLeftChild(None)
     else:
-      parentNode = node.getParent()
-      if node.getValue() < parentNode.getValue():
-        parentNode.setLeftChild(None)
-      else:
-        parentNode.setRightChild(None)
-      node.setParent(None)
+      parent.setRightChild(None)
 
+    target.setParent(None)
+    self.massCancelations += 1
 
-  # Identificar los casos de eliminación
-  # caso 1 cuando es nodo hoja
-  # caso 2 cuando solo tiene un hijo
-  # caso 3 cuando tiene los dos hijos
-  def __identifyDeletionCase(self, node):
-    # se inicia pensando que es caso 2 (un solo hijo)
-    deletionCase = 2
-    # se verifica si es hoja y se cmabia el caso a 1
-    if node.getLeftChild() is None and node.getRightChild() is None:
-      deletionCase = 1
-    # sino se verifica si tiene dos hijos y se cambia a caso 3
-    elif node.getLeftChild() is not None and node.getRightChild() is not None:
-      deletionCase = 3
-    return deletionCase
+    if not self.stressMode and parent is not None:
+      self.__checkBalance(parent)
 
+    return {"removed": removedCount}
 
-  # Método para recorrido en anchura
-  def breadthFirstSearch(self):
-    if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__breadthFirstSearch(self.root)
+  def __countNodes(self, node):
+    if node is None:
+      return 0
+    return 1 + self.__countNodes(node.getLeftChild()) + self.__countNodes(node.getRightChild())
 
-  # Método para mostrar el recorrido en anchura
-  # se obtiene una lista con los valores de los nodos recorridos
-  def __breadthFirstSearch(self, currentRoot):
-    queue = []
-    result = []
-    queue.append(currentRoot)
-    while len(queue) > 0:
-      currentRoot = queue.pop(0)
-      result.append(currentRoot.getValue())
-      if currentRoot.getLeftChild() is not None:
-        queue.append(currentRoot.getLeftChild())
-      if currentRoot.getRightChild() is not None:
-        queue.append(currentRoot.getRightChild())
-    return result
-
-  # Método para recorrido en profundidad pre-order
-  def preOrderTraversal(self):
-    if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__preOrderTraversal(self.root)
-
-  # Root - Left - Right
-  def __preOrderTraversal(self, currentRoot):
-    print(currentRoot.getValue())
-    if currentRoot.getLeftChild() is not None:
-      self.__preOrderTraversal(currentRoot.getLeftChild())
-    if currentRoot.getRightChild() is not None:
-      self.__preOrderTraversal(currentRoot.getRightChild())
-
-  # Método para recorrido en profundidad in-order
-
-  def inOrderTraversal(self):
-    if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__inOrderTraversal(self.root)
-
-  # Left - Root - Right
-  def __inOrderTraversal(self, currentRoot):
-    if currentRoot.getLeftChild() is not None:
-      self.__inOrderTraversal(currentRoot.getLeftChild())
-
-    print(currentRoot.getValue())
-
-    if currentRoot.getRightChild() is not None:
-      self.__inOrderTraversal(currentRoot.getRightChild())
-
-  # Método para recorrido en profundidad pos-order
-  def posOrderTraversal(self):
-    if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__posOrderTraversal(self.root)
-
-  # Left - Root - Right
-  def __posOrderTraversal(self, currentRoot):
-    if currentRoot.getLeftChild() is not None:
-      self.__posOrderTraversal(currentRoot.getLeftChild())
-
-    if currentRoot.getRightChild() is not None:
-      self.__posOrderTraversal(currentRoot.getRightChild())
-    print(currentRoot.getValue())
-
-  # Método para calcular la altura de un nodo
+  # Height utilities.
   def calculateHeight(self, node):
     if node is None:
       return -1
-    else:
-      return self.__calculateHeight(node)
+    return 1 + max(self.calculateHeight(node.getLeftChild()), self.calculateHeight(node.getRightChild()))
 
-  # Método recursivo para calcular la altura de un nodo
-  def __calculateHeight(self, currentRoot):
-    if currentRoot is None:
-      return -1
-    else:
-      leftHeight = self.__calculateHeight(currentRoot.getLeftChild())
-      rightHeight = self.__calculateHeight(currentRoot.getRightChild())
-      #print(f"Altura del hijo izquierdo {leftHeight}")
-      #print(f"Altura del hijo derecho {rightHeight}")
-      maxHeight = max(leftHeight, rightHeight)
-      return 1 + maxHeight
-
-  # Método para detectar si hay desbalanceo en el nodo -1 <= bf <= 1
   def getBalanceFactor(self, node):
-    leftChildHeight = self.calculateHeight(node.getLeftChild())
-    rightChildHeight = self.calculateHeight(node.getRightChild())
-    bf = leftChildHeight - rightChildHeight
-    return bf
+    if node is None:
+      return 0
+    return self.calculateHeight(node.getLeftChild()) - self.calculateHeight(node.getRightChild())
 
-  # Método que verifica el balanceo de un árbol y si está desbalanceado ejecuta el proceso de balanceo
+  # Traverses upward from a node and restores AVL balance.
   def __checkBalance(self, node):
-    # Obtiene el nodo padre del nodo actual.
-    # El rebalanceo en AVL se revisa hacia arriba en el árbol
-    parentNode = node.getParent()
+    current = node
+    while current is not None:
+      bf = self.getBalanceFactor(current)
+      if bf > 1 or bf < -1:
+        current = self.__rebalance(current, bf)
+      current = current.getParent()
 
-    # Si el nodo no tiene padre significa que llegamos a la raíz
-    # En ese caso ya no hay más nodos que revisar
-    if parentNode is None:
-      return
-
-    # Calcula el factor de balance del nodo padre
-    # BF = altura(subárbol izquierdo) - altura(subárbol derecho)
-    bf = self.getBalanceFactor(parentNode)
-
-    # Si el factor de balance está fuera del rango permitido [-1,1]
-    # significa que el nodo está desbalanceado
-    if bf > 1 or bf < -1:
-      # Se ejecuta el proceso de rebalanceo
-      # (rotaciones según el caso: LL, RR, LR, RL)
-      self.__rebalance(parentNode, bf)
-
-    # Continúa verificando el balance hacia arriba en el árbol
-    # ahora revisando el padre del nodo actual
-    self.__checkBalance(parentNode)
-
-
-  # Método para balancear el árbol, identificando la dirección del desbalanceo con positivos por izquierda y negativos por derecha
   def __rebalance(self, node, bf):
-    rebalanceCase = self.__identifyRebalanceCase(node, bf)
-    match rebalanceCase:
-      case "LL":
-        self.__balanceLL(node)
-      case "RR":
-        self.__balanceRR(node)
-      case "LR":
-        self.__balanceLR(node)
-      case "RL":
-        self.__balanceRL(node)
+    caseName = self.__identifyRebalanceCase(node, bf)
+    if caseName == "LL":
+      return self.__balanceLL(node)
+    if caseName == "RR":
+      return self.__balanceRR(node)
+    if caseName == "LR":
+      return self.__balanceLR(node)
+    return self.__balanceRL(node)
 
-  # Método para el balanceo de tipo LR
-  def __balanceLR(self, topNode):
-    raise Exception("No implementado")
+  def __identifyRebalanceCase(self, node, bf):
+    if bf > 0:
+      childBf = self.getBalanceFactor(node.getLeftChild())
+      if childBf >= 0:
+        return "LL"
+      return "LR"
 
+    childBf = self.getBalanceFactor(node.getRightChild())
+    if childBf <= 0:
+      return "RR"
+    return "RL"
 
-  # Método para el balanceo de tipo RL
-  def __balanceRL(self, topNode):
-    raise Exception("No implementado")
-
-  # Método para el balanceo de tipo LL
+  # LL case: single right rotation.
   def __balanceLL(self, topNode):
-    # se obtiene el hijo izquierdo del superior
+    self.rotationCounts["LL"] += 1
+    return self.__rotateRight(topNode)
+
+  # RR case: single left rotation.
+  def __balanceRR(self, topNode):
+    self.rotationCounts["RR"] += 1
+    return self.__rotateLeft(topNode)
+
+  # LR case: left rotation on left child, then right rotation.
+  def __balanceLR(self, topNode):
+    self.rotationCounts["LR"] += 1
+    self.__rotateLeft(topNode.getLeftChild())
+    return self.__rotateRight(topNode)
+
+  # RL case: right rotation on right child, then left rotation.
+  def __balanceRL(self, topNode):
+    self.rotationCounts["RL"] += 1
+    self.__rotateRight(topNode.getRightChild())
+    return self.__rotateLeft(topNode)
+
+  def __rotateLeft(self, topNode):
+    middleNode = topNode.getRightChild()
+    leftChildOfMiddle = middleNode.getLeftChild()
+    topParent = topNode.getParent()
+
+    middleNode.setParent(topParent)
+    if topParent is None:
+      self.root = middleNode
+    elif topParent.getLeftChild() == topNode:
+      topParent.setLeftChild(middleNode)
+    else:
+      topParent.setRightChild(middleNode)
+
+    middleNode.setLeftChild(topNode)
+    topNode.setParent(middleNode)
+
+    topNode.setRightChild(leftChildOfMiddle)
+    if leftChildOfMiddle is not None:
+      leftChildOfMiddle.setParent(topNode)
+
+    return middleNode
+
+  def __rotateRight(self, topNode):
     middleNode = topNode.getLeftChild()
-
-    # se obtiene el padre del nodo superior (puede que sea la raiz y no tenga padre, es decir que es None)
-    topNodeParent = topNode.getParent()
-    # se obtiene el hijo derecho del nodo de la mitad para pasarlo luego al topNode que baja como hijo derecho del nodo de la mitad
     rightChildOfMiddle = middleNode.getRightChild()
+    topParent = topNode.getParent()
 
-    # el nodo superior baja como hijo derecho del nodo de la mitad
+    middleNode.setParent(topParent)
+    if topParent is None:
+      self.root = middleNode
+    elif topParent.getLeftChild() == topNode:
+      topParent.setLeftChild(middleNode)
+    else:
+      topParent.setRightChild(middleNode)
+
     middleNode.setRightChild(topNode)
     topNode.setParent(middleNode)
 
-    # reasignar el padre del superior al de la mitad
-    middleNode.setParent(topNodeParent )
-    # verificar si el topNode es la raiz, parent es el padre del nodo de arriba
-    if topNodeParent is None:
-      self.root = middleNode
-    else:
-      # si es nodo intermedio, se debe verificar si el parentNode es hijo izquierdo o derecho de su padre y así ajustar las referencias con middlename
-      if topNodeParent.getLeftChild() == topNode:
-        topNodeParent.setLeftChild(middleNode)
-      else:
-        topNodeParent.setRightChild(middleNode)
-
-
-    # reasignar el hijo derecho del nodo de la mitad como hijo izquierdo del nodo de arriba
     topNode.setLeftChild(rightChildOfMiddle)
     if rightChildOfMiddle is not None:
       rightChildOfMiddle.setParent(topNode)
 
-  # Método para el balanceo de tipo RR
-  def __balanceRR(self, topNode):
-    # se obtiene el hijo derecho del superior
-    middleNode = topNode.getRightChild()
+    return middleNode
 
-    # se obtiene el padre del nodo superior (puede que sea la raiz y no tenga padre, es decir que es None)
-    topNodeParent = topNode.getParent()
-    # se obtiene el hijo izquierdo del nodo de la mitad para pasarlo luego al topNode que baja como hijo izquierdo del nodo de la mitad
-    leftChildOfMiddle = middleNode.getLeftChild()
+  def breadthFirstSearch(self):
+    if self.root is None:
+      return []
 
-    # el nodo superior baja como hijo izquierdo del nodo de la mitad
-    middleNode.setLeftChild(topNode)
-    topNode.setParent(middleNode)
+    queue = [self.root]
+    result = []
+    while len(queue) > 0:
+      current = queue.pop(0)
+      result.append(current.getValue())
+      if current.getLeftChild() is not None:
+        queue.append(current.getLeftChild())
+      if current.getRightChild() is not None:
+        queue.append(current.getRightChild())
+    return result
 
-    # reasignar el padre del superior al de la mitad
-    middleNode.setParent(topNodeParent)
-    # verificar si el topNode es la raiz, parent es el padre del nodo de arriba
-    if topNodeParent is None:
-      self.root = middleNode
+  def preOrderTraversal(self):
+    result = []
+    self.__preOrder(self.root, result)
+    return result
+
+  def __preOrder(self, node, result):
+    if node is None:
+      return
+    result.append(node.getValue())
+    self.__preOrder(node.getLeftChild(), result)
+    self.__preOrder(node.getRightChild(), result)
+
+  def inOrderTraversal(self):
+    result = []
+    self.__inOrder(self.root, result)
+    return result
+
+  def __inOrder(self, node, result):
+    if node is None:
+      return
+    self.__inOrder(node.getLeftChild(), result)
+    result.append(node.getValue())
+    self.__inOrder(node.getRightChild(), result)
+
+  def posOrderTraversal(self):
+    result = []
+    self.__postOrder(self.root, result)
+    return result
+
+  def __postOrder(self, node, result):
+    if node is None:
+      return
+    self.__postOrder(node.getLeftChild(), result)
+    self.__postOrder(node.getRightChild(), result)
+    result.append(node.getValue())
+
+  def countLeaves(self):
+    return self.__countLeaves(self.root)
+
+  def __countLeaves(self, node):
+    if node is None:
+      return 0
+    if node.getLeftChild() is None and node.getRightChild() is None:
+      return 1
+    return self.__countLeaves(node.getLeftChild()) + self.__countLeaves(node.getRightChild())
+
+  # Rechecks all nodes bottom-up and rebalances when needed.
+  def rebalanceGlobal(self):
+    if self.root is None:
+      return {"passes": 0}
+
+    passes = 0
+    changed = True
+    while changed and passes < 100:
+      passes += 1
+      changed = False
+      nodes = []
+      self.__collectPostOrderNodes(self.root, nodes)
+      for node in nodes:
+        bf = self.getBalanceFactor(node)
+        if bf > 1 or bf < -1:
+          self.__rebalance(node, bf)
+          changed = True
+
+    return {"passes": passes}
+
+  def __collectPostOrderNodes(self, node, result):
+    if node is None:
+      return
+    self.__collectPostOrderNodes(node.getLeftChild(), result)
+    self.__collectPostOrderNodes(node.getRightChild(), result)
+    result.append(node)
+
+  # Applies depth penalty rule and marks critical nodes.
+  def applyDepthPenalty(self, depthLimit):
+    self.__applyDepthPenalty(self.root, 0, depthLimit)
+
+  def __applyDepthPenalty(self, node, depth, depthLimit):
+    if node is None:
+      return
+
+    if depth > depthLimit:
+      node.critico = True
+      node.precioFinal = round(node.precioBase * 1.25, 2)
     else:
-      # si es nodo intermedio, se debe verificar si el parentNode es hijo izquierdo o derecho de su padre y así ajustar las referencias con middlename
-      if topNodeParent.getLeftChild() == topNode:
-        topNodeParent.setLeftChild(middleNode)
-      else:
-        topNodeParent.setRightChild(middleNode)
+      node.critico = False
+      node.precioFinal = node.precioBase
 
-    # reasignar el hijo izquierdo del nodo de la mitad como hijo derecho del nodo de arriba
-    topNode.setRightChild(x)
-    if leftChildOfMiddle is not None:
-      leftChildOfMiddle.setParent(topNode)
+    self.__applyDepthPenalty(node.getLeftChild(), depth + 1, depthLimit)
+    self.__applyDepthPenalty(node.getRightChild(), depth + 1, depthLimit)
 
+  # Removes the subtree with the least profitable root.
+  def removeLeastProfitableSubtree(self):
+    candidates = []
+    self.__collectProfitCandidates(self.root, 0, candidates)
+    if len(candidates) == 0:
+      return {"removed": 0}
 
-  # Método para identificar el caso de desbalanceo
-  def __identifyRebalanceCase(self, node, bf):
-    rebalanceCase = ""
-    # desbalanceo positivo (L)
-    if bf > 0:
-      childBf = self.getBalanceFactor(node.getLeftChild())
-      # caso L-L
-      if childBf > 0:
-        rebalanceCase = "LL"
-      # caso L-R
-      else:
-        rebalanceCase = "LR"
-    # desbalanceo negativo (R)
-    else:
-      childBf = self.getBalanceFactor(node.getRightChild())
-      # caso RL
-      if childBf > 0:
-        rebalanceCase = "RL"
-      # caso RR
-      else:
-        rebalanceCase = "RR"
-    return rebalanceCase
+    # Sort by rentability ascending, depth descending, code descending.
+    candidates.sort(key=lambda item: (item[0], -item[1], -item[2]))
+    _, _, code = candidates[0]
+    response = self.cancelSubtree(code)
+    return {"removed": response["removed"], "codigo": code}
 
-  # Método para dibujar el árbol en forma de árbol
+  def __collectProfitCandidates(self, node, depth, result):
+    if node is None:
+      return
+
+    promotionImpact = node.precioBase * 0.1 if node.promocion else 0
+    penaltyImpact = node.precioBase * 0.25 if node.critico else 0
+    rentability = (node.pasajeros * node.precioFinal) - promotionImpact + penaltyImpact
+
+    result.append((rentability, depth, node.codigo))
+    self.__collectProfitCandidates(node.getLeftChild(), depth + 1, result)
+    self.__collectProfitCandidates(node.getRightChild(), depth + 1, result)
+
+  # Returns a full report to validate the AVL property.
+  def verifyAVLProperty(self):
+    issues = []
+    self.__verifyNode(self.root, issues)
+    return {
+      "isValid": len(issues) == 0,
+      "issues": issues,
+    }
+
+  def __verifyNode(self, node, issues):
+    if node is None:
+      return -1
+
+    leftHeight = self.__verifyNode(node.getLeftChild(), issues)
+    rightHeight = self.__verifyNode(node.getRightChild(), issues)
+    expectedHeight = 1 + max(leftHeight, rightHeight)
+    bf = leftHeight - rightHeight
+
+    if bf < -1 or bf > 1:
+      issues.append({
+        "codigo": node.codigo,
+        "reason": f"Balance factor fuera de rango ({bf})",
+      })
+
+    return expectedHeight
+
+  # Converts the full tree to a D3-friendly nested object.
+  def toDict(self):
+    return self.__serializeNode(self.root)
+
+  def __serializeNode(self, node):
+    if node is None:
+      return None
+
+    return {
+      "codigo": node.codigo,
+      "origen": node.origen,
+      "destino": node.destino,
+      "pasajeros": node.pasajeros,
+      "precioBase": node.precioBase,
+      "precioFinal": node.precioFinal,
+      "promocion": node.promocion,
+      "prioridad": node.prioridad,
+      "critico": node.critico,
+      "alerta": node.alerta,
+      "altura": self.calculateHeight(node),
+      "factorEquilibrio": self.getBalanceFactor(node),
+      "izquierdo": self.__serializeNode(node.getLeftChild()),
+      "derecho": self.__serializeNode(node.getRightChild()),
+    }
+
+  def getMetrics(self):
+    return {
+      "alturaActual": self.calculateHeight(self.root),
+      "hojas": self.countLeaves(),
+      "bfs": self.breadthFirstSearch(),
+      "dfs": {
+        "preOrder": self.preOrderTraversal(),
+        "inOrder": self.inOrderTraversal(),
+        "posOrder": self.posOrderTraversal(),
+      },
+      "rotaciones": self.rotationCounts,
+      "cancelacionesMasivas": self.massCancelations,
+      "modoEstres": self.stressMode,
+    }
+
+  def clear(self):
+    self.root = None
+    self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.massCancelations = 0
+
+  def loadFromInsertionList(self, vuelos):
+    self.clear()
+    for vuelo in vuelos:
+      node = Node(vuelo)
+      self.insert(node)
+
+  def loadFromTopology(self, data):
+    self.clear()
+    self.root = self.__buildNodeFromTopology(data, None)
+
+  def __buildNodeFromTopology(self, data, parent):
+    if data is None:
+      return None
+
+    payload = {
+      "codigo": data.get("codigo"),
+      "origen": data.get("origen", ""),
+      "destino": data.get("destino", ""),
+      "pasajeros": data.get("pasajeros", 0),
+      "precioBase": data.get("precioBase", 0),
+      "precioFinal": data.get("precioFinal", data.get("precioBase", 0)),
+      "promocion": data.get("promocion", False),
+      "prioridad": data.get("prioridad", 0),
+      "critico": data.get("critico", False),
+      "alerta": data.get("alerta", False),
+    }
+
+    node = Node(payload)
+    node.setParent(parent)
+
+    leftNode = self.__buildNodeFromTopology(data.get("izquierdo"), node)
+    rightNode = self.__buildNodeFromTopology(data.get("derecho"), node)
+    node.setLeftChild(leftNode)
+    node.setRightChild(rightNode)
+
+    return node
+
   def print_tree(self):
     if self.root is None:
       print("El árbol está vacío.")
-    else:
-      self.__print_tree(self.root, "", True)
+      return
+    self.__print_tree(self.root, "", True)
 
-
-  # Methodo para imprimir el árbold AVL
   def __print_tree(self, node=None, prefix="", is_left=True):
-      if node is not None:
-          # Print right subtree
-          if node.getRightChild():
-              new_prefix = prefix + ("│   " if is_left else "    ")
-              self.__print_tree(node.getRightChild(), new_prefix, False)
+    if node is None:
+      return
 
-          # Print current node
-          connector = "└── " if is_left else "┌── "
-          print(prefix + connector + str(node.getValue()))
+    if node.getRightChild() is not None:
+      new_prefix = prefix + ("│   " if is_left else "    ")
+      self.__print_tree(node.getRightChild(), new_prefix, False)
 
-          # Print left subtree
-          if node.getLeftChild():
-              new_prefix = prefix + ("    " if is_left else "│   ")
-              self.__print_tree(node.getLeftChild(), new_prefix, True)
+    connector = "└── " if is_left else "┌── "
+    print(prefix + connector + str(node.getValue()))
+
+    if node.getLeftChild() is not None:
+      new_prefix = prefix + ("    " if is_left else "│   ")
+      self.__print_tree(node.getLeftChild(), new_prefix, True)

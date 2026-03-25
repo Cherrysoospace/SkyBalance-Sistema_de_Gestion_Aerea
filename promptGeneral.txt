@@ -1,0 +1,17 @@
+**Prompt General para Copilot**  
+Con el fin de garantizar coherencia, mantenibilidad y calidad técnica en el desarrollo del proyecto SkyBalance, se establecieron las siguientes directrices para el uso de herramientas de asistencia como Copilot:
+
+Todo requerimiento debe desarrollarse dentro del contexto de un sistema académico basado en estructuras de datos, específicamente un Árbol AVL aplicado a la gestión de vuelos, donde la organización jerárquica impacta variables como precio, prioridad, profundidad y métricas operativas. A diferencia de otros entornos, en este proyecto se permite la modificación del backend, siempre que se realice de manera controlada, sin comprometer la estabilidad del sistema y reutilizando al máximo la lógica existente.
+
+Se prioriza la reutilización de componentes, evitando la duplicación de código y promoviendo el uso de clases previamente definidas como AVLTree, Node, Queue y Stack. En caso de requerir nuevas funcionalidades, estas deben integrarse en los archivos existentes en lugar de crear nuevas estructuras innecesarias. Toda modificación debe ser consistente con la arquitectura general del sistema y no debe afectar negativamente otras funcionalidades.
+
+El código generado debe ser claro, simple y comprensible, facilitando su explicación durante la sustentación. Se exige el uso de comentarios explicativos en funciones clave, especialmente en operaciones críticas como inserciones, rotaciones (LL, RR, LR, RL), cálculo de alturas, factores de balance y procesos de rebalanceo.
+
+En cuanto a la visualización, el sistema debe estar diseñado para integrarse con la biblioteca D3.js, permitiendo representar el árbol como una estructura jerárquica dinámica. Cada operación sobre el árbol debe reflejarse visualmente mediante transiciones animadas, garantizando claridad en procesos como inserciones, eliminaciones, cancelaciones masivas y cambios estructurales.
+
+El sistema debe soportar persistencia mediante archivos JSON, permitiendo tanto la reconstrucción del árbol desde su topología como la inserción progresiva de nodos. Asimismo, debe garantizar la exportación completa de la estructura, incluyendo atributos como alturas, factores de equilibrio, precios, pasajeros y demás variables relevantes.
+
+Entre las funcionalidades obligatorias se incluyen: inserción con balanceo automático, eliminación de nodos individuales, cancelación de subárboles, sistema de deshacer (undo) mediante pila, simulación de concurrencia usando una cola de inserciones, cálculo de métricas en tiempo real, modo estrés sin balanceo inmediato, rebalanceo global, auditoría de la propiedad AVL y eliminación inteligente basada en rentabilidad.
+
+Se establece como restricción el uso de tecnologías livianas, limitando la implementación a JavaScript, HTML, CSS y D3.js, con la posibilidad de utilizar frameworks de estilos como Bootstrap o Tailwind. No se permite el uso de frameworks pesados como Angular o React, ni la ejecución de comandos en terminal salvo que sea estrictamente necesario.
+Finalmente, toda modificación realizada debe ir acompañada de una explicación concisa en un solo párrafo que describa qué se hizo, por qué se hizo y cómo impacta el sistema, asegurando trazabilidad y comprensión del desarrollo.

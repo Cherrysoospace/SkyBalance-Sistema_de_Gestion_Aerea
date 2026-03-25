@@ -1,40 +1,82 @@
-# Clase que permite instanciar Nodos para alimentar un árbol.
+# Node model used by AVL/BST. It keeps tree references and flight attributes.
 class Node:
-  # El constructor permite la asignación de un valor
-  # También inicia tanto el padre como los hijos en None
-  def __init__(self, value):
+  # The constructor accepts either a raw value or a flight-like dict.
+  def __init__(self, value=None, **kwargs):
+    if isinstance(value, dict):
+      kwargs = {**value, **kwargs}
+      value = kwargs.get("codigo")
+
     self.value = value
+    self.codigo = kwargs.get("codigo", value)
+    self.origen = kwargs.get("origen", "")
+    self.destino = kwargs.get("destino", "")
+    self.pasajeros = int(kwargs.get("pasajeros", 0))
+    self.precioBase = float(kwargs.get("precioBase", 0))
+    self.precioFinal = float(kwargs.get("precioFinal", self.precioBase))
+    self.promocion = bool(kwargs.get("promocion", False))
+    self.prioridad = int(kwargs.get("prioridad", 0))
+    self.critico = bool(kwargs.get("critico", False))
+    self.alerta = bool(kwargs.get("alerta", False))
+
     self.parent = None
     self.leftChild = None
     self.rightChild = None
 
-  # Método que permite asignar un padre al nodo
-  # recibe la referencia al nodo padre que va a ser asignado
+  # Parent reference helpers.
   def setParent(self, parentNode):
     self.parent = parentNode
 
-  # Método que permite obtener la referencia al padre del nodo
   def getParent(self):
     return self.parent
 
-  # Método que permite asignar un hijo izquierdo al nodo
-  # se recibe la referencia al hijo que se va a asignar
+  # Left child reference helpers.
   def setLeftChild(self, leftChildNode):
     self.leftChild = leftChildNode
 
-  # Método para obtener la referencia al hijo izquiero del nodo
   def getLeftChild(self):
     return self.leftChild
 
-  # Método que permite asignar un hijo derecho al nodo
-  # se recibe la referencia al hijo que se va a asignar
+  # Right child reference helpers.
   def setRightChild(self, rightChildNode):
     self.rightChild = rightChildNode
 
-  # Método para obtener la referencia al hijo derecho del nodo
   def getRightChild(self):
     return self.rightChild
 
-  # Método para obtener el valor del nodo
+  # Key used by tree operations.
   def getValue(self):
     return self.value
+
+  # Setter required by delete-with-predecessor flow.
+  def setValue(self, value):
+    self.value = value
+    self.codigo = value
+
+  # Copies only the payload from another node (not tree references).
+  def copyPayloadFrom(self, otherNode):
+    self.value = otherNode.value
+    self.codigo = otherNode.codigo
+    self.origen = otherNode.origen
+    self.destino = otherNode.destino
+    self.pasajeros = otherNode.pasajeros
+    self.precioBase = otherNode.precioBase
+    self.precioFinal = otherNode.precioFinal
+    self.promocion = otherNode.promocion
+    self.prioridad = otherNode.prioridad
+    self.critico = otherNode.critico
+    self.alerta = otherNode.alerta
+
+  # Flight payload as dictionary for serialization/API responses.
+  def toFlightDict(self):
+    return {
+      "codigo": self.codigo,
+      "origen": self.origen,
+      "destino": self.destino,
+      "pasajeros": self.pasajeros,
+      "precioBase": self.precioBase,
+      "precioFinal": self.precioFinal,
+      "promocion": self.promocion,
+      "prioridad": self.prioridad,
+      "critico": self.critico,
+      "alerta": self.alerta,
+    }
