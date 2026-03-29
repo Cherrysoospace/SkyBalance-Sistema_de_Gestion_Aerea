@@ -29,12 +29,13 @@ app.innerHTML = `
 			<section>
 				<h2>Insertar Vuelo</h2>
 				<form id="insertForm">
-					<input name="codigo" type="number" placeholder="Codigo" required />
-					<input name="origen" placeholder="Origen" required />
-					<input name="destino" placeholder="Destino" required />
-					<input name="pasajeros" type="number" placeholder="Pasajeros" value="0" required />
-					<input name="precioBase" type="number" placeholder="Precio base" value="0" required />
-					<input name="prioridad" type="number" placeholder="Prioridad" value="1" required />
+				<input name="codigo" type="text" placeholder="Codigo (ej: SB400)" required />
+				<input name="origen" placeholder="Origen" required />
+				<input name="destino" placeholder="Destino" required />
+				<input name="horaSalida" type="time" required />
+				<input name="pasajeros" type="number" placeholder="Pasajeros" value="0" />
+				<input name="precioBase" type="number" placeholder="Precio Base" value="0" step="0.01" />
+				<input name="prioridad" type="number" placeholder="Prioridad" value="0" min="0" max="3" />
 					<label><input name="promocion" type="checkbox" /> Promocion</label>
 					<label><input name="alerta" type="checkbox" /> Alerta</label>
 					<button type="submit">Insertar</button>
@@ -43,11 +44,11 @@ app.innerHTML = `
 
 			<section>
 				<h2>Operaciones</h2>
-				<input id="deleteCode" type="number" placeholder="Codigo para eliminar" />
-				<button id="deleteBtn">Eliminar nodo</button>
-				<input id="cancelCode" type="number" placeholder="Codigo para cancelar subarbol" />
-				<button id="cancelBtn">Cancelar subarbol</button>
-				<button id="undoBtn">Deshacer</button>
+			<input id="deleteCode" type="text" placeholder="Codigo para eliminar" />
+			<button id="deleteBtn">Eliminar nodo</button>
+			<input id="cancelCode" type="text" placeholder="Codigo para cancelar subarbol" />
+			<button id="cancelBtn">Cancelar subarbol</button>
+			<button id="undoBtn">↶ Deshacer</button>
 			</section>
 
 			<section>
@@ -62,6 +63,11 @@ app.innerHTML = `
 				<button id="saveVersionBtn">Guardar version</button>
 				<select id="versionSelect"></select>
 				<button id="restoreVersionBtn">Restaurar version</button>
+			</section>
+
+			<section>
+				<h2>Visualizaciones</h2>
+				<button id="comparisonViewBtn" style="background: linear-gradient(135deg, #0077b6, #00b4d8); color: white; width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; margin-bottom: 10px;">📊 Inserción con Comparación</button>
 			</section>
 
 			<section>
@@ -109,16 +115,15 @@ function formPayload() {
 	const form = document.querySelector("#insertForm");
 	const data = new FormData(form);
 	return {
-		codigo: Number(data.get("codigo")),
+		codigo: String(data.get("codigo")),
 		origen: String(data.get("origen")),
 		destino: String(data.get("destino")),
+		horaSalida: String(data.get("horaSalida")),
 		pasajeros: Number(data.get("pasajeros")),
 		precioBase: Number(data.get("precioBase")),
-		precioFinal: Number(data.get("precioBase")),
 		prioridad: Number(data.get("prioridad")),
 		promocion: data.get("promocion") === "on",
 		alerta: data.get("alerta") === "on",
-		critico: false,
 	};
 }
 
@@ -259,14 +264,14 @@ document.querySelector("#insertForm").addEventListener("submit", async (event) =
 });
 
 document.querySelector("#deleteBtn").addEventListener("click", async () => {
-	const code = Number(document.querySelector("#deleteCode").value);
+	const code = document.querySelector("#deleteCode").value.trim();
 	if (!code) return;
 	await axios.delete(`${API}/tree/delete/${code}`);
 	await refreshState();
 });
 
 document.querySelector("#cancelBtn").addEventListener("click", async () => {
-	const code = Number(document.querySelector("#cancelCode").value);
+	const code = document.querySelector("#cancelCode").value.trim();
 	if (!code) return;
 	await axios.delete(`${API}/tree/cancel/${code}`);
 	await refreshState();
@@ -326,6 +331,38 @@ document.querySelector("#leastProfitableBtn").addEventListener("click", async ()
 	await axios.delete(`${API}/metrics/least-profitable`);
 	await refreshState();
 });
+
+// Function to render comparison view
+function renderComparisonView() {
+	import("./pages/ComparisonView.js").then(({ ComparisonView }) => {
+		new ComparisonView();
+	}).catch((error) => {
+		console.error("Error loading ComparisonView:", error);
+		alert("Error al cargar vista de comparación: " + error.message);
+	});
+}
+
+// Use event delegation for comparison button
+document.addEventListener("click", (e) => {
+	if (e.target && e.target.id === "comparisonViewBtn") {
+		renderComparisonView();
+	}
+});
+
+// Handle hash navigation
+window.addEventListener("hashchange", () => {
+	const hash = window.location.hash.slice(1);
+	if (hash === "comparison") {
+		renderComparisonView();
+	} else if (hash === "" || hash === "main") {
+		location.reload();
+	}
+});
+
+// Initialize with main view
+if (window.location.hash === "#comparison") {
+	renderComparisonView();
+}
 
 refreshState().catch((error) => {
 	document.querySelector("#auditBox").textContent = `Error de conexion con backend: ${error.message}`;

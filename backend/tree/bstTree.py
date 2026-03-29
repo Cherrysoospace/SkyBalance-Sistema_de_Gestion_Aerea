@@ -1,5 +1,8 @@
  # BST paralelo
- # Clase árbol BST para la administración de los nodos
+# Clase árbol BST para la administración de los nodos
+from tree.nodo import Node
+
+
 class BST:
 
   # Constructor del árbol
@@ -143,52 +146,48 @@ class BST:
 
   # Método para recorrido en profundidad pre-order
   def preOrderTraversal(self):
-    if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__preOrderTraversal(self.root)
+    result = []
+    if self.root is not None:
+      self.__preOrderTraversal(self.root, result)
+    return result
 
   # Root - Left - Right
-  def __preOrderTraversal(self, currentRoot):
-    print(currentRoot.getValue())
-    if currentRoot.getLeftChild() is not None:
-      self.__preOrderTraversal(currentRoot.getLeftChild())
-    if currentRoot.getRightChild() is not None:
-      self.__preOrderTraversal(currentRoot.getRightChild())
+  def __preOrderTraversal(self, currentRoot, result):
+    if currentRoot is None:
+      return
+    result.append(currentRoot.getValue())
+    self.__preOrderTraversal(currentRoot.getLeftChild(), result)
+    self.__preOrderTraversal(currentRoot.getRightChild(), result)
 
   # Método para recorrido en profundidad in-order
-
   def inOrderTraversal(self):
-    if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__inOrderTraversal(self.root)
+    result = []
+    if self.root is not None:
+      self.__inOrderTraversal(self.root, result)
+    return result
 
   # Left - Root - Right
-  def __inOrderTraversal(self, currentRoot):
-    if currentRoot.getLeftChild() is not None:
-      self.__inOrderTraversal(currentRoot.getLeftChild())
-
-    print(currentRoot.getValue())
-
-    if currentRoot.getRightChild() is not None:
-      self.__inOrderTraversal(currentRoot.getRightChild())
+  def __inOrderTraversal(self, currentRoot, result):
+    if currentRoot is None:
+      return
+    self.__inOrderTraversal(currentRoot.getLeftChild(), result)
+    result.append(currentRoot.getValue())
+    self.__inOrderTraversal(currentRoot.getRightChild(), result)
 
   # Método para recorrido en profundidad pos-order
   def posOrderTraversal(self):
-    if self.root is None:
-      raise Exception("El árbol está vacío.")
-    else:
-      return self.__posOrderTraversal(self.root)
+    result = []
+    if self.root is not None:
+      self.__posOrderTraversal(self.root, result)
+    return result
 
-  # Left - Root - Right
-  def __posOrderTraversal(self, currentRoot):
-    if currentRoot.getLeftChild() is not None:
-      self.__posOrderTraversal(currentRoot.getLeftChild())
-
-    if currentRoot.getRightChild() is not None:
-      self.__posOrderTraversal(currentRoot.getRightChild())
-    print(currentRoot.getValue())
+  # Left - Right - Root
+  def __posOrderTraversal(self, currentRoot, result):
+    if currentRoot is None:
+      return
+    self.__posOrderTraversal(currentRoot.getLeftChild(), result)
+    self.__posOrderTraversal(currentRoot.getRightChild(), result)
+    result.append(currentRoot.getValue())
 
   # Método para calcular la altura de un nodo
   def calculateHeight(self, node):
@@ -208,3 +207,94 @@ class BST:
       #print(f"Altura del hijo derecho {rightHeight}")
       maxHeight = max(leftHeight, rightHeight)
       return 1 + maxHeight
+
+  # Método para obtener la raiz del árbol
+  def getRoot(self):
+    return self.root
+
+  # Método para contar las hojas del árbol
+  def countLeaves(self):
+    return self.__countLeaves(self.root)
+
+  # Método recursivo para contar hojas
+  def __countLeaves(self, node):
+    if node is None:
+      return 0
+    if node.getLeftChild() is None and node.getRightChild() is None:
+      return 1
+    return self.__countLeaves(node.getLeftChild()) + self.__countLeaves(node.getRightChild())
+
+  # Método para serializar el árbol a un diccionario D3-friendly
+  def toDict(self):
+    return self.__serializeNode(self.root)
+
+  # Método recursivo para serializar nodos
+  def __serializeNode(self, node):
+    if node is None:
+      return None
+
+    return {
+      "codigo": node.codigo,
+      "origen": node.origen,
+      "destino": node.destino,
+      "pasajeros": node.pasajeros,
+      "precioBase": node.precioBase,
+      "precioFinal": node.precioFinal,
+      "promocion": node.promocion,
+      "prioridad": node.prioridad,
+      "critico": node.critico,
+      "alerta": node.alerta,
+      "altura": self.calculateHeight(node),
+      "izquierdo": self.__serializeNode(node.getLeftChild()),
+      "derecho": self.__serializeNode(node.getRightChild()),
+    }
+
+  # Método para obtener métricas del árbol
+  def getMetrics(self):
+    return {
+      "alturaActual": self.calculateHeight(self.root),
+      "hojas": self.countLeaves(),
+      "bfs": self.breadthFirstSearch() if self.root is not None else [],
+      "dfs": {
+        "preOrder": self.preOrderTraversal() if self.root is not None else [],
+        "inOrder": self.inOrderTraversal() if self.root is not None else [],
+        "posOrder": self.posOrderTraversal() if self.root is not None else [],
+      },
+    }
+
+  # Método para limpiar el árbol
+  def clear(self):
+    self.root = None
+
+  # Método para cargar árbol desde topología (serialización)
+  def loadFromTopology(self, data):
+    self.clear()
+    self.root = self.__buildNodeFromTopology(data, None)
+
+  # Método recursivo para construir árbol desde topología
+  def __buildNodeFromTopology(self, data, parent):
+    if data is None:
+      return None
+
+    payload = {
+      "codigo": data.get("codigo"),
+      "origen": data.get("origen", ""),
+      "destino": data.get("destino", ""),
+      "pasajeros": data.get("pasajeros", 0),
+      "precioBase": data.get("precioBase", 0),
+      "precioFinal": data.get("precioFinal", data.get("precioBase", 0)),
+      "promocion": data.get("promocion", False),
+      "prioridad": data.get("prioridad", 0),
+      "critico": data.get("critico", False),
+      "alerta": data.get("alerta", False),
+    }
+
+    node = Node(payload)
+    node.setParent(parent)
+
+    leftNode = self.__buildNodeFromTopology(data.get("izquierdo"), node)
+    rightNode = self.__buildNodeFromTopology(data.get("derecho"), node)
+    node.setLeftChild(leftNode)
+    node.setRightChild(rightNode)
+
+    return node

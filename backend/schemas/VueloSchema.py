@@ -2,9 +2,10 @@ from pydantic import BaseModel
 
 
 class VueloSchema(BaseModel):
-	codigo: int
+	codigo: str
 	origen: str
 	destino: str
+	horaSalida: str
 	pasajeros: int = 0
 	precioBase: float = 0
 	precioFinal: float | None = None

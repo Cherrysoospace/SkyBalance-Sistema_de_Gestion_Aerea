@@ -3,6 +3,7 @@ from copy import deepcopy
 from models.Version import Version
 from tree.actionStack import ActionStack
 from tree.avlTree import AVL
+from tree.bstTree import BST
 from tree.insertionQueue import InsertionQueue
 from tree.nodo import Node
 
@@ -12,6 +13,7 @@ class TreeService:
 
 	def __init__(self):
 		self.avl = AVL()
+		self.bst = BST()
 		self.undoStack = ActionStack()
 		self.queue = InsertionQueue()
 		self.versions = {}
@@ -27,6 +29,29 @@ class TreeService:
 	def get_metrics(self):
 		return self.avl.getMetrics()
 
+	def get_comparison(self):
+		"""Devuelve una comparación entre AVL y BST con sus métricas"""
+		return {
+			"avl": {
+				"tree": self.avl.toDict(),
+				"metrics": {
+					"raiz": self.avl.getRoot().getValue() if self.avl.getRoot() is not None else None,
+					"profundidad": self.avl.calculateHeight(self.avl.getRoot()),
+					"hojas": self.avl.countLeaves(),
+					"alturaActual": self.avl.calculateHeight(self.avl.getRoot()),
+				}
+			},
+			"bst": {
+				"tree": self.bst.toDict(),
+				"metrics": {
+					"raiz": self.bst.getRoot().getValue() if self.bst.getRoot() is not None else None,
+					"profundidad": self.bst.calculateHeight(self.bst.getRoot()),
+					"hojas": self.bst.countLeaves(),
+					"alturaActual": self.bst.calculateHeight(self.bst.getRoot()),
+				}
+			}
+		}
+
 	def set_stress_mode(self, enabled):
 		self.avl.setStressMode(enabled)
 		return {"modoEstres": self.avl.getStressMode()}
@@ -38,20 +63,26 @@ class TreeService:
 
 	def insert_flight(self, payload):
 		self._push_undo_state()
-		node = Node(payload)
-		self.avl.insert(node)
+		avl_node = Node(payload)
+		bst_node = Node(payload)
+		self.avl.insert(avl_node)
+		self.bst.insert(bst_node)
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return {"ok": True}
 
 	def delete_node(self, codigo):
 		self._push_undo_state()
 		deleted = self.avl.delete(codigo)
+		if deleted:
+			self.bst.delete(codigo)
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return {"ok": deleted}
 
 	def cancel_subtree(self, codigo):
 		self._push_undo_state()
 		response = self.avl.cancelSubtree(codigo)
+		if response["removed"] > 0:
+			self.bst.delete(codigo)
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return response
 
@@ -60,6 +91,7 @@ class TreeService:
 		if snapshot is None:
 			return {"ok": False, "message": "No hay acciones para deshacer."}
 		self.avl.loadFromTopology(snapshot)
+		self.bst.loadFromTopology(snapshot)
 		return {"ok": True}
 
 	def queue_insert(self, payload):
@@ -74,7 +106,10 @@ class TreeService:
 			payload = self.queue.dequeue()
 			try:
 				self._push_undo_state()
-				self.avl.insert(Node(payload))
+				avl_node = Node(payload)
+				bst_node = Node(payload)
+				self.avl.insert(avl_node)
+				self.bst.insert(bst_node)
 				processed += 1
 			except Exception as exc:
 				conflicts.append({"codigo": payload.get("codigo"), "error": str(exc)})
@@ -99,11 +134,16 @@ class TreeService:
 		if isinstance(data, dict) and data.get("tipo", "").upper() == "INSERCION":
 			vuelos = data.get("vuelos", [])
 			self.avl.loadFromInsertionList(vuelos)
+			self.bst.clear()
+			for vuelo in vuelos:
+				node = Node(vuelo)
+				self.bst.insert(node)
 			self.avl.applyDepthPenalty(self.depthLimit)
 			return {"mode": "INSERCION", "nodos": len(vuelos)}
 
 		# Fallback to topology mode.
 		self.avl.loadFromTopology(data)
+		self.bst.loadFromTopology(data)
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return {"mode": "TOPOLOGIA", "nodos": len(self.avl.breadthFirstSearch())}
 
@@ -128,6 +168,7 @@ class TreeService:
 			return {"ok": False, "message": "Versión no encontrada."}
 		self._push_undo_state()
 		self.avl.loadFromTopology(deepcopy(version.snapshot))
+		self.bst.loadFromTopology(deepcopy(version.snapshot))
 		return {"ok": True, "name": name}
 
 	def verify_avl(self):
@@ -136,12 +177,16 @@ class TreeService:
 	def rebalance_global(self):
 		self._push_undo_state()
 		response = self.avl.rebalanceGlobal()
+		# Sincronizar BST con el nuevo estado del AVL
+		self.bst.loadFromTopology(self.avl.toDict())
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return response
 
 	def remove_least_profitable(self):
 		self._push_undo_state()
 		response = self.avl.removeLeastProfitableSubtree()
+		# Sincronizar BST con el nuevo estado del AVL
+		self.bst.loadFromTopology(self.avl.toDict())
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return response
 

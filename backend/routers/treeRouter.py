@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from schemas.VueloSchema import VueloSchema
+from schemas.treeComparisonSchema import TreeComparisonResponseSchema
 from services.TreeService import treeService
 
 
@@ -30,6 +31,20 @@ def delete_node(codigo: int):
 	if not response["ok"]:
 		raise HTTPException(status_code=404, detail="Nodo no encontrado")
 	return get_state()
+
+
+@router.get("/comparison", response_model=TreeComparisonResponseSchema)
+def get_comparison():
+	"""
+	Endpoint que devuelve la comparación completa entre AVL y BST.
+
+	Incluye:
+	- Estructura serializada de ambos árboles (formato D3 para visualización)
+	- Métricas de cada árbol: raíz, profundidad y cantidad de hojas
+
+	Útil para comparar cómo dos estructuras diferentes manejan los mismos datos.
+	"""
+	return treeService.get_comparison()
 
 
 @router.delete("/cancel/{codigo}")
