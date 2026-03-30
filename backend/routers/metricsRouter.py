@@ -41,6 +41,17 @@ def rebalance_global():
 	}
 
 
+@router.post("/rebalance-global-animated")
+def rebalance_global_animated():
+	"""Retorna detalles paso a paso para animar el rebalanceo."""
+	response = treeService.rebalance_global_animated()
+	return {
+		"result": response,
+		"tree": treeService.get_tree(),
+		"metrics": treeService.get_metrics(),
+	}
+
+
 @router.get("/audit")
 def audit_avl():
 	return treeService.verify_avl()

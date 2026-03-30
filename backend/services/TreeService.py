@@ -236,6 +236,15 @@ class TreeService:
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return response
 
+	def rebalance_global_animated(self):
+		"""Rebalanceo global pero retornando snapshots para animación paso a paso."""
+		self._push_undo_state()
+		response = self.avl.rebalanceGlobalStepByStep()
+		# Sincronizar BST con el nuevo estado del AVL
+		self.bst.loadFromTopology(self.avl.toDict())
+		self.avl.applyDepthPenalty(self.depthLimit)
+		return response
+
 	def remove_least_profitable(self):
 		self._push_undo_state()
 		response = self.avl.removeLeastProfitableSubtree()

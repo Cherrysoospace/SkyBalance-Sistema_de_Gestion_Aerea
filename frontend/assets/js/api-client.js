@@ -145,7 +145,8 @@ class APIClient {
     }
 
     async getMetrics() {
-        return this.getTree(); // Devuelve tree + metrics
+        // Obtener métricas del endpoint específico
+        return this.get('/metrics/');
     }
 
     async healthCheck() {
@@ -202,6 +203,10 @@ class APIClient {
 
     async globalRebalance() {
         return this.post('/metrics/rebalance-global', {});
+    }
+
+    async globalRebalanceAnimated() {
+        return this.post('/metrics/rebalance-global-animated', {});
     }
 
     async auditAVL() {

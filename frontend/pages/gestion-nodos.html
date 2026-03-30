@@ -46,6 +46,17 @@
             <button class="btn-action cancelar" id="btnCancelar">
                 <i class="fas fa-ban"></i> Cancelar Vuelo
             </button>
+            <div class="separator"></div>
+            <button class="btn-action stress-mode" id="btnModoEstres">
+                <i class="fas fa-fire"></i> Modo Estrés
+            </button>
+            <button class="btn-action rebalance" id="btnRebalanceo" disabled>
+                <i class="fas fa-balance-scale"></i> Rebalanceo Global
+            </button>
+            <div class="separator"></div>
+            <button class="btn-action analytics" id="btnMetricas">
+                <i class="fas fa-chart-bar"></i> Ver Métricas
+            </button>
         </aside>
 
         <!-- Sección de carga — visible solo cuando no hay árbol -->
@@ -86,6 +97,33 @@
             </button>
         </aside>
     </main>
+
+    <!-- Panel de Animación de Rebalanceo Global -->
+    <div id="rebalance-panel" class="rebalance-animation-panel">
+        <div class="rebalance-header">
+            <i class="fas fa-balance-scale"></i> Rebalanceo Global en Progreso
+        </div>
+        <div class="rebalance-content">
+            <div class="rebalance-progress">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="rotations-list"></div>
+        </div>
+        <div class="rebalance-footer">
+            <span id="rotation-counter">0/0 rotaciones</span>
+        </div>
+    </div>
+
+    <!-- Modal para Métricas Analíticas -->
+    <div id="modal-metricas" class="modal hidden">
+        <div class="modal-content metrics-modal">
+            <span class="close-modal">&times;</span>
+            <h2>Métricas Analíticas del Árbol AVL</h2>
+            <div id="metrics-content" class="metrics-content">
+                <!-- Se rellena dinámicamente -->
+            </div>
+        </div>
+    </div>
 
     <!-- Modal para formularios -->
     <div id="modal-formulario" class="modal hidden">
@@ -139,6 +177,7 @@
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/animation-config.js"></script>
     <script src="../assets/js/navbar.js"></script>
     <script src="../assets/js/modal-manager.js"></script>
     <script src="../assets/js/gestion-nodos.js"></script>

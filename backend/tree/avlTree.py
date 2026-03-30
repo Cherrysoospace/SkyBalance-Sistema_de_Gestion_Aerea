@@ -187,6 +187,27 @@ class AVL:
       return self.__balanceLR(node)
     return self.__balanceRL(node)
 
+  def __rebalanceWithTracking(self, node, bf, rotations):
+    """Realiza rebalanceo registrando cada rotación con detalles."""
+    caseName = self.__identifyRebalanceCase(node, bf)
+    
+    if caseName == "LL":
+      rotations.append({"type": "LL", "node_codigo": node.codigo})
+      self.rotationCounts["LL"] += 1
+      return self.__balanceLL(node)
+    elif caseName == "RR":
+      rotations.append({"type": "RR", "node_codigo": node.codigo})
+      self.rotationCounts["RR"] += 1
+      return self.__balanceRR(node)
+    elif caseName == "LR":
+      rotations.append({"type": "LR", "node_codigo": node.codigo})
+      self.rotationCounts["LR"] += 1
+      return self.__balanceLR(node)
+    else:  # RL
+      rotations.append({"type": "RL", "node_codigo": node.codigo})
+      self.rotationCounts["RL"] += 1
+      return self.__balanceRL(node)
+
   def __identifyRebalanceCase(self, node, bf):
     if bf > 0:
       childBf = self.getBalanceFactor(node.getLeftChild())
@@ -329,10 +350,13 @@ class AVL:
   # Rechecks all nodes bottom-up and rebalances when needed.
   def rebalanceGlobal(self):
     if self.root is None:
-      return {"passes": 0}
+      return {"passes": 0, "rotations": []}
 
     passes = 0
     changed = True
+    rotations = []  # Registrar cada rotación
+    self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Reset counters
+    
     while changed and passes < 100:
       passes += 1
       changed = False
@@ -341,10 +365,72 @@ class AVL:
       for node in nodes:
         bf = self.getBalanceFactor(node)
         if bf > 1 or bf < -1:
-          self.__rebalance(node, bf)
+          self.__rebalanceWithTracking(node, bf, rotations)
           changed = True
 
-    return {"passes": passes}
+    return {
+      "passes": passes, 
+      "rotations": rotations,
+      "summary": self.rotationCounts
+    }
+
+  def rebalanceGlobalStepByStep(self):
+    """Retorna información detallada para animar paso a paso.
+    Cada rotación incluye: tipo, nodo, y estado del árbol después."""
+    if self.root is None:
+      return {"steps": [], "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0}}
+
+    passes = 0
+    changed = True
+    steps = []  # Lista de pasos con rotación y snapshots del árbol
+    self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    
+    while changed and passes < 100:
+      passes += 1
+      changed = False
+      rotations_in_pass = []
+      nodes = []
+      self.__collectPostOrderNodes(self.root, nodes)
+      for node in nodes:
+        bf = self.getBalanceFactor(node)
+        if bf > 1 or bf < -1:
+          self.__rebalanceWithTrackingStepByStep(node, bf, rotations_in_pass)
+          changed = True
+          
+          # Guardar snapshot después de cada rotación
+          for rotation_info in rotations_in_pass:
+            steps.append({
+              "type": rotation_info["type"],
+              "node_codigo": rotation_info["node_codigo"],
+              "tree_snapshot": self.toDict()  # Estado actual del árbol
+            })
+          rotations_in_pass = []
+
+    return {
+      "steps": steps,
+      "summary": self.rotationCounts
+    }
+
+  def __rebalanceWithTrackingStepByStep(self, node, bf, rotations):
+    """Similar a __rebalanceWithTracking pero para step-by-step."""
+    caseName = self.__identifyRebalanceCase(node, bf)
+    
+    if caseName == "LL":
+      rotations.append({"type": "LL", "node_codigo": node.codigo})
+      self.rotationCounts["LL"] += 1
+      return self.__balanceLL(node)
+    elif caseName == "RR":
+      rotations.append({"type": "RR", "node_codigo": node.codigo})
+      self.rotationCounts["RR"] += 1
+      return self.__balanceRR(node)
+    elif caseName == "LR":
+      rotations.append({"type": "LR", "node_codigo": node.codigo})
+      self.rotationCounts["LR"] += 1
+      return self.__balanceLR(node)
+    else:  # RL
+      rotations.append({"type": "RL", "node_codigo": node.codigo})
+      self.rotationCounts["RL"] += 1
+      return self.__balanceRL(node)
 
   def __collectPostOrderNodes(self, node, result):
     if node is None:
