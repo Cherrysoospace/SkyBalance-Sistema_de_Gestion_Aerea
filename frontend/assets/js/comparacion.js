@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await tryLoadExisting();
 });
 
-// El árbol ya fue cargado desde index.html, mostrar resultados directamente
+// Intenta cargar árbol existente; si no hay, muestra sección de carga
 async function tryLoadExisting() {
     try {
         const avlData = await apiClient.getTree();
@@ -55,11 +55,12 @@ async function tryLoadExisting() {
             await loadComparison();
             showResults();
         } else {
-            // Si por alguna razón no hay árbol, redirigir al inicio
-            window.location.href = '../index.html';
+            // No hay árbol, mostrar sección de carga
+            showLoadSection();
         }
     } catch (e) {
-        window.location.href = '../index.html';
+        // Error al obtener árbol, mostrar sección de carga
+        showLoadSection();
     }
 }
 
