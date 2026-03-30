@@ -38,6 +38,7 @@ class APIClient {
                 let errorDetail = `HTTP error! status: ${response.status}`;
                 try {
                     const errorBody = await response.json();
+                    console.log('📥 Error response body:', errorBody);
                     errorDetail = errorBody.detail || errorDetail;
                 } catch (e) {
                     // Si no hay JSON, usa el mensaje por defecto
@@ -106,19 +107,25 @@ class APIClient {
         return this.get('/tree/state');
     }
 
-    async insertNode(codigo, origen, destino, horaSalida, pasajeros = 0, precioBase = 0) {
-        const payload = {
-            codigo,
-            origen,
-            destino,
-            horaSalida,
-            pasajeros,
-            precioBase,
+    async insertNode(payload) {
+        // Si se recibe un objeto completo, usarlo directamente
+        if (typeof payload === 'object' && payload !== null) {
+            return this.post('/tree/insert', payload);
+        }
+
+        // Fallback: si se recibe como argumentos posicionales (compatibilidad)
+        const data = {
+            codigo: arguments[0],
+            origen: arguments[1],
+            destino: arguments[2],
+            horaSalida: arguments[3],
+            pasajeros: arguments[4] || 0,
+            precioBase: arguments[5] || 0,
             promocion: false,
             prioridad: 0,
             alerta: false
         };
-        return this.post('/tree/insert', payload);
+        return this.post('/tree/insert', data);
     }
 
     async deleteNode(codigo) {

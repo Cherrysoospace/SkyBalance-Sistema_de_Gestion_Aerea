@@ -43,13 +43,10 @@
                     <label for="file-picker">Cargar JSON:</label>
                     <input type="file" id="file-picker" accept=".json">
                 </div>
-                <div class="control-group">
-                    <label for="load-mode">Modo de carga:</label>
-                    <select id="load-mode">
-                        <option value="topology">Topología</option>
-                        <option value="insertion">Inserción</option>
-                    </select>
-                </div>
+                <p class="load-hint">
+                    El modo se detecta automáticamente desde el JSON
+                    <strong>("tipo": "INSERCION")</strong> o <strong>("tipo": "TOPOLOGIA")</strong>
+                </p>
                 <div class="control-group">
                     <label for="depth-limit">Profundidad límite:</label>
                     <input type="number" id="depth-limit" min="1" placeholder="Profundidad límite">

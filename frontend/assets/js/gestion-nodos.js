@@ -29,6 +29,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Configurar handler de submit del modal
     modalManager.setSubmitHandler(procesarFormulario);
+
+    // Carga de JSON desde esta página
+    const filePicker = document.getElementById('file-picker-gestion');
+    const btnCargar  = document.getElementById('btn-cargar-gestion');
+
+    if (filePicker && btnCargar) {
+        filePicker.addEventListener('change', () => {
+            btnCargar.disabled = !filePicker.files[0];
+        });
+        btnCargar.addEventListener('click', async () => {
+            const file = filePicker.files[0];
+            if (!file) return;
+            btnCargar.disabled = true;
+            btnCargar.textContent = 'Cargando...';
+            try {
+                await apiClient.loadTreeFromJSON(file);
+                console.log('✅ JSON cargado desde gestión');
+                await loadTree();
+            } catch (e) {
+                console.error('❌ Error cargando JSON:', e);
+                alert('Error al cargar el archivo');
+                btnCargar.disabled = false;
+                btnCargar.textContent = 'Cargar';
+            }
+        });
+    }
 });
 
 // Abrir formulario para adicionar
@@ -83,22 +109,36 @@ function abrirFormularioEliminar() {
 // Procesar envío del formulario
 async function procesarFormulario(action, formData) {
     try {
+        const payload = {
+            codigo:      formData.codigo || '',
+            origen:      formData.origen      || '',
+            destino:     formData.destino      || '',
+            horaSalida:  formData.horaSalida   || '',
+            pasajeros:   Number.isNaN(parseInt(formData.pasajeros)) ? 0 : parseInt(formData.pasajeros),
+            precioBase:  Number.isNaN(parseFloat(formData.precioBase)) ? 0 : parseFloat(formData.precioBase),
+            promocion:   !!formData.promocion,
+            prioridad:   Number.isNaN(parseInt(formData.prioridad)) ? 0 : parseInt(formData.prioridad),
+            alerta:      !!formData.alerta,
+        };
+
+        console.log('📤 Enviando payload:', payload);
+
         if (action === 'adicionar') {
-            await apiClient.insertNode(formData.codigo, formData.origen, formData.destino,
-                                      formData.horaSalida, formData.pasajeros, formData.precioBase);
-            console.log('✅ Nodo adicionado:', formData.codigo);
+            await apiClient.insertNode(payload);
+            console.log('✅ Nodo adicionado:', payload.codigo);
         } else if (action === 'modificar') {
-            await apiClient.updateNode(formData.codigo, formData);
-            console.log('✅ Nodo modificado:', formData.codigo);
+            await apiClient.updateNode(payload.codigo, payload);
+            console.log('✅ Nodo modificado:', payload.codigo);
         } else if (action === 'eliminar') {
-            await apiClient.deleteNode(formData.codigo);
-            console.log('✅ Nodo eliminado:', formData.codigo);
+            await apiClient.deleteNode(payload.codigo);
+            console.log('✅ Nodo eliminado:', payload.codigo);
+            selectedNode = null;
         }
 
         await loadTree();
     } catch (error) {
         console.error('❌ Error en operación:', error);
-        alert('Error: ' + error.message);
+        alert('Error: ' + (error.response?.data?.detail || error.message));
     }
 }
 
@@ -106,13 +146,28 @@ async function procesarFormulario(action, formData) {
 async function loadTree() {
     try {
         const data = await apiClient.getTree();
-        console.log('✅ Árbol cargado:', data);
+        if (!data || !data.tree) {
+            mostrarSeccionCarga();
+            return;
+        }
+        ocultarSeccionCarga();
         renderTree(data);
         await updateMetrics();
+        console.log('✅ Árbol cargado');
     } catch (error) {
         console.error('❌ Error cargando el árbol:', error);
-        document.getElementById('tree-container').innerHTML = '<p>Error al cargar el árbol</p>';
+        mostrarSeccionCarga();
     }
+}
+
+function mostrarSeccionCarga() {
+    document.getElementById('load-section').classList.remove('hidden');
+    document.getElementById('tree-container').classList.add('hidden');
+}
+
+function ocultarSeccionCarga() {
+    document.getElementById('load-section').classList.add('hidden');
+    document.getElementById('tree-container').classList.remove('hidden');
 }
 
 // Renderizar el árbol con D3 - muestra estructura jerárquica con nodos clickeables
@@ -125,15 +180,31 @@ function renderTree(treeData) {
         return;
     }
 
+    console.log('🔍 DEBUG renderTree - treeData recibido:', treeData);
+    console.log('🔍 DEBUG renderTree - treeData.tree:', treeData.tree);
+    console.log('🔍 DEBUG - Campos del nodo raíz:', Object.keys(treeData.tree));
+
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 500;
 
-    const root = d3.hierarchy(treeData.tree, d => {
+    const root = d3.hierarchy(treeData.tree ?? treeData, d => {
         const children = [];
-        if (d.left) children.push(d.left);
-        if (d.right) children.push(d.right);
+        if (d.left)      children.push(d.left);
+        if (d.right)     children.push(d.right);
+        if (d.izquierdo) children.push(d.izquierdo);
+        if (d.derecho)   children.push(d.derecho);
+
+        console.log(`📍 Nodo ${d.codigo || '?'} - Hijos encontrados: ${children.length}`, {
+            left: !!d.left,
+            right: !!d.right,
+            izquierdo: !!d.izquierdo,
+            derecho: !!d.derecho
+        });
+
         return children.length ? children : null;
     });
+
+    console.log(`✅ Árbol procesado - Total nodos: ${root.descendants().length}`);
 
     const treeLayout = d3.tree().size([width - 80, height - 100]);
     treeLayout(root);
@@ -186,14 +257,14 @@ function renderTree(treeData) {
         .attr('font-size', '11px')
         .attr('fill', '#fff')
         .attr('font-weight', '600')
-        .text(d => d.data.codigo);
+        .text(d => d.data.codigo ?? d.data.codigo);
 
     node.append('text')
         .attr('text-anchor', 'middle')
         .attr('dy', '1em')
         .attr('font-size', '10px')
         .attr('fill', '#fff')
-        .text(d => `$${d.data.precioFinal ?? d.data.precioBase}`);
+        .text(d => `$${d.data.precioFinal ?? d.data.precioBase ?? '?'}`);
 }
 
 // Deshacer última acción

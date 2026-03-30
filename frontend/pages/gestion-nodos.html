@@ -48,9 +48,32 @@
             </button>
         </aside>
 
+        <!-- Sección de carga — visible solo cuando no hay árbol -->
+        <div id="load-section" class="load-section hidden">
+            <div class="load-card">
+                <h2>No hay árbol cargado</h2>
+                <p>Carga un archivo JSON de topología para comenzar</p>
+                <div class="load-controls">
+                    <input type="file" id="file-picker-gestion" accept=".json">
+                    <label for="file-picker-gestion" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> Seleccionar archivo
+                    </label>
+                </div>
+                <button id="btn-cargar-gestion" class="btn btn-primary" disabled>
+                    <i class="fas fa-upload"></i> Cargar árbol
+                </button>
+                <a href="../index.html" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Ir al inicio
+                </a>
+            </div>
+        </div>
+
         <!-- Contenido Central -->
         <section class="content-center">
             <h1>Gestión de nodos</h1>
+            <div id="metrics-panel" class="metrics-panel">
+                <!-- Se llena dinámicamente -->
+            </div>
             <div id="tree-container" class="tree-visualization">
                 <!-- SVG se renderiza aquí -->
             </div>

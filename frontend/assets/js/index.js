@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const filePicker = document.getElementById('file-picker');
     const btnCargar  = document.getElementById('btn-cargar');
-    const modeSelect = document.getElementById('load-mode');
 
     // Habilitar botón solo cuando hay archivo seleccionado
     filePicker.addEventListener('change', () => {
@@ -47,13 +46,12 @@ async function checkExistingTree() {
     }
 }
 
-// Maneja la carga del JSON y redirige según el modo elegido
+// Maneja la carga del JSON y redirige según el modo detectado por el backend
 async function handleLoad() {
-    const file      = document.getElementById('file-picker').files[0];
-    const mode      = document.getElementById('load-mode').value;
-    const depthEl   = document.getElementById('depth-limit');
+    const file       = document.getElementById('file-picker').files[0];
+    const depthEl    = document.getElementById('depth-limit');
     const depthLimit = depthEl?.value ? parseInt(depthEl.value) : null;
-    const btnCargar = document.getElementById('btn-cargar');
+    const btnCargar  = document.getElementById('btn-cargar');
 
     if (!file) return;
 
@@ -62,9 +60,10 @@ async function handleLoad() {
     hideError();
 
     try {
-        // 1. Cargar el JSON en el backend
-        await apiClient.loadTreeFromJSON(file);
-        console.log(`✅ JSON cargado en modo: ${mode}`);
+        // 1. Enviar archivo — el backend detecta el modo automáticamente
+        const response = await apiClient.loadTreeFromJSON(file);
+        const mode = response?.info?.mode;
+        console.log(`✅ JSON cargado — modo detectado: ${mode}, nodos: ${response?.info?.nodos}`);
 
         // 2. Aplicar profundidad límite si se especificó
         if (depthLimit) {
@@ -72,18 +71,17 @@ async function handleLoad() {
             console.log(`✅ Profundidad límite: ${depthLimit}`);
         }
 
-        // 3. Redirigir según el modo
-        if (mode === 'insertion') {
-            // Inserción genera AVL + BST → ir a comparación
+        // 3. Redirigir según el modo retornado por el backend
+        if (mode === 'INSERCION') {
             window.location.href = './pages/comparacion.html';
         } else {
-            // Topología genera solo AVL → ir a gestión de nodos
+            // TOPOLOGIA u otro → gestión de nodos
             window.location.href = './pages/gestion-nodos.html';
         }
 
     } catch (error) {
         console.error('❌ Error cargando JSON:', error);
-        showError('Error al cargar el archivo. Verifica que sea un JSON válido con el formato correcto.');
+        showError('Error al cargar el archivo. Verifica que sea un JSON válido.');
         btnCargar.disabled = false;
         btnCargar.textContent = 'Cargar';
     }

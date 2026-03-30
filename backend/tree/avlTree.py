@@ -499,8 +499,9 @@ class AVL:
     node = Node(payload)
     node.setParent(parent)
 
-    leftNode = self.__buildNodeFromTopology(data.get("left"), node)
-    rightNode = self.__buildNodeFromTopology(data.get("right"), node)
+    # Soporta ambos nombres: left/right (inserción) e izquierdo/derecho (topología)
+    leftNode = self.__buildNodeFromTopology(data.get("left") or data.get("izquierdo"), node)
+    rightNode = self.__buildNodeFromTopology(data.get("right") or data.get("derecho"), node)
     node.setLeftChild(leftNode)
     node.setRightChild(rightNode)
 
