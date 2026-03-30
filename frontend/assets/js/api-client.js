@@ -1,0 +1,259 @@
+/* ============================================
+   API CLIENT - Conectar con el backend FastAPI
+   ============================================ */
+
+const API_BASE_URL = 'http://localhost:8000';
+
+// Clase para manejar todas las peticiones API
+class APIClient {
+    constructor(baseURL = API_BASE_URL) {
+        this.baseURL = baseURL;
+    }
+
+    // Método genérico GET
+    async get(endpoint) {
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API GET Error:', error);
+            throw error;
+        }
+    }
+
+    // Método genérico POST
+    async post(endpoint, data) {
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) {
+                let errorDetail = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorBody = await response.json();
+                    errorDetail = errorBody.detail || errorDetail;
+                } catch (e) {
+                    // Si no hay JSON, usa el mensaje por defecto
+                }
+                throw new Error(errorDetail);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API POST Error:', error);
+            throw error;
+        }
+    }
+
+    // Método genérico DELETE
+    async delete(endpoint) {
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                let errorDetail = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorBody = await response.json();
+                    errorDetail = errorBody.detail || errorDetail;
+                } catch (e) {
+                    // Si no hay JSON, usa el mensaje por defecto
+                }
+                throw new Error(errorDetail);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API DELETE Error:', error);
+            throw error;
+        }
+    }
+
+    // Método genérico PATCH
+    async patch(endpoint, data) {
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) {
+                let errorDetail = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorBody = await response.json();
+                    errorDetail = errorBody.detail || errorDetail;
+                } catch (e) {
+                    // Si no hay JSON, usa el mensaje por defecto
+                }
+                throw new Error(errorDetail);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API PATCH Error:', error);
+            throw error;
+        }
+    }
+
+    // Tree Endpoints
+    async getTree() {
+        return this.get('/tree/state');
+    }
+
+    async insertNode(codigo, origen, destino, horaSalida, pasajeros = 0, precioBase = 0) {
+        const payload = {
+            codigo,
+            origen,
+            destino,
+            horaSalida,
+            pasajeros,
+            precioBase,
+            promocion: false,
+            prioridad: 0,
+            alerta: false
+        };
+        return this.post('/tree/insert', payload);
+    }
+
+    async deleteNode(codigo) {
+        return this.delete(`/tree/delete/${codigo}`);
+    }
+
+    async cancelSubtree(codigo) {
+        return this.delete(`/tree/cancel/${codigo}`);
+    }
+
+    async getComparison() {
+        return this.get('/tree/comparison');
+    }
+
+    async undoLast() {
+        return this.post('/tree/undo', {});
+    }
+
+    async getMetrics() {
+        return this.getTree(); // Devuelve tree + metrics
+    }
+
+    async healthCheck() {
+        return this.get('/');
+    }
+
+    // ============================================
+    // TREE - Modificación de nodos
+    // ============================================
+    async updateNode(codigo, payload) {
+        return this.patch(`/tree/update/${codigo}`, payload);
+    }
+
+    // ============================================
+    // PERSISTENCE - Carga y exportación
+    // ============================================
+    async loadTreeFromJSON(file) {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch(`${this.baseURL}/persistence/load`, {
+                method: 'POST',
+                body: formData,
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API loadTreeFromJSON Error:', error);
+            throw error;
+        }
+    }
+
+    async exportTreeToJSON() {
+        try {
+            const response = await fetch(`${this.baseURL}/persistence/export`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API exportTreeToJSON Error:', error);
+            throw error;
+        }
+    }
+
+    // ============================================
+    // METRICS & STRESS
+    // ============================================
+    async setStressMode(enabled) {
+        return this.post('/metrics/stress', { enabled });
+    }
+
+    async globalRebalance() {
+        return this.post('/metrics/rebalance-global', {});
+    }
+
+    async auditAVL() {
+        return this.get('/metrics/audit');
+    }
+
+    async setDepthLimit(value) {
+        try {
+            const response = await fetch(`${this.baseURL}/metrics/depth-penalty`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ limit: value }),
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API setDepthLimit Error:', error);
+            throw error;
+        }
+    }
+
+    async deleteLeastProfitable() {
+        return this.delete('/tree/least-profitable');
+    }
+
+    // ============================================
+    // QUEUE
+    // ============================================
+    async enqueueInsertion(payload) {
+        return this.post('/queue/add', payload);
+    }
+
+    async getQueue() {
+        return this.get('/queue');
+    }
+
+    async processQueueWithSteps() {
+        return this.post('/queue/process-steps', {});
+    }
+
+    // ============================================
+    // VERSIONS
+    // ============================================
+    async saveVersion(name) {
+        return this.post('/versions/', { name });
+    }
+
+    async listVersions() {
+        return this.get('/versions/');
+    }
+
+    async restoreVersion(name) {
+        return this.post(`/versions/${name}/restore`, {});
+    }
+}
+
+// Instancia global
+const apiClient = new APIClient();

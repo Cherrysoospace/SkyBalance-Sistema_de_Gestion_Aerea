@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Nodos - SKYBALANCE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/navbar.css">
+    <link rel="stylesheet" href="../assets/css/gestion-nodos.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="../index.html" class="navbar-logo">
+                <img src="../Img/plane.svg" alt="Logo">
+                <span>SKYBALANCE</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="gestion-nodos.html" class="active">Gestion Nodos</a></li>
+                <li><a href="modo-estres.html">Modo Estres</a></li>
+                <li><a href="simulacion.html">Simulacion</a></li>
+                <li><a href="comparacion.html">Comparison (BST vs AVL)</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Contenido -->
+    <main class="gestion-container">
+        <!-- Sidebar Izquierdo -->
+        <aside class="sidebar-left">
+            <button class="btn-action deshacer" id="btnDeshacer">
+                <i class="fas fa-arrow-left-right"></i> Deshacer
+            </button>
+            <button class="btn-action adicionar" id="btnAdicionar">
+                <i class="fas fa-plus"></i> Adicionar
+            </button>
+            <button class="btn-action modificar" id="btnModificar">
+                <i class="fas fa-edit"></i> Modificar
+            </button>
+            <button class="btn-action eliminacion" id="btnEliminacion">
+                <i class="fas fa-trash"></i> Eliminacion
+            </button>
+            <button class="btn-action cancelar" id="btnCancelar">
+                <i class="fas fa-ban"></i> Cancelar Vuelo
+            </button>
+        </aside>
+
+        <!-- Contenido Central -->
+        <section class="content-center">
+            <h1>Gestión de nodos</h1>
+            <div id="tree-container" class="tree-visualization">
+                <!-- SVG se renderiza aquí -->
+            </div>
+        </section>
+
+        <!-- Sidebar Derecho -->
+        <aside class="sidebar-right">
+            <button class="btn-export" id="btnExportar">
+                <i class="fas fa-download"></i> Exportar
+            </button>
+        </aside>
+    </main>
+
+    <!-- Modal para formularios -->
+    <div id="modal-formulario" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Formulario</h2>
+            <form id="formulario">
+                <div class="form-group">
+                    <label for="field-codigo">Código de Vuelo:</label>
+                    <input type="text" id="field-codigo" placeholder="ej: SB400" required>
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-origen">Origen:</label>
+                    <input type="text" id="field-origen" placeholder="Origen">
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-destino">Destino:</label>
+                    <input type="text" id="field-destino" placeholder="Destino">
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-horaSalida">Hora Salida:</label>
+                    <input type="time" id="field-horaSalida">
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-pasajeros">Pasajeros:</label>
+                    <input type="number" id="field-pasajeros" placeholder="Pasajeros">
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-precioBase">Precio Base:</label>
+                    <input type="number" id="field-precioBase" placeholder="Precio base">
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-promocion">Promoción:</label>
+                    <input type="checkbox" id="field-promocion">
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-prioridad">Prioridad:</label>
+                    <input type="number" id="field-prioridad" placeholder="Prioridad">
+                </div>
+                <div class="form-group" data-field>
+                    <label for="field-alerta">Alerta:</label>
+                    <input type="checkbox" id="field-alerta">
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-submit">Aceptar</button>
+                    <button type="button" class="btn-cancel">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/navbar.js"></script>
+    <script src="../assets/js/modal-manager.js"></script>
+    <script src="../assets/js/gestion-nodos.js"></script>
+</body>
+</html>

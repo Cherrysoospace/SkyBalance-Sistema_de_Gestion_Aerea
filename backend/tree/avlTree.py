@@ -68,6 +68,34 @@ class AVL:
     self.__deleteNode(target)
     return True
 
+  def updateNode(self, codigo, updates):
+    """Busca un nodo por código y actualiza sus campos, rebalanceando si es necesario."""
+    target = self.search(codigo)
+    if target is None:
+      return False
+
+    # Actualizar campos permitidos
+    allowed_fields = {"origen", "destino", "horaSalida", "pasajeros", "precioBase", "promocion", "prioridad", "alerta"}
+    for key, value in updates.items():
+      if key in allowed_fields:
+        if key == "pasajeros":
+          target.pasajeros = int(value)
+        elif key == "precioBase":
+          target.precioBase = float(value)
+          target.precioFinal = float(value)  # Resetear precioFinal
+        elif key in ("promocion", "alerta"):
+          setattr(target, key, bool(value))
+        elif key == "prioridad":
+          target.prioridad = int(value)
+        else:
+          setattr(target, key, str(value))
+
+    # Rebalancear si no estamos en stress mode
+    if not self.stressMode:
+      self.__checkBalance(target)
+
+    return True
+
   def __deleteNode(self, node):
     if node.getLeftChild() is not None and node.getRightChild() is not None:
       predecessor = self.__getPredecessor(node)
@@ -406,6 +434,7 @@ class AVL:
       "codigo": node.codigo,
       "origen": node.origen,
       "destino": node.destino,
+      "horaSalida": node.horaSalida,
       "pasajeros": node.pasajeros,
       "precioBase": node.precioBase,
       "precioFinal": node.precioFinal,
@@ -415,8 +444,8 @@ class AVL:
       "alerta": node.alerta,
       "altura": self.calculateHeight(node),
       "factorEquilibrio": self.getBalanceFactor(node),
-      "izquierdo": self.__serializeNode(node.getLeftChild()),
-      "derecho": self.__serializeNode(node.getRightChild()),
+      "left": self.__serializeNode(node.getLeftChild()),
+      "right": self.__serializeNode(node.getRightChild()),
     }
 
   def getMetrics(self):
@@ -457,6 +486,7 @@ class AVL:
       "codigo": data.get("codigo"),
       "origen": data.get("origen", ""),
       "destino": data.get("destino", ""),
+      "horaSalida": data.get("horaSalida", ""),
       "pasajeros": data.get("pasajeros", 0),
       "precioBase": data.get("precioBase", 0),
       "precioFinal": data.get("precioFinal", data.get("precioBase", 0)),
@@ -469,8 +499,8 @@ class AVL:
     node = Node(payload)
     node.setParent(parent)
 
-    leftNode = self.__buildNodeFromTopology(data.get("izquierdo"), node)
-    rightNode = self.__buildNodeFromTopology(data.get("derecho"), node)
+    leftNode = self.__buildNodeFromTopology(data.get("left"), node)
+    rightNode = self.__buildNodeFromTopology(data.get("right"), node)
     node.setLeftChild(leftNode)
     node.setRightChild(rightNode)
 

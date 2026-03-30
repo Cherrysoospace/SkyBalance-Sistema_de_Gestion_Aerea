@@ -1,0 +1,305 @@
+/* ============================================
+   GESTION NODOS PAGE STYLES
+   ============================================ */
+
+.gestion-container {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: calc(100vh - 100px);
+}
+
+/* Sidebar Styles */
+.sidebar-left,
+.sidebar-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Action Buttons */
+.btn-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border: 2px solid var(--primary-dark);
+    border-radius: 2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-action:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-action:active {
+    transform: translateY(-1px);
+}
+
+.btn-action i {
+    font-size: 1.1rem;
+}
+
+/* Export Button */
+.btn-export {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, var(--secondary-color), #1e3a8a);
+    color: white;
+    border: 2px solid #1e3a8a;
+    border-radius: 2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-export:hover {
+    background: linear-gradient(135deg, #1e3a8a, var(--secondary-color));
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Content Center */
+.content-center {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.content-center h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--primary-dark);
+}
+
+/* Tree Visualization */
+.tree-visualization {
+    width: 100%;
+    height: 500px;
+    background: #f5f9fc;
+    border-radius: 0.75rem;
+    border: 2px solid var(--border-color);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tree-visualization svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease-in;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-lg);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+}
+
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.close-modal:hover {
+    color: var(--danger-color);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn-submit,
+.btn-cancel {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-submit {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-submit:hover {
+    background-color: #15803d;
+}
+
+.btn-cancel {
+    background-color: var(--border-color);
+    color: var(--text-dark);
+}
+
+.btn-cancel:hover {
+    background-color: #a1aec6;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .gestion-container {
+        grid-template-columns: 150px 1fr 150px;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .btn-action {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .gestion-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .sidebar-left,
+    .sidebar-right {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .btn-action,
+    .btn-export {
+        flex: 1;
+        min-width: 100px;
+    }
+
+    .tree-visualization {
+        height: 400px;
+    }
+
+    .modal-content {
+        width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    .gestion-container {
+        padding: 0.5rem;
+    }
+
+    .content-center {
+        padding: 1rem;
+    }
+
+    .tree-visualization {
+        height: 300px;
+    }
+
+    .btn-action,
+    .btn-export {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.7rem;
+    }
+
+    .btn-action i {
+        font-size: 0.9rem;
+    }
+}

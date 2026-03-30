@@ -85,6 +85,33 @@ class BST:
       else:
         self.__delete(node)
 
+  def updateNode(self, codigo, updates):
+    """Busca un nodo por código y actualiza sus campos."""
+    try:
+      target = self.search(codigo)
+      if target is None:
+        return False
+
+      # Actualizar campos permitidos
+      allowed_fields = {"origen", "destino", "horaSalida", "pasajeros", "precioBase", "promocion", "prioridad", "alerta"}
+      for key, value in updates.items():
+        if key in allowed_fields:
+          if key == "pasajeros":
+            target.pasajeros = int(value)
+          elif key == "precioBase":
+            target.precioBase = float(value)
+            target.precioFinal = float(value)
+          elif key in ("promocion", "alerta"):
+            setattr(target, key, bool(value))
+          elif key == "prioridad":
+            target.prioridad = int(value)
+          else:
+            setattr(target, key, str(value))
+
+      return True
+    except:
+      return False
+
   # Método para identificar el caso y eiminar el nodo
   def __delete(self, node):
     deletionCase = self.__identifyDeletionCase(node)
@@ -237,6 +264,7 @@ class BST:
       "codigo": node.codigo,
       "origen": node.origen,
       "destino": node.destino,
+      "horaSalida": node.horaSalida,
       "pasajeros": node.pasajeros,
       "precioBase": node.precioBase,
       "precioFinal": node.precioFinal,
@@ -245,8 +273,8 @@ class BST:
       "critico": node.critico,
       "alerta": node.alerta,
       "altura": self.calculateHeight(node),
-      "izquierdo": self.__serializeNode(node.getLeftChild()),
-      "derecho": self.__serializeNode(node.getRightChild()),
+      "left": self.__serializeNode(node.getLeftChild()),
+      "right": self.__serializeNode(node.getRightChild()),
     }
 
   # Método para obtener métricas del árbol
@@ -280,6 +308,7 @@ class BST:
       "codigo": data.get("codigo"),
       "origen": data.get("origen", ""),
       "destino": data.get("destino", ""),
+      "horaSalida": data.get("horaSalida", ""),
       "pasajeros": data.get("pasajeros", 0),
       "precioBase": data.get("precioBase", 0),
       "precioFinal": data.get("precioFinal", data.get("precioBase", 0)),

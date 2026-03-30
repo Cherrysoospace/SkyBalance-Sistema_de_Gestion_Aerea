@@ -78,6 +78,16 @@ class TreeService:
 		self.avl.applyDepthPenalty(self.depthLimit)
 		return {"ok": deleted}
 
+	def modify_node(self, codigo, updates):
+		"""Modifica los campos de un nodo existente."""
+		self._push_undo_state()
+		updated_avl = self.avl.updateNode(codigo, updates)
+		if updated_avl:
+			self.bst.updateNode(codigo, updates)
+			self.avl.applyDepthPenalty(self.depthLimit)
+			return {"ok": True}
+		return {"ok": False}
+
 	def cancel_subtree(self, codigo):
 		self._push_undo_state()
 		response = self.avl.cancelSubtree(codigo)
@@ -118,6 +128,50 @@ class TreeService:
 		return {
 			"processed": processed,
 			"conflicts": conflicts,
+			"pendientes": self.queue.size(),
+		}
+
+	def process_queue_with_steps(self):
+		"""Procesa la cola pero retorna pasos intermedios para animación."""
+		steps = []
+		processed = 0
+		conflicts = []
+
+		while not self.queue.is_empty():
+			payload = self.queue.dequeue()
+			try:
+				self._push_undo_state()
+				avl_node = Node(payload)
+				bst_node = Node(payload)
+				self.avl.insert(avl_node)
+				self.bst.insert(bst_node)
+				processed += 1
+				self.avl.applyDepthPenalty(self.depthLimit)
+
+				# Capturar estado intermediario
+				steps.append({
+					"step": processed,
+					"codigo_insertado": payload.get("codigo"),
+					"tree": self.avl.toDict(),
+					"metrics": self.avl.getMetrics(),
+					"conflictos": len(conflicts),
+				})
+			except Exception as exc:
+				conflict_item = {"codigo": payload.get("codigo"), "error": str(exc)}
+				conflicts.append(conflict_item)
+				steps.append({
+					"step": processed + 1,
+					"codigo_insertado": payload.get("codigo"),
+					"tree": self.avl.toDict(),
+					"metrics": self.avl.getMetrics(),
+					"conflictos": len(conflicts),
+					"conflicto": conflict_item,
+				})
+
+		return {
+			"processed": processed,
+			"conflicts": conflicts,
+			"steps": steps,
 			"pendientes": self.queue.size(),
 		}
 

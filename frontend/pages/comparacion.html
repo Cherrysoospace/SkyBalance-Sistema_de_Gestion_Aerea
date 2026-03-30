@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparacion BST vs AVL - SKYBALANCE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/common.css">
+    <link rel="stylesheet" href="../assets/css/navbar.css">
+    <link rel="stylesheet" href="../assets/css/comparacion.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="../index.html" class="navbar-logo">
+                <img src="../Img/plane.svg" alt="Logo">
+                <span>SKYBALANCE</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="../index.html">Inicio</a></li>
+                <li><a href="gestion-nodos.html">Gestion Nodos</a></li>
+                <li><a href="modo-estres.html">Modo Estres</a></li>
+                <li><a href="simulacion.html">Simulacion</a></li>
+                <li><a href="comparacion.html" class="active">Comparison (BST vs AVL)</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Contenido -->
+    <main class="comparacion-container">
+        <h1>Comparación BST vs AVL</h1>
+
+        <!-- Sección de carga de JSON -->
+        <section class="load-section" id="load-section">
+            <div class="load-card">
+                <h2>Cargar árbol</h2>
+                <p class="load-hint">Selecciona un archivo JSON para construir el AVL y BST</p>
+                <div class="load-controls">
+                    <input type="file" id="file-picker" accept=".json">
+                    <label for="file-picker" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> Seleccionar archivo
+                    </label>
+                    <span id="file-name">Ningún archivo seleccionado</span>
+                </div>
+                <div id="load-error" class="load-error hidden"></div>
+                <button id="btn-cargar" class="btn btn-primary" disabled>
+                    <i class="fas fa-upload"></i> Cargar y comparar
+                </button>
+            </div>
+        </section>
+
+        <!-- Sección de resultados (oculta hasta que se cargue) -->
+        <section id="results-section" class="hidden">
+        <!-- Stats Bar Fija -->
+        <div class="stats-bar">
+            <div class="stat-group">
+                <h3>AVL</h3>
+                <div class="stat-value">
+                    <span>Raíz: <strong id="avl-raiz">-</strong></span>
+                    <span>Altura: <strong id="avl-altura">-</strong></span>
+                    <span>Hojas: <strong id="avl-hojas">-</strong></span>
+                </div>
+            </div>
+            <div class="stat-group">
+                <h3>BST</h3>
+                <div class="stat-value">
+                    <span>Raíz: <strong id="bst-raiz">-</strong></span>
+                    <span>Altura: <strong id="bst-altura">-</strong></span>
+                    <span>Hojas: <strong id="bst-hojas">-</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenedor de comparación con scroll horizontal -->
+        <div class="comparison-scroll-container">
+            <!-- Panel AVL -->
+            <div class="comparison-panel avl-panel">
+                <h2>Árbol AVL</h2>
+                <div id="avl-tree-container" class="tree-visualization">
+                    <!-- SVG del árbol AVL -->
+                </div>
+            </div>
+
+            <!-- Panel BST -->
+            <div class="comparison-panel bst-panel">
+                <h2>Árbol BST</h2>
+                <div id="bst-tree-container" class="tree-visualization">
+                    <!-- SVG del árbol BST -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="controls">
+            <section class="version-control">
+                <h3>Versionado</h3>
+                <div class="version-controls-inline">
+                    <input type="text" id="version-name" placeholder="Nombre de versión">
+                    <button id="btn-guardar-version" class="btn btn-secondary">Guardar versión</button>
+                    <select id="version-selector"></select>
+                    <button id="btn-restaurar-version" class="btn btn-secondary">Restaurar</button>
+                </div>
+            </section>
+
+            <button id="btn-exportar" class="btn btn-secondary">
+                <i class="fas fa-download"></i> Exportar JSON
+            </button>
+            <button id="btn-volver" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Volver
+            </button>
+        </div>
+        </section>
+    </main>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/navbar.js"></script>
+    <script src="../assets/js/comparacion.js"></script>
+</body>
+</html>

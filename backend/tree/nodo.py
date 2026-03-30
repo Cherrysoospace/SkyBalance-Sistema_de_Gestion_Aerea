@@ -10,6 +10,7 @@ class Node:
     self.codigo = kwargs.get("codigo", value)
     self.origen = kwargs.get("origen", "")
     self.destino = kwargs.get("destino", "")
+    self.horaSalida = kwargs.get("horaSalida", "")
     self.pasajeros = int(kwargs.get("pasajeros", 0))
     self.precioBase = float(kwargs.get("precioBase", 0))
     precioFinal = kwargs.get("precioFinal")
@@ -59,6 +60,7 @@ class Node:
     self.codigo = otherNode.codigo
     self.origen = otherNode.origen
     self.destino = otherNode.destino
+    self.horaSalida = otherNode.horaSalida
     self.pasajeros = otherNode.pasajeros
     self.precioBase = otherNode.precioBase
     self.precioFinal = otherNode.precioFinal
@@ -73,6 +75,7 @@ class Node:
       "codigo": self.codigo,
       "origen": self.origen,
       "destino": self.destino,
+      "horaSalida": self.horaSalida,
       "pasajeros": self.pasajeros,
       "precioBase": self.precioBase,
       "precioFinal": self.precioFinal,

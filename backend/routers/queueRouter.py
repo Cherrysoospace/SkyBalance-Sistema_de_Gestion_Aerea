@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from schemas.VueloSchema import VueloSchema
+from schemas.VueloSchema import VueloRequestSchema
 from services.TreeService import treeService
 
 
@@ -13,7 +13,7 @@ def get_queue():
 
 
 @router.post("/enqueue")
-def enqueue_insert(payload: VueloSchema):
+def enqueue_insert(payload: VueloRequestSchema):
 	return treeService.queue_insert(payload.model_dump())
 
 
@@ -25,4 +25,14 @@ def process_queue():
 		"tree": treeService.get_tree(),
 		"metrics": treeService.get_metrics(),
 	}
-# Endpoints para gestionar la cola de inserciones pendientes
+
+
+@router.post("/process-steps")
+def process_queue_with_steps():
+	"""Procesa la cola y retorna array con pasos intermedios para animación."""
+	result = treeService.process_queue_with_steps()
+	return {
+		"result": result,
+		"tree": treeService.get_tree(),
+		"metrics": treeService.get_metrics(),
+	}
