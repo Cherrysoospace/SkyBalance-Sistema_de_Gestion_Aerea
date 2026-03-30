@@ -19,27 +19,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filePicker = document.getElementById('file-picker');
     const btnCargar  = document.getElementById('btn-cargar');
 
-    filePicker.addEventListener('change', () => {
-        const file = filePicker.files[0];
-        document.getElementById('file-name').textContent = file ? file.name : 'Ningún archivo seleccionado';
-        btnCargar.disabled = !file;
-    });
-
-    btnCargar.addEventListener('click', handleLoad);
+    if (filePicker && btnCargar) {
+        filePicker.addEventListener('change', () => {
+            const file = filePicker.files[0];
+            document.getElementById('file-name').textContent = file ? file.name : 'Ningún archivo seleccionado';
+            btnCargar.disabled = !file;
+        });
+        btnCargar.addEventListener('click', handleLoad);
+    }
 
     // Listeners existentes
-    document.getElementById('btn-exportar').addEventListener('click', exportComparison);
-    document.getElementById('btn-volver').addEventListener('click', () => {
-        window.location.href = 'index.html';
-    });
-    document.getElementById('btn-guardar-version').addEventListener('click', saveVersion);
-    document.getElementById('btn-restaurar-version').addEventListener('click', restoreVersion);
+    const btnExportar = document.getElementById('btn-exportar');
+    const btnVolver = document.getElementById('btn-volver');
+    const btnGuardarVersion = document.getElementById('btn-guardar-version');
+    const btnRestaurarVersion = document.getElementById('btn-restaurar-version');
+
+    if (btnExportar) btnExportar.addEventListener('click', exportComparison);
+    if (btnVolver) {
+        btnVolver.addEventListener('click', () => {
+            window.location.href = '../index.html';
+        });
+    }
+    if (btnGuardarVersion) btnGuardarVersion.addEventListener('click', saveVersion);
+    if (btnRestaurarVersion) btnRestaurarVersion.addEventListener('click', restoreVersion);
 
     // Intentar cargar árbol existente en el backend silenciosamente
     await tryLoadExisting();
 });
 
-// Intenta cargar árbol existente en el backend; si no hay, muestra sección de carga
+// El árbol ya fue cargado desde index.html, mostrar resultados directamente
 async function tryLoadExisting() {
     try {
         const avlData = await apiClient.getTree();
@@ -47,10 +55,11 @@ async function tryLoadExisting() {
             await loadComparison();
             showResults();
         } else {
-            showLoadSection();
+            // Si por alguna razón no hay árbol, redirigir al inicio
+            window.location.href = '../index.html';
         }
     } catch (e) {
-        showLoadSection();
+        window.location.href = '../index.html';
     }
 }
 
