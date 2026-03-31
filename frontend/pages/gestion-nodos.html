@@ -65,11 +65,13 @@
             </button>
             <div class="separator"></div>
             <div class="depth-limit-control">
-                <label for="input-depth-limit"><i class="fas fa-ruler"></i> Profundidad Máxima:</label>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="number" id="input-depth-limit" min="2" value="5" placeholder="Profundidad" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    <button id="btn-update-depth" class="btn-action" style="flex: 0; padding: 8px 12px;">
-                        <i class="fas fa-save"></i>
+                <label for="input-depth-limit" title="Profundidad Máxima">
+                    <i class="fas fa-ruler"></i> Profundidad
+                </label>
+                <div class="depth-input-wrapper">
+                    <input type="number" id="input-depth-limit" min="2" value="5" title="Profundidad máxima del árbol">
+                    <button id="btn-update-depth" class="btn-depth-save" title="Guardar profundidad">
+                        <i class="fas fa-check"></i>
                     </button>
                 </div>
             </div>
