@@ -97,3 +97,5 @@ class StressModeManager {
         console.log('✅ Botones DESACTIVADOS: Rebalanceo Global y Auditoría AVL');
     }
 }
+
+export { StressModeManager };

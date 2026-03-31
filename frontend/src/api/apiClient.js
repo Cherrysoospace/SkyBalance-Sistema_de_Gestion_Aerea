@@ -5,7 +5,7 @@
 const API_BASE_URL = 'http://localhost:8000';
 
 // Clase para manejar todas las peticiones API
-class APIClient {
+export class ApiClient {
     constructor(baseURL = API_BASE_URL) {
         this.baseURL = baseURL;
     }
@@ -267,5 +267,5 @@ class APIClient {
     }
 }
 
-// Instancia global
-const apiClient = new APIClient();
+// Instancia global exportada
+export const apiClient = new ApiClient();

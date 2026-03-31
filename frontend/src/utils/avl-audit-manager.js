@@ -380,3 +380,5 @@ function initializeAuditManager(apiClient) {
     auditManager = new AVLAuditManager(apiClient);
     return auditManager;
 }
+
+export { AVLAuditManager, initializeAuditManager, auditManager };

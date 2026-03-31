@@ -2,7 +2,7 @@
    MODAL MANAGER - Lógica reutilizable de modales
    ============================================ */
 
-class ModalManager {
+export class ModalManager {
     constructor(modalId = 'modal-formulario', formId = 'formulario', titleId = 'modal-title') {
         this.modal = document.getElementById(modalId);
         this.form = document.getElementById(formId);
@@ -111,5 +111,5 @@ class ModalManager {
     }
 }
 
-// Instancia global
-const modalManager = new ModalManager();
+// Instancia global exportada
+export const modalManager = new ModalManager();

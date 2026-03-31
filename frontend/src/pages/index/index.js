@@ -3,6 +3,11 @@
    Handles initial JSON load and routing
    ============================================ */
 
+// ========================================
+// IMPORTS (Module System)
+// ========================================
+import { apiClient } from '../../api/apiClient.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 SkyBalance iniciando...');
 

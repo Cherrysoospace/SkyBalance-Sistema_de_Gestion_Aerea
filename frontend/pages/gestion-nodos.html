@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Nodos - SKYBALANCE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/common.css">
-    <link rel="stylesheet" href="../assets/css/navbar.css">
-    <link rel="stylesheet" href="../assets/css/gestion-nodos.css">
+    <link rel="stylesheet" href="../src/styles/common.css">
+    <link rel="stylesheet" href="../src/styles/navbar.css">
+    <link rel="stylesheet" href="../src/styles/gestion-nodos.css">
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar">
         <div class="navbar-container">
             <a href="../index.html" class="navbar-logo">
-                <img src="../Img/plane.svg" alt="Logo">
+                <img src="../assets/images/plane.svg" alt="Logo">
                 <span>SKYBALANCE</span>
             </a>
             <ul class="navbar-menu">
@@ -196,17 +196,7 @@
     </div>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="../assets/js/api-client.js"></script>
-    <script src="../assets/js/avl-audit-manager.js"></script>
-    <script src="../assets/js/animation-config.js"></script>
-    <script src="../assets/js/rebalance-animation-engine.js"></script>
-    <!-- SOLID Refactoring Managers -->
-    <script src="../assets/js/MetricsManager.js"></script>
-    <script src="../assets/js/StressModeManager.js"></script>
-    <script src="../assets/js/RebalanceAnimationManager.js"></script>
-    <!-- Page Script -->
-    <script src="../assets/js/navbar.js"></script>
-    <script src="../assets/js/modal-manager.js"></script>
-    <script src="../assets/js/gestion-nodos.js"></script>
+    <script type="module" src="../src/shared/navbar.js"></script>
+    <script type="module" src="../src/pages/gestion-nodos/gestion-nodos.js"></script>
 </body>
 </html>

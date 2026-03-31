@@ -64,3 +64,5 @@ function updateStressModeState(enabled) {
         btnAuditar.disabled = !enabled;
     }
 }
+
+export { applyStressModeState, updateStressModeState };

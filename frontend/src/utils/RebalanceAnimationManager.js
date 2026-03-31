@@ -4,6 +4,9 @@
  * SOLID Compliance: SRP + OCP + DIP
  */
 
+import { RebalanceAnimationEngine, RotationQueueAnimator } from './rebalance-animation-engine.js';
+import { REBALANCE_ANIMATION_CONFIG } from './animation-config.js';
+
 class RebalanceAnimationManager {
     /**
      * @param {APIClient} apiClient - Cliente API inyectado
@@ -17,7 +20,7 @@ class RebalanceAnimationManager {
             rotationsList: 'rotations-list',
             progressBar: 'progress-bar',
             rotationCounter: 'rotation-counter',
-            animationConfig: window.REBALANCE_ANIMATION_CONFIG || this._getFallbackConfig(),
+            animationConfig: REBALANCE_ANIMATION_CONFIG || this._getFallbackConfig(),
             ...config
         };
         this.rebalanceEngine = null;
@@ -310,3 +313,5 @@ El árbol ha sido rebalanceado exitosamente.
         };
     }
 }
+
+export { RebalanceAnimationManager };

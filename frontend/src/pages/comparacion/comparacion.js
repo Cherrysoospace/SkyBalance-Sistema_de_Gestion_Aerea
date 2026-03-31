@@ -2,6 +2,13 @@
    COMPARACION PAGE SCRIPT
    ============================================ */
 
+// ========================================
+// IMPORTS (Module System)
+// ========================================
+import { apiClient } from '../../api/apiClient.js';
+
+// D3 es cargado desde CDN en el HTML (disponible como global)
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Cargando página de Comparación BST vs AVL...');
 

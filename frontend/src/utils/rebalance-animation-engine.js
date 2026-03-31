@@ -485,3 +485,5 @@ class RotationQueueAnimator {
         this.queue = [];
     }
 }
+
+export { RebalanceAnimationEngine, RotationQueueAnimator };

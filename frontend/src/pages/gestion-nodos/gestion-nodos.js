@@ -4,6 +4,18 @@
    ============================================ */
 
 // ========================================
+// IMPORTS (Module System)
+// ========================================
+import { apiClient } from '../../api/apiClient.js';
+import { modalManager } from '../../components/modalManager.js';
+import { MetricsManager } from '../../utils/MetricsManager.js';
+import { StressModeManager } from '../../utils/StressModeManager.js';
+import { RebalanceAnimationManager } from '../../utils/RebalanceAnimationManager.js';
+import { initializeAuditManager } from '../../utils/avl-audit-manager.js';
+
+// D3 es cargado desde CDN en el HTML (disponible como global)
+
+// ========================================
 // ESTADO ENCAPSULADO (SRP)
 // ========================================
 let selectedNode = null;
@@ -14,6 +26,7 @@ let selectedNode = null;
 let metricsManager = null;
 let stressModeManager = null;
 let rebalanceManager = null;
+let auditManager = null; // Será inicializado con initializeAuditManager()
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Inicializando Gestión de Nodos con arquitectura SOLID...');
@@ -31,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ========================================
     // INICIALIZAR AUDIT MANAGER LEGACY (requerido para AuditAVLManager)
     // ========================================
-    initializeAuditManager(apiClient);
+    auditManager = initializeAuditManager(apiClient);
 
     // ========================================
     // INICIALIZAR MANAGERS (DIP - Inyección)

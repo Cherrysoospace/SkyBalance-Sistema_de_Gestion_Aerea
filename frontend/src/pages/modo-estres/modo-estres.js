@@ -2,6 +2,11 @@
    MODO ESTRES PAGE SCRIPT
    ============================================ */
 
+// ========================================
+// IMPORTS (Module System)
+// ========================================
+import { apiClient } from '../../api/apiClient.js';
+
 let stressTestRunning = false;
 
 document.addEventListener('DOMContentLoaded', () => {

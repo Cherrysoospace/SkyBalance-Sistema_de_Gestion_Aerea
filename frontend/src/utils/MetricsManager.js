@@ -316,3 +316,5 @@ class MetricsManager {
         `;
     }
 }
+
+export { MetricsManager };

@@ -87,3 +87,5 @@ function resetRebalanceAnimationConfig() {
     REBALANCE_ANIMATION_CONFIG.DEBUG_MODE = false;
     console.log('✅ Configuración de animación reseteada a valores por defecto');
 }
+
+export { REBALANCE_ANIMATION_CONFIG };
