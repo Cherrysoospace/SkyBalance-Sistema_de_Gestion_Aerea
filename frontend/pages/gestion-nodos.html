@@ -47,11 +47,20 @@
                 <i class="fas fa-ban"></i> Cancelar Vuelo
             </button>
             <div class="separator"></div>
-            <button class="btn-action stress-mode" id="btnModoEstres">
-                <i class="fas fa-fire"></i> Modo Estrés
+            <button class="btn-stress-mode" id="btnModoEstres">
+                <span class="stress-icon-off">
+                    <i class="fas fa-circle"></i>
+                </span>
+                <span class="stress-icon-on" style="display:none;">
+                    <i class="fas fa-check-circle"></i>
+                </span>
+                <span class="stress-label">Modo Estrés</span>
             </button>
             <button class="btn-action rebalance" id="btnRebalanceo" disabled>
                 <i class="fas fa-balance-scale"></i> Rebalanceo Global
+            </button>
+            <button class="btn-action audit" id="btnAuditar" disabled>
+                <i class="fas fa-search-plus"></i> Verificar Propiedad AVL
             </button>
             <div class="separator"></div>
             <button class="btn-action analytics" id="btnMetricas">
@@ -125,6 +134,17 @@
         </div>
     </div>
 
+    <!-- Modal para Auditoría AVL -->
+    <div id="modal-audit" class="modal hidden">
+        <div class="modal-content audit-modal">
+            <span class="close-modal">&times;</span>
+            <h2>📋 Reporte de Auditoría AVL</h2>
+            <div id="audit-report-modal" class="audit-report">
+                <!-- Se rellena dinámicamente -->
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para formularios -->
     <div id="modal-formulario" class="modal hidden">
         <div class="modal-content">
@@ -177,7 +197,14 @@
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="../assets/js/api-client.js"></script>
+    <script src="../assets/js/avl-audit-manager.js"></script>
     <script src="../assets/js/animation-config.js"></script>
+    <script src="../assets/js/rebalance-animation-engine.js"></script>
+    <!-- SOLID Refactoring Managers -->
+    <script src="../assets/js/MetricsManager.js"></script>
+    <script src="../assets/js/StressModeManager.js"></script>
+    <script src="../assets/js/RebalanceAnimationManager.js"></script>
+    <!-- Page Script -->
     <script src="../assets/js/navbar.js"></script>
     <script src="../assets/js/modal-manager.js"></script>
     <script src="../assets/js/gestion-nodos.js"></script>

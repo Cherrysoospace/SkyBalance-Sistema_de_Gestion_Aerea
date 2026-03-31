@@ -1,4 +1,5 @@
 from tree.nodo import Node
+from services.AVLAuditService import AVLAuditService
 
 
 # AVL tree used as the core structure for SkyBalance.
@@ -7,8 +8,14 @@ class AVL:
   def __init__(self):
     self.root = None
     self.stressMode = False
+    # Contadores de rotaciones - ahora con trazabilidad separada
     self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.rotationCountsHistorical = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Acumulativo total
+    self.rotationCountsStressMode = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Durante stress mode
+    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Último rebalanceo global
     self.massCancelations = 0
+    # Inyección de dependencia: servicio de auditoría (Principio D - SOLID)
+    self.auditService = AVLAuditService()
 
   def getRoot(self):
     return self.root
@@ -180,32 +187,36 @@ class AVL:
   def __rebalance(self, node, bf):
     caseName = self.__identifyRebalanceCase(node, bf)
     if caseName == "LL":
+      self.rotationCounts["LL"] += 1
       return self.__balanceLL(node)
     if caseName == "RR":
+      self.rotationCounts["RR"] += 1
       return self.__balanceRR(node)
     if caseName == "LR":
+      self.rotationCounts["LR"] += 1
       return self.__balanceLR(node)
+    self.rotationCounts["RL"] += 1
     return self.__balanceRL(node)
 
   def __rebalanceWithTracking(self, node, bf, rotations):
-    """Realiza rebalanceo registrando cada rotación con detalles."""
+    """Realiza rebalanceo registrando cada rotación sin duplicar conteo."""
     caseName = self.__identifyRebalanceCase(node, bf)
     
+    # Registrar la rotación
+    rotations.append({"type": caseName, "node_codigo": node.codigo})
+    
+    # Incrementar contadores
+    self.rotationCountsLastGlobalRebalance[caseName] += 1
+    self.rotationCounts[caseName] += 1
+    
+    # Ejecutar la rotación
     if caseName == "LL":
-      rotations.append({"type": "LL", "node_codigo": node.codigo})
-      self.rotationCounts["LL"] += 1
       return self.__balanceLL(node)
     elif caseName == "RR":
-      rotations.append({"type": "RR", "node_codigo": node.codigo})
-      self.rotationCounts["RR"] += 1
       return self.__balanceRR(node)
     elif caseName == "LR":
-      rotations.append({"type": "LR", "node_codigo": node.codigo})
-      self.rotationCounts["LR"] += 1
       return self.__balanceLR(node)
     else:  # RL
-      rotations.append({"type": "RL", "node_codigo": node.codigo})
-      self.rotationCounts["RL"] += 1
       return self.__balanceRL(node)
 
   def __identifyRebalanceCase(self, node, bf):
@@ -222,23 +233,19 @@ class AVL:
 
   # LL case: single right rotation.
   def __balanceLL(self, topNode):
-    self.rotationCounts["LL"] += 1
     return self.__rotateRight(topNode)
 
   # RR case: single left rotation.
   def __balanceRR(self, topNode):
-    self.rotationCounts["RR"] += 1
     return self.__rotateLeft(topNode)
 
   # LR case: left rotation on left child, then right rotation.
   def __balanceLR(self, topNode):
-    self.rotationCounts["LR"] += 1
     self.__rotateLeft(topNode.getLeftChild())
     return self.__rotateRight(topNode)
 
   # RL case: right rotation on right child, then left rotation.
   def __balanceRL(self, topNode):
-    self.rotationCounts["RL"] += 1
     self.__rotateRight(topNode.getRightChild())
     return self.__rotateLeft(topNode)
 
@@ -350,12 +357,12 @@ class AVL:
   # Rechecks all nodes bottom-up and rebalances when needed.
   def rebalanceGlobal(self):
     if self.root is None:
-      return {"passes": 0, "rotations": []}
+      return {"passes": 0, "rotations": [], "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0}}
 
     passes = 0
     changed = True
     rotations = []  # Registrar cada rotación
-    self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Reset counters
+    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Reset solo para este rebalanceo
     
     while changed and passes < 100:
       passes += 1
@@ -368,10 +375,11 @@ class AVL:
           self.__rebalanceWithTracking(node, bf, rotations)
           changed = True
 
+    # Retornar resumen del rebalanceo global actual, no el total
     return {
       "passes": passes, 
       "rotations": rotations,
-      "summary": self.rotationCounts
+      "summary": self.rotationCountsLastGlobalRebalance
     }
 
   def rebalanceGlobalStepByStep(self):
@@ -383,7 +391,7 @@ class AVL:
     passes = 0
     changed = True
     steps = []  # Lista de pasos con rotación y snapshots del árbol
-    self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Reset solo para este rebalanceo
     
     while changed and passes < 100:
       passes += 1
@@ -406,30 +414,31 @@ class AVL:
             })
           rotations_in_pass = []
 
+    # Retornar resumen del rebalanceo global actual, no el total
     return {
       "steps": steps,
-      "summary": self.rotationCounts
+      "summary": self.rotationCountsLastGlobalRebalance
     }
 
   def __rebalanceWithTrackingStepByStep(self, node, bf, rotations):
     """Similar a __rebalanceWithTracking pero para step-by-step."""
     caseName = self.__identifyRebalanceCase(node, bf)
     
+    # Registrar la rotación
+    rotations.append({"type": caseName, "node_codigo": node.codigo})
+    
+    # Incrementar contadores
+    self.rotationCountsLastGlobalRebalance[caseName] += 1
+    self.rotationCounts[caseName] += 1
+    
+    # Ejecutar la rotación
     if caseName == "LL":
-      rotations.append({"type": "LL", "node_codigo": node.codigo})
-      self.rotationCounts["LL"] += 1
       return self.__balanceLL(node)
     elif caseName == "RR":
-      rotations.append({"type": "RR", "node_codigo": node.codigo})
-      self.rotationCounts["RR"] += 1
       return self.__balanceRR(node)
     elif caseName == "LR":
-      rotations.append({"type": "LR", "node_codigo": node.codigo})
-      self.rotationCounts["LR"] += 1
       return self.__balanceLR(node)
     else:  # RL
-      rotations.append({"type": "RL", "node_codigo": node.codigo})
-      self.rotationCounts["RL"] += 1
       return self.__balanceRL(node)
 
   def __collectPostOrderNodes(self, node, result):
@@ -483,30 +492,14 @@ class AVL:
     self.__collectProfitCandidates(node.getRightChild(), depth + 1, result)
 
   # Returns a full report to validate the AVL property.
+  # Utiliza servicio de auditoría (Principio D - Dependency Inversion)
   def verifyAVLProperty(self):
-    issues = []
-    self.__verifyNode(self.root, issues)
-    return {
-      "isValid": len(issues) == 0,
-      "issues": issues,
-    }
-
-  def __verifyNode(self, node, issues):
-    if node is None:
-      return -1
-
-    leftHeight = self.__verifyNode(node.getLeftChild(), issues)
-    rightHeight = self.__verifyNode(node.getRightChild(), issues)
-    expectedHeight = 1 + max(leftHeight, rightHeight)
-    bf = leftHeight - rightHeight
-
-    if bf < -1 or bf > 1:
-      issues.append({
-        "codigo": node.codigo,
-        "reason": f"Balance factor fuera de rango ({bf})",
-      })
-
-    return expectedHeight
+    """
+    Realiza auditoría completa del árbol AVL.
+    Retorna reporte detallado con todos los problemas encontrados.
+    """
+    audit_result = self.auditService.audit_tree(self.root)
+    return self.auditService.get_audit_report_summary(audit_result)
 
   # Converts the full tree to a D3-friendly nested object.
   def toDict(self):
@@ -544,7 +537,14 @@ class AVL:
         "inOrder": self.inOrderTraversal(),
         "posOrder": self.posOrderTraversal(),
       },
+      # COMPATIBILIDAD: mantener 'rotaciones' como lo era, pero ahora reflejando datos acumulativos correctos
       "rotaciones": self.rotationCounts,
+      # NUEVO: información detallada de rotaciones
+      "rotacionesDetallado": {
+        "sesionActual": self.rotationCounts,  # Total acumulativo de esta sesión
+        "historico": self.rotationCountsHistorical,  # Acumulativo histórico total
+        "ultimoRebalanceoGlobal": self.rotationCountsLastGlobalRebalance  # Del último rebalanceo global
+      },
       "cancelacionesMasivas": self.massCancelations,
       "modoEstres": self.stressMode,
     }
@@ -552,6 +552,9 @@ class AVL:
   def clear(self):
     self.root = None
     self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.rotationCountsHistorical = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.rotationCountsStressMode = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
     self.massCancelations = 0
 
   def loadFromInsertionList(self, vuelos):

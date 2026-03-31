@@ -9,17 +9,30 @@
 
 const REBALANCE_ANIMATION_CONFIG = {
     /**
-     * Delay (ms) entre cada rotación
-     * Mayor valor = animación más lenta
-     * Recomendado: 600-1000ms
+     * Duración (ms) de cada animación de rotación
+     * Tiempo que tarda en interpolarse de una posición a otra
+     * Recomendado: 800-1200ms para visibilidad clara
      */
-    DELAY_BETWEEN_ROTATIONS: 1500,
+    ROTATION_ANIMATION_DURATION: 1500,
     
     /**
-     * Tiempo (ms) que el nodo permanece resaltado
-     * Recomendado: 400-800ms
+     * Función de easing para animaciones suaves
+     * Opciones: 'linear', 'easeInOutCubic', 'easeInOutQuad', 'easeOutCubic'
      */
-    NODE_HIGHLIGHT_DURATION: 600,
+    EASING_FUNCTION: 'easeInOutCubic',
+    
+    /**
+     * Pausa entre cada rotación (después de que termina animación anterior)
+     * Mayor valor = más tiempo entre rotaciones
+     * Recomendado: 200-400ms
+     */
+    PAUSE_BETWEEN_ROTATIONS: 400,
+    
+    /**
+     * Tiempo (ms) que el nodo permanece resaltado durante la rotación
+     * Recomendado: 300-500ms
+     */
+    NODE_HIGHLIGHT_DURATION: 300,
     
     /**
      * Mostrar notificación final como alert
@@ -42,12 +55,19 @@ const REBALANCE_ANIMATION_CONFIG = {
      * Tiempo (ms) que el panel permanece visible después de completar
      * Antes de mostrar el alert final
      */
-    PANEL_DISPLAY_TIME_AFTER_COMPLETE: 2000,
+    PANEL_DISPLAY_TIME_AFTER_COMPLETE: 1500,
     
     /**
-     * Opciones de debug
+     * Opciones de debug - logs detallados en consola
      */
-    DEBUG_MODE: false // Habilitar logs detallados en consola
+    DEBUG_MODE: false,
+    
+    /**
+     * Suavidad de links durante animación
+     * true = re-dibujar dinámicamente durante la animación
+     * false = re-dibujar solo al final
+     */
+    SMOOTH_LINK_REDRAW: true
 };
 
 // Función para actualizar configuración
