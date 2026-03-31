@@ -60,23 +60,22 @@ async function handleLoad() {
 
     if (!file) return;
 
+    if (!depthLimit || depthLimit < 2) {
+        showError('❌ Debes especificar una profundidad máxima mayor o igual a 2');
+        return;
+    }
+
     btnCargar.disabled = true;
     btnCargar.textContent = 'Cargando...';
     hideError();
 
     try {
-        // 1. Enviar archivo — el backend detecta el modo automáticamente
-        const response = await apiClient.loadTreeFromJSON(file);
+        // Enviar archivo + depthLimit al backend
+        const response = await apiClient.loadTreeFromJSON(file, depthLimit);
         const mode = response?.info?.mode;
-        console.log(`✅ JSON cargado — modo detectado: ${mode}, nodos: ${response?.info?.nodos}`);
+        console.log(`✅ JSON cargado — modo detectado: ${mode}, nodos: ${response?.info?.nodos}, depthLimit: ${depthLimit}`);
 
-        // 2. Aplicar profundidad límite si se especificó
-        if (depthLimit) {
-            await apiClient.setDepthLimit(depthLimit);
-            console.log(`✅ Profundidad límite: ${depthLimit}`);
-        }
-
-        // 3. Redirigir según el modo retornado por el backend
+        // Redirigir según el modo retornado por el backend
         if (mode === 'INSERCION') {
             window.location.href = './pages/comparacion.html';
         } else {
@@ -86,7 +85,7 @@ async function handleLoad() {
 
     } catch (error) {
         console.error('❌ Error cargando JSON:', error);
-        showError('Error al cargar el archivo. Verifica que sea un JSON válido.');
+        showError('❌ Error al cargar el archivo: ' + error.message);
         btnCargar.disabled = false;
         btnCargar.textContent = 'Cargar';
     }

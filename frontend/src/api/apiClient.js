@@ -163,16 +163,29 @@ export class ApiClient {
     // ============================================
     // PERSISTENCE - Carga y exportación
     // ============================================
-    async loadTreeFromJSON(file) {
+    async loadTreeFromJSON(file, depthLimit) {
         try {
+            if (!depthLimit || depthLimit <= 0) {
+                throw new Error('La profundidad máxima debe ser mayor a 0');
+            }
+
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('depthLimit', depthLimit);
+
             const response = await fetch(`${this.baseURL}/persistence/load`, {
                 method: 'POST',
                 body: formData,
             });
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                let errorDetail = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorBody = await response.json();
+                    errorDetail = errorBody.detail || errorDetail;
+                } catch (e) {
+                    // Si no hay JSON, usa el mensaje por defecto
+                }
+                throw new Error(errorDetail);
             }
             return await response.json();
         } catch (error) {
@@ -214,22 +227,7 @@ export class ApiClient {
     }
 
     async setDepthLimit(value) {
-        try {
-            const response = await fetch(`${this.baseURL}/metrics/depth-penalty`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ limit: value }),
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('API setDepthLimit Error:', error);
-            throw error;
-        }
+        return this.post('/metrics/depth-penalty', { depthLimit: value });
     }
 
     async deleteLeastProfitable() {

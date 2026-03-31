@@ -67,6 +67,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnExportar').addEventListener('click', exportTree);
 
     // ========================================
+    // EVENT LISTENERS - Profundidad Máxima
+    // ========================================
+    const btnUpdateDepth = document.getElementById('btn-update-depth');
+    const inputDepthLimit = document.getElementById('input-depth-limit');
+
+    if (btnUpdateDepth && inputDepthLimit) {
+        btnUpdateDepth.addEventListener('click', async () => {
+            const depthValue = parseInt(inputDepthLimit.value);
+            if (isNaN(depthValue) || depthValue < 2) {
+                alert('❌ Ingresa un número válido mayor o igual a 2');
+                return;
+            }
+
+            try {
+                const response = await apiClient.setDepthLimit(depthValue);
+                console.log('✅ Profundidad máxima actualizada a:', depthValue);
+                await loadTree(); // Recargar árbol con nueva profundidad
+            } catch (e) {
+                console.error('❌ Error actualizando profundidad:', e);
+                alert('❌ Error: ' + e.message);
+            }
+        });
+
+        // Permitir Enter para actualizar
+        inputDepthLimit.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') btnUpdateDepth.click();
+        });
+    }
+
+    // ========================================
     // EVENT LISTENERS - Modo Estrés & Análisis
     // ========================================
     document.getElementById('btnModoEstres').addEventListener('click', onToggleStressMode);
@@ -106,18 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnCargar.addEventListener('click', async () => {
             const file = filePicker.files[0];
             if (!file) return;
-            btnCargar.disabled = true;
-            btnCargar.textContent = 'Cargando...';
-            try {
-                await apiClient.loadTreeFromJSON(file);
-                console.log('✅ JSON cargado desde gestión');
-                await loadTree();
-            } catch (e) {
-                console.error('❌ Error cargando JSON:', e);
-                alert('Error al cargar el archivo');
-                btnCargar.disabled = false;
-                btnCargar.textContent = 'Cargar';
-            }
+            await mostrarModalDepthLimit(file, btnCargar);
         });
     }
 });
@@ -125,6 +144,75 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ========================================
 // INICIALIZACIÓN DE MANAGERS (SRP)
 // ========================================
+
+/**
+ * Muestra un modal pidiendo la profundidad máxima del árbol
+ * Obligatorio antes de cargar cualquier archivo
+ */
+async function mostrarModalDepthLimit(file, btnCargar) {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 400px;">
+                <h2>⚖️ Profundidad Máxima del Árbol</h2>
+                <p>Ingresa la profundidad máxima permitida para el árbol. Este parámetro se usa para calcular el precio final de los vuelos.</p>
+                <div class="form-group">
+                    <label for="depth-input">Profundidad máxima (mínimo 2):</label>
+                    <input type="number" id="depth-input" min="2" value="5" placeholder="Ej: 5, 10, 15" required>
+                </div>
+                <div class="form-buttons" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn-cancel" onclick="this.closest('.modal').remove()">Cancelar</button>
+                    <button type="button" class="btn-submit">Aceptar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const depthInput = modal.querySelector('#depth-input');
+        const submitBtn = modal.querySelector('.btn-submit');
+        const cancelBtn = modal.querySelector('.btn-cancel');
+
+        // Enfocar en el input automáticamente
+        depthInput.focus();
+
+        submitBtn.addEventListener('click', async () => {
+            const depthLimit = parseInt(depthInput.value);
+
+            if (isNaN(depthLimit) || depthLimit < 2) {
+                alert('❌ Ingresa un número válido mayor o igual a 2');
+                return;
+            }
+
+            modal.remove();
+            btnCargar.disabled = true;
+            btnCargar.textContent = 'Cargando...';
+
+            try {
+                await apiClient.loadTreeFromJSON(file, depthLimit);
+                console.log('✅ JSON cargado desde gestión con depthLimit:', depthLimit);
+                await loadTree();
+            } catch (e) {
+                console.error('❌ Error cargando JSON:', e);
+                alert('❌ Error al cargar el archivo: ' + e.message);
+            } finally {
+                btnCargar.disabled = false;
+                btnCargar.textContent = 'Cargar';
+            }
+
+            resolve();
+        });
+
+        cancelBtn.addEventListener('click', () => resolve());
+
+        // Permitir Enter para confirmar
+        depthInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitBtn.click();
+        });
+    });
+}
+
 /**
  * Inicializa todos los managers con inyección de dependencias
  * Cumple con DIP - todos dependen de abstracciones (apiClient)

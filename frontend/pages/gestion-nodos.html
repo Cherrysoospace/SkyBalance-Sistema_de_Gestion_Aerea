@@ -64,6 +64,16 @@
                 <i class="fas fa-search-plus"></i> Verificar Propiedad AVL
             </button>
             <div class="separator"></div>
+            <div class="depth-limit-control">
+                <label for="input-depth-limit"><i class="fas fa-ruler"></i> Profundidad Máxima:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="number" id="input-depth-limit" min="2" value="5" placeholder="Profundidad" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <button id="btn-update-depth" class="btn-action" style="flex: 0; padding: 8px 12px;">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="separator"></div>
             <button class="btn-action analytics" id="btnMetricas">
                 <i class="fas fa-chart-bar"></i> Ver Métricas
             </button>

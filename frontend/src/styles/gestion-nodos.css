@@ -1113,6 +1113,46 @@
     margin: 0.5rem 0;
 }
 
+/* Control de Profundidad Máxima */
+.depth-limit-control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, var(--bg-light), var(--bg-lighter));
+    border: 2px solid var(--border-color);
+    border-radius: 0.75rem;
+}
+
+.depth-limit-control label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.depth-limit-control input[type="number"] {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    background: white;
+    color: var(--text-primary);
+}
+
+.depth-limit-control input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.depth-limit-control #btn-update-depth {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+}
+
 /* Botón Modo Estrés */
 .btn-action.stress-mode {
     background: linear-gradient(135deg, #f97316, #ea580c);
