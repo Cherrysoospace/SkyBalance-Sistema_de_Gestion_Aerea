@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../src/styles/common.css">
     <link rel="stylesheet" href="../src/styles/navbar.css">
     <link rel="stylesheet" href="../src/styles/gestion-nodos.css">
+    <link rel="stylesheet" href="../src/styles/versioning.css">
 </head>
 <body>
     <!-- Navbar -->
@@ -65,6 +66,9 @@
             <div class="separator"></div>
             <button class="btn-action analytics" id="btnMetricas">
                 <i class="fas fa-chart-bar"></i> Ver Métricas
+            </button>
+            <button class="btn-action versioning" id="btnVersionado">
+                <i class="fas fa-save"></i> Versionado
             </button>
         </aside>
 
@@ -192,6 +196,52 @@
                     <button type="button" class="btn-cancel">Cancelar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal para Versionado Persistente -->
+    <div id="modal-versioning" class="modal hidden">
+        <div class="modal-content versioning-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-save"></i> Sistema de Versionado</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Sección de Guardar Versión -->
+                <div class="save-version-section">
+                    <h3><i class="fas fa-floppy-disk"></i> Guardar Nueva Versión</h3>
+                    <div class="version-input-group">
+                        <input 
+                            type="text" 
+                            id="version-name-input" 
+                            placeholder="Ej: Simulación Alta Demanda"
+                            maxlength="50"
+                            autofocus
+                        >
+                        <button id="btn-save-version" class="btn-action-versioning">
+                            <i class="fas fa-check"></i> Guardar versión
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sección de Versiones Guardadas -->
+                <div class="versions-section">
+                    <h3>
+                        <i class="fas fa-history"></i> Versiones Guardadas
+                        <button id="btn-refresh-versions" class="btn-action-small" style="margin-left: auto;">
+                            <i class="fas fa-sync-alt"></i> Refrescar
+                        </button>
+                    </h3>
+                    <div id="versions-list-container">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-close-versioning">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
         </div>
     </div>
 

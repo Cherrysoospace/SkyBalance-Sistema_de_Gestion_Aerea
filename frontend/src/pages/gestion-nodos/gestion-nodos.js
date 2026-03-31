@@ -11,6 +11,7 @@ import { modalManager } from '../../components/modalManager.js';
 import { MetricsManager } from '../../utils/MetricsManager.js';
 import { StressModeManager } from '../../utils/StressModeManager.js';
 import { RebalanceAnimationManager } from '../../utils/RebalanceAnimationManager.js';
+import { VersioningManager } from '../../utils/VersioningManager.js';
 import { initializeAuditManager } from '../../utils/avl-audit-manager.js';
 
 // D3 es cargado desde CDN en el HTML (disponible como global)
@@ -26,6 +27,7 @@ let selectedNode = null;
 let metricsManager = null;
 let stressModeManager = null;
 let rebalanceManager = null;
+let versioningManager = null;
 let auditManager = null; // Será inicializado con initializeAuditManager()
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -71,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnRebalanceo').addEventListener('click', onExecuteRebalance);
     document.getElementById('btnAuditar').addEventListener('click', onExecuteAudit);
     document.getElementById('btnMetricas').addEventListener('click', onOpenMetrics);
+    document.getElementById('btnVersionado').addEventListener('click', onOpenVersioning);
 
     // ========================================
     // CONFIGURAR MODALES (DIP)
@@ -80,6 +83,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Configurar handler de submit del modal
     modalManager.setSubmitHandler(procesarFormulario);
+
+    // ========================================
+    // ESCUCHAR EVENTOS DE VERSIONADO
+    // ========================================
+    document.addEventListener('versionRestored', async (event) => {
+        console.log('📢 Evento versionRestored recibido:', event.detail.versionName);
+        await loadTree();
+        await metricsManager.updateMetricsPanel();
+    });
 
     // ========================================
     // CARGA DE JSON DESDE ESTA PÁGINA
@@ -139,6 +151,13 @@ function initializeManagers() {
         console.log('  ✅ RebalanceAnimationManager inicializado');
     } catch (e) {
         console.error('  ❌ Error inicializando RebalanceAnimationManager:', e);
+    }
+
+    try {
+        versioningManager = new VersioningManager(apiClient);
+        console.log('  ✅ VersioningManager inicializado');
+    } catch (e) {
+        console.error('  ❌ Error inicializando VersioningManager:', e);
     }
 
     // Nota: auditManager (AVLAuditManager) ya está inicializado globalmente
@@ -489,5 +508,22 @@ async function onExecuteAudit() {
     } catch (error) {
         console.error('❌ Error en auditoría:', error);
         alert('Error en auditoría: ' + error.message);
+    }
+}
+
+/* ============================================
+   VERSIONADO PERSISTENTE
+   ============================================ */
+
+/**
+ * Handler para abrir el panel de versionado
+ * DIP: VersioningManager maneja toda la lógica
+ */
+async function onOpenVersioning() {
+    try {
+        await versioningManager.openVersioningPanel();
+    } catch (error) {
+        console.error('❌ Error abriendo versionado:', error);
+        alert('Error: ' + (error.response?.data?.detail || error.message));
     }
 }

@@ -1,0 +1,371 @@
+/**
+ * VersioningManager.js
+ * Responsabilidad Única: Gestionar el versionado persistente del árbol
+ * SOLID Compliance: SRP + DIP + Open/Closed
+ * 
+ * Este componente es responsable de:
+ * - Guardar versiones del árbol con nombres específicos
+ * - Listar versiones disponibles
+ * - Restaurar versiones guardadas
+ * - Actualizar la UI de versionado
+ */
+
+export class VersioningManager {
+    /**
+     * Constructor con inyección de dependencia
+     * @param {ApiClient} apiClient - Cliente API inyectado
+     * @param {Object} config - Configuración de elementos DOM
+     */
+    constructor(apiClient, config = {}) {
+        this.apiClient = apiClient;
+        
+        // Configuración de elementos DOM
+        this.config = {
+            versioningPanel: 'versioning-panel',
+            versioningModal: 'modal-versioning',
+            versionNameInput: 'version-name-input',
+            saveVersionBtn: 'btn-save-version',
+            versionsListContainer: 'versions-list-container',
+            refreshVersionsBtn: 'btn-refresh-versions',
+            ...config
+        };
+
+        // Estado local
+        this.versions = [];
+        this.selectedVersionName = null;
+
+        this.setupHandlers();
+    }
+
+    /**
+     * Configura los event listeners del componente
+     * SRP: Responsable solo de configurar handlers
+     */
+    setupHandlers() {
+        const saveBtn = document.getElementById(this.config.saveVersionBtn);
+        const refreshBtn = document.getElementById(this.config.refreshVersionsBtn);
+        const nameInput = document.getElementById(this.config.versionNameInput);
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.handleSaveVersion());
+        }
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this.refreshVersionsList());
+        }
+
+        if (nameInput) {
+            nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleSaveVersion();
+                }
+            });
+        }
+
+        // Cerrar modal
+        const modal = document.getElementById(this.config.versioningModal);
+        if (modal) {
+            const closeBtn = modal.querySelector('.close-modal');
+            const closeBtnFooter = modal.querySelector('.btn-close-versioning');
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closeVersioningPanel());
+            }
+            if (closeBtnFooter) {
+                closeBtnFooter.addEventListener('click', () => this.closeVersioningPanel());
+            }
+
+            // Cerrar al hacer clic fuera
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeVersioningPanel();
+                }
+            });
+        }
+    }
+
+    /**
+     * Abre el panel/modal de versionado
+     * SRP: Responsable de mostrar la interfaz
+     */
+    async openVersioningPanel() {
+        try {
+            const modal = document.getElementById(this.config.versioningModal);
+            if (!modal) {
+                throw new Error('Modal de versionado no encontrado en el DOM');
+            }
+
+            // Limpiar input
+            const nameInput = document.getElementById(this.config.versionNameInput);
+            if (nameInput) {
+                nameInput.value = '';
+                nameInput.focus();
+            }
+
+            // Cargar versiones
+            await this.refreshVersionsList();
+
+            // Mostrar modal
+            modal.classList.remove('hidden');
+            modal.classList.add('show');
+            console.log('✅ Panel de versionado abierto');
+
+        } catch (error) {
+            console.error('❌ Error abriendo panel de versionado:', error);
+            alert('Error al abrir versionado: ' + error.message);
+        }
+    }
+
+    /**
+     * Cierra el panel/modal de versionado
+     * SRP: Responsable solo de cerrar modal
+     */
+    closeVersioningPanel() {
+        const modal = document.getElementById(this.config.versioningModal);
+        if (modal) {
+            modal.classList.remove('show');
+            modal.classList.add('hidden');
+            console.log('✅ Panel de versionado cerrado');
+        }
+    }
+
+    /**
+     * Maneja el evento de guardar versión
+     * DIP: Delega en apiClient para la petición
+     */
+    async handleSaveVersion() {
+        try {
+            const nameInput = document.getElementById(this.config.versionNameInput);
+            const versionName = nameInput?.value?.trim();
+
+            if (!versionName) {
+                alert('Por favor ingresa un nombre para la versión');
+                nameInput?.focus();
+                return;
+            }
+
+            // Validar que el nombre sea único
+            if (this.versions.some(v => v.name === versionName)) {
+                alert(`Ya existe una versión con el nombre "${versionName}"`);
+                return;
+            }
+
+            console.log('💾 Guardando versión:', versionName);
+            const saveBtn = document.getElementById(this.config.saveVersionBtn);
+            const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Guardando...';
+
+            // Llamar API
+            const response = await this.apiClient.post('/versions/', { name: versionName });
+
+            // Limpiar input
+            nameInput.value = '';
+
+            // Actualizar lista
+            await this.refreshVersionsList();
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+
+            console.log('✅ Versión guardada exitosamente:', response);
+            alert(`✅ Versión "${versionName}" guardada correctamente`);
+
+        } catch (error) {
+            console.error('❌ Error guardando versión:', error);
+            alert('Error al guardar versión: ' + error.message);
+            const saveBtn = document.getElementById(this.config.saveVersionBtn);
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar versión';
+        }
+    }
+
+    /**
+     * Recarga la lista de versiones disponibles
+     * SRP: Responsable de actualizar la lista
+     */
+    async refreshVersionsList() {
+        try {
+            console.log('🔄 Refrescando lista de versiones...');
+            
+            this.versions = await this.apiClient.get('/versions/');
+            
+            const container = document.getElementById(this.config.versionsListContainer);
+            if (!container) {
+                throw new Error('Contenedor de versiones no encontrado');
+            }
+
+            if (this.versions.length === 0) {
+                container.innerHTML = '<p class="no-versions">No hay versiones guardadas aún</p>';
+                console.log('ℹ️ No hay versiones guardadas');
+                return;
+            }
+
+            // Construir lista de versiones
+            const html = this.versions
+                .map((version, index) => this._buildVersionItemHTML(version, index))
+                .join('');
+
+            container.innerHTML = html;
+
+            // Agregar event listeners a los botones de restauración
+            this.versions.forEach(version => {
+                const restoreBtn = document.getElementById(`btn-restore-${version.name}`);
+                const deleteBtn = document.getElementById(`btn-delete-${version.name}`);
+
+                if (restoreBtn) {
+                    restoreBtn.addEventListener('click', () => this.handleRestoreVersion(version.name));
+                }
+
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', () => this.handleDeleteVersion(version.name));
+                }
+            });
+
+            console.log(`✅ Lista de versiones actualizada: ${this.versions.length} versiones`);
+
+        } catch (error) {
+            console.error('❌ Error refrescando lista de versiones:', error);
+            const container = document.getElementById(this.config.versionsListContainer);
+            if (container) {
+                container.innerHTML = `<p class="error-message">❌ Error cargando versiones: ${error.message}</p>`;
+            }
+        }
+    }
+
+    /**
+     * Maneja el evento de restauración de versión
+     * DIP: Delega en apiClient para la petición
+     */
+    async handleRestoreVersion(versionName) {
+        try {
+            const confirmed = confirm(`¿Restaurar la versión "${versionName}"?\n\nLa versión actual se guardará en el historial de deshacer.`);
+            if (!confirmed) {
+                return;
+            }
+
+            console.log('🔄 Restaurando versión:', versionName);
+
+            const restoreBtn = document.getElementById(`btn-restore-${versionName}`);
+            if (restoreBtn) {
+                restoreBtn.disabled = true;
+                restoreBtn.textContent = 'Restaurando...';
+            }
+
+            // Llamar API
+            const response = await this.apiClient.post('/versions/restore', { name: versionName });
+
+            if (restoreBtn) {
+                restoreBtn.disabled = false;
+                restoreBtn.textContent = 'Restaurar';
+            }
+
+            console.log('✅ Versión restaurada:', response);
+
+            // Emitir evento para que gestion-nodos.js recargue el árbol
+            this._emitVersionRestored(versionName);
+
+            alert(`✅ Versión "${versionName}" restaurada correctamente`);
+
+        } catch (error) {
+            console.error('❌ Error restaurando versión:', error);
+            alert('Error al restaurar versión: ' + error.message);
+            const restoreBtn = document.getElementById(`btn-restore-${versionName}`);
+            if (restoreBtn) {
+                restoreBtn.disabled = false;
+                restoreBtn.textContent = 'Restaurar';
+            }
+        }
+    }
+
+    /**
+     * Maneja eliminación de versión (extensión futura - Open/Closed Principle)
+     * Nota: Actualmente no hay endpoint DELETE en el backend, pero está preparado
+     */
+    async handleDeleteVersion(versionName) {
+        try {
+            const confirmed = confirm(`¿Eliminar la versión "${versionName}"?\n\nEsta acción no se puede deshacer.`);
+            if (!confirmed) {
+                return;
+            }
+
+            console.log('🗑️ Eliminando versión:', versionName);
+
+            // Nota: Este endpoint no existe en el backend actual
+            // Se puede agregar sin modificar esta clase (Open/Closed Principle)
+            if (this.apiClient.delete) {
+                await this.apiClient.delete(`/versions/${versionName}`);
+                console.log('✅ Versión eliminada');
+                await this.refreshVersionsList();
+                alert(`✅ Versión "${versionName}" eliminada correctamente`);
+            } else {
+                console.warn('⚠️ Eliminación de versiones no soportada en el backend');
+                alert('La eliminación de versiones no está disponible aún');
+            }
+
+        } catch (error) {
+            console.error('❌ Error eliminando versión:', error);
+            alert('Error al eliminar versión: ' + error.message);
+        }
+    }
+
+    /**
+     * Emite evento customizado para notificar que se restauró una versión
+     * Patrón de comunicación entre componentes sin acoplamiento directo
+     */
+    _emitVersionRestored(versionName) {
+        const event = new CustomEvent('versionRestored', {
+            detail: { versionName }
+        });
+        document.dispatchEvent(event);
+    }
+
+    /**
+     * Construye el HTML de un elemento de versión
+     * SRP: Método privado para generar markup
+     */
+    _buildVersionItemHTML(version, index) {
+        const timestamp = new Date(version.timestamp).toLocaleString('es-ES');
+        const versionId = version.name; // Usar name como ID único
+
+        return `
+            <div class="version-item" data-version="${versionId}">
+                <div class="version-info">
+                    <div class="version-name">
+                        <span class="version-badge">#${index + 1}</span>
+                        <strong>${version.name}</strong>
+                    </div>
+                    <div class="version-timestamp">
+                        <i class="fas fa-clock"></i> ${timestamp}
+                    </div>
+                </div>
+                <div class="version-actions">
+                    <button id="btn-restore-${versionId}" class="btn-action-small restore" title="Restaurar esta versión">
+                        <i class="fas fa-undo"></i> Restaurar
+                    </button>
+                    <button id="btn-delete-${versionId}" class="btn-action-small delete" title="Eliminar esta versión">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Limpia los event listeners
+     * Patrón de limpieza para evitar memory leaks (Open/Closed - extensible)
+     */
+    cleanup() {
+        const saveBtn = document.getElementById(this.config.saveVersionBtn);
+        const refreshBtn = document.getElementById(this.config.refreshVersionsBtn);
+
+        if (saveBtn) {
+            saveBtn.replaceWith(saveBtn.cloneNode(true));
+        }
+        if (refreshBtn) {
+            refreshBtn.replaceWith(refreshBtn.cloneNode(true));
+        }
+
+        console.log('✅ VersioningManager limpiado');
+    }
+}
