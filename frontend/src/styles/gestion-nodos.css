@@ -1348,3 +1348,817 @@
     font-style: italic;
     text-align: center;
 }
+
+/* ============================================
+   SIMULACIÓN DE CONCURRENCIA - Estilos de Cola
+   ============================================ */
+
+.sidebar-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    margin: 0.5rem 0;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.btn-action.programar-insercion {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #059669;
+    width: 100%;
+}
+
+.btn-action.programar-insercion:hover {
+    background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.btn-action.procesar-cola {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-color: #1d4ed8;
+    width: 100%;
+}
+
+.btn-action.procesar-cola:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+}
+
+.btn-action.procesar-cola:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.queue-section {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+    border: 1px solid var(--primary-color);
+    border-radius: 0.8rem;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+.queue-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem 0;
+    gap: 0.5rem;
+}
+
+.queue-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.queue-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.queue-item {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0.5rem;
+    background: white;
+    border-left: 3px solid var(--primary-color);
+    padding: 0.6rem;
+    border-radius: 0.4rem;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.queue-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+.queue-index {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.queue-codigo {
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.queue-ruta {
+    grid-column: 1 / -1;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding-left: 0.5rem;
+}
+
+.queue-empty {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.queue-processing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 0.6rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.queue-conflicts-panel {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 1px solid #f87171;
+    border-radius: 0.6rem;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.queue-conflicts-panel h4 {
+    color: #dc2626;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.conflicts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.conflict-item {
+    background: white;
+    border-left: 3px solid #dc2626;
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    color: #7f1d1d;
+}
+
+.conflict-item-code {
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.conflict-item-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #991b1b;
+}
+
+.conflict-item-detail span {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* ============================================
+   QUEUE PROCESSING ANIMATION STYLES
+   ============================================ */
+
+/**
+ * ANIMACIÓN 1: Entrada de Nodo (Fade-in + Scale)
+ * Aplicada cuando un nodo nuevo se inserta en el árbol
+ */
+@keyframes nodeEntryAnimation {
+    0% {
+        opacity: 0;
+        r: 12px;
+        filter: drop-shadow(0 0 0 rgba(251, 191, 36, 0));
+    }
+    50% {
+        opacity: 0.8;
+        filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.6));
+    }
+    100% {
+        opacity: 1;
+        r: 28px;
+        filter: drop-shadow(0 0 0 rgba(251, 191, 36, 0));
+    }
+}
+
+/**
+ * ANIMACIÓN 2: Remoción de Item de Cola (Slide-out + Fade-out)
+ * El vuelo desaparece de la cola cuando se procesa
+ */
+@keyframes queueItemRemoval {
+    0% {
+        opacity: 1;
+        transform: translateX(0) scaleX(1);
+        height: auto;
+        margin-bottom: 0.5rem;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-100%) scaleX(0.8);
+        height: 0;
+        margin-bottom: 0;
+    }
+}
+
+/**
+ * ANIMACIÓN 3: Badge de Rotación - Entrada (Slide-in + Fade)
+ * Badge flotante que indica qué tipo de rotación ocurrió
+ */
+@keyframes rotateBadgeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/**
+ * ANIMACIÓN 4: Badge de Rotación - Salida (Slide-out + Fade)
+ */
+@keyframes rotateBadgeOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+}
+
+/**
+ * ANIMACIÓN 5: Alerta de Conflicto - Entrada
+ * Alerta visual cuando se detecta un desbalance crítico
+ */
+@keyframes conflictAlertIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/**
+ * ANIMACIÓN 6: Alerta de Conflicto - Salida
+ */
+@keyframes conflictAlertOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+}
+
+/**
+ * ANIMACIÓN 7: Pulso de Nodo en Conflicto
+ * Efecto de alerta pulsante
+ */
+@keyframes conflictNodePulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0));
+    }
+    50% {
+        filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));
+    }
+}
+
+/**
+ * ANIMACIÓN 8: Resumen - Entrada
+ */
+@keyframes summarySlidIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/**
+ * ANIMACIÓN 9: Resumen - Salida
+ */
+@keyframes summarySlideOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+/**
+ * ESTILOS: Badge de Rotación Flotante
+ * Elemento visual que flota sobre el árbol indicando tipo de rotación
+ */
+.rotation-badge-floating {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+    z-index: 2500;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    letter-spacing: 0.5px;
+}
+
+/**
+ * ESTILOS: Alerta de Conflicto Animada
+ * Elemento visual que muestra información del desbalance detectado
+ */
+.conflict-alert-animated {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 2px solid #f87171;
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 10px 30px rgba(248, 113, 113, 0.3);
+    z-index: 2500;
+    min-width: 300px;
+    pointer-events: auto;
+}
+
+.conflict-alert-content {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.conflict-alert-animated i {
+    color: #dc2626;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.conflict-text {
+    color: #7f1d1d;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.conflict-text code {
+    background: rgba(220, 38, 38, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    color: #dc2626;
+}
+
+/**
+ * ESTILOS: Contenedor de Resumen Final
+ * Modal que muestra estadísticas del procesamiento
+ */
+#queue-summary-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.queue-processing-summary {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: slidUpSummary 0.4s ease-out;
+}
+
+@keyframes slidUpSummary {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    color: var(--success-color);
+}
+
+.summary-header i {
+    font-size: 2rem;
+}
+
+.summary-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f5f9fc;
+    border-radius: 0.75rem;
+    border: 2px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.stat-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+}
+
+.stat-icon {
+    font-size: 2rem;
+}
+
+.stat-icon.flights {
+    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.stat-icon.rotations {
+    filter: drop-shadow(0 2px 4px rgba(168, 85, 247, 0.3));
+}
+
+.stat-icon.conflicts {
+    filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
+}
+
+.stat-icon.conflicts.alert {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.stat-content {
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+
+.summary-rotations {
+    background: #f5f9fc;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-rotations h4 {
+    margin: 0 0 1rem 0;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.rotation-breakdown {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.rotation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 0.5rem;
+    border-left: 3px solid var(--primary-color);
+}
+
+.rotation-type-label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.rotation-count {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.btn-summary-close {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--success-color), #15803d);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-summary-close:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-summary-close:active {
+    transform: translateY(0);
+}
+
+/* ============================================
+   CONFLICTO EN NODO - Eventos SVG del Árbol
+   ============================================
+   
+   Visualización de desbalance en nodos durante
+   el procesamiento de cola. Aplica:
+   1. Pulso visual en nodo desbalanceado
+   2. Tooltip/badge flotante con factor de balance
+   3. Transición suave a resolución
+*/
+
+/**
+ * CLASE 1: Nodo en estado de ALERTA
+ * Aplicada cuando se detecta factor de balance fuera de {-1, 0, 1}
+ * Dispara animación de pulso + cambio de color
+ */
+g.conflict-node-alert circle {
+    fill: #fee2e2 !important;
+    stroke: #dc2626 !important;
+    stroke-width: 4 !important;
+    animation: conflictNodePulse 0.5s ease-in-out infinite !important;
+}
+
+g.conflict-node-alert text {
+    fill: #7f1d1d !important;
+    font-weight: 700 !important;
+}
+
+/**
+ * ANIMACIÓN: Pulso de Nodo en Conflicto
+ * Efecto de alerta pulsante con glow progresivo
+ * Duración: 500ms (configurable)
+ */
+@keyframes conflictNodePulse {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.4));
+        r: 30px;
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.8));
+        r: 32px;
+    }
+    100% {
+        filter: drop-shadow(0 0 2px rgba(220, 38, 38, 0.4));
+        r: 30px;
+    }
+}
+
+/**
+ * ELEMENTO: Tooltip Flotante de Balance
+ * Muestra el factor de balance actual del nodo
+ * Se posiciona sobre el nodo desbalanceado usando fixed positioning
+ */
+.conflict-node-tooltip {
+    position: fixed;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 2px solid #dc2626;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #7f1d1d;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+    white-space: nowrap;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+    transition: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/**
+ * ESTADO: Tooltip Visible
+ * Aplicado después de crear el tooltip
+ * Anima entrada con fade + slide + scale
+ */
+.conflict-node-tooltip.tooltip-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    animation: conflictTooltipEnter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/**
+ * ESTADO: Tooltip Oculto
+ * Aplicado antes de remover el tooltip
+ * Anima salida suave
+ */
+.conflict-node-tooltip.tooltip-hidden {
+    opacity: 0;
+    transform: translateY(10px) scale(0.8);
+    animation: conflictTooltipExit 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/**
+ * ANIMACIÓN: Entrada del Tooltip
+ * Bounce suave para captar atención
+ * Duración: 350ms
+ */
+@keyframes conflictTooltipEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(-15px) scale(0.6);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(2px) scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/**
+ * ANIMACIÓN: Salida del Tooltip
+ * Fade-out suave siguiendo la misma dirección
+ * Duración: 300ms
+ */
+@keyframes conflictTooltipExit {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.8);
+    }
+}
+
+/**
+ * CONTENIDO DEL TOOLTIP
+ * Flexbox para alinear contenido y icono
+ */
+.conflict-node-tooltip .tooltip-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/**
+ * ICONO DE ADVERTENCIA EN TOOLTIP
+ * Animación adicional de parpadeo
+ */
+.conflict-node-tooltip .tooltip-icon {
+    display: inline-block;
+    font-size: 1rem;
+    animation: tooltipIconBlink 0.8s ease-in-out infinite;
+}
+
+/**
+ * ANIMACIÓN: Parpadeo del Icono de Advertencia
+ */
+@keyframes tooltipIconBlink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/**
+ * CLASE 2: Nodo en estado de RESOLUCIÓN
+ * Aplicada después de completar rotación
+ * Transiciona el nodo de vuelta a su estado normal
+ */
+g.conflict-node-resolved circle {
+    animation: conflictNodeResolve 0.5s ease-out forwards !important;
+    stroke-width: 1.5 !important;
+}
+
+g.conflict-node-resolved text {
+    font-weight: 600 !important;
+}
+
+/**
+ * ANIMACIÓN: Resolución del Nodo
+ * Transiciona suavemente de rojo a color normal
+ * Duración: 500ms (configurable)
+ */
+@keyframes conflictNodeResolve {
+    0% {
+        fill: #fee2e2;
+        stroke: #dc2626;
+        filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6));
+        r: 30px;
+    }
+    100% {
+        fill: #c084fc;
+        stroke: #333;
+        filter: drop-shadow(0 0 0 rgba(220, 38, 38, 0));
+        r: 28px;
+    }
+}

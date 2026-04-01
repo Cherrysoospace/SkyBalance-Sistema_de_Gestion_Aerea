@@ -12,6 +12,8 @@ import { MetricsManager } from '../../utils/MetricsManager.js';
 import { StressModeManager } from '../../utils/StressModeManager.js';
 import { RebalanceAnimationManager } from '../../utils/RebalanceAnimationManager.js';
 import { VersioningManager } from '../../utils/VersioningManager.js';
+import { QueueManager } from '../../utils/QueueManager.js';
+import { QueueProcessingAnimationManager } from '../../utils/QueueProcessingAnimationManager.js';
 import { initializeAuditManager } from '../../utils/avl-audit-manager.js';
 
 // D3 es cargado desde CDN en el HTML (disponible como global)
@@ -28,6 +30,8 @@ let metricsManager = null;
 let stressModeManager = null;
 let rebalanceManager = null;
 let versioningManager = null;
+let queueManager = null;
+let queueProcessingAnimationManager = null;
 let auditManager = null; // Será inicializado con initializeAuditManager()
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -65,6 +69,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnEliminacion').addEventListener('click', () => abrirFormularioEliminar());
     document.getElementById('btnCancelar').addEventListener('click', cancelarVuelo);
     document.getElementById('btnExportar').addEventListener('click', exportTree);
+
+    // ========================================
+    // EVENT LISTENERS - Simulación de Concurrencia
+    // ========================================
+    document.getElementById('btnProgramarInsercion').addEventListener('click', () => abrirFormularioProgramarInsercion());
+    document.getElementById('btnProcesarCola').addEventListener('click', () => procesarColaPasoAPaso());
 
     // ========================================
     // EVENT LISTENERS - Profundidad Máxima
@@ -248,6 +258,21 @@ function initializeManagers() {
         console.error('  ❌ Error inicializando VersioningManager:', e);
     }
 
+    try {
+        queueManager = new QueueManager(apiClient);
+        console.log('  ✅ QueueManager inicializado');
+    } catch (e) {
+        console.error('  ❌ Error inicializando QueueManager:', e);
+    }
+
+    try {
+        queueProcessingAnimationManager = new QueueProcessingAnimationManager(apiClient);
+        window.queueProcessingAnimationManager = queueProcessingAnimationManager; // Exponer globalmente para debugging
+        console.log('  ✅ QueueProcessingAnimationManager inicializado');
+    } catch (e) {
+        console.error('  ❌ Error inicializando QueueProcessingAnimationManager:', e);
+    }
+
     // Nota: auditManager (AVLAuditManager) ya está inicializado globalmente
     if (!auditManager) {
         console.error('  ❌ auditManager no está inicializado');
@@ -256,6 +281,18 @@ function initializeManagers() {
     }
 
     console.log('✅ Todos los managers inicializados correctamente');
+    
+    // Exponer managers globalmente para debugging en console
+    window.managers = {
+        metricsManager,
+        stressModeManager,
+        rebalanceManager,
+        versioningManager,
+        queueManager,
+        queueProcessingAnimationManager,
+        auditManager
+    };
+    console.log('🔍 Managers disponibles en window.managers para debugging');
 }
 
 // Abrir formulario para adicionar
@@ -334,6 +371,19 @@ async function procesarFormulario(action, formData) {
             await apiClient.deleteNode(payload.codigo);
             console.log('✅ Nodo eliminado:', payload.codigo);
             selectedNode = null;
+        } else if (action === 'enqueue') {
+            // Simulación de Concurrencia: Encolar vuelo
+            await queueManager.enqueueInsertion(payload);
+            console.log('✅ Vuelo programado en cola:', payload.codigo);
+            // Actualizar list de vuelos en cola
+            await queueManager.updateQueueDisplay();
+            // Habilitar botón de procesamiento
+            const btnProcesar = document.getElementById('btnProcesarCola');
+            if (btnProcesar) {
+                btnProcesar.disabled = false;
+            }
+            modalManager.close();
+            return;
         }
 
         await loadTree();
@@ -381,9 +431,10 @@ function renderTree(treeData) {
         return;
     }
 
-    console.log('🔍 DEBUG renderTree - treeData recibido:', treeData);
-    console.log('🔍 DEBUG renderTree - treeData.tree:', treeData.tree);
-    console.log('🔍 DEBUG - Campos del nodo raíz:', Object.keys(treeData.tree));
+    console.log('\n🌳 === RENDER TREE DEBUG ===');
+    console.log('📊 treeData recibido:', treeData);
+    console.log('📊 treeData.tree:', treeData.tree);
+    console.log('📊 Campos del nodo raíz:', Object.keys(treeData.tree));
 
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 500;
@@ -433,6 +484,7 @@ function renderTree(treeData) {
         .data(root.descendants())
         .enter().append('g')
         .attr('class', 'node')
+        .attr('data-node-code', d => d.data.codigo)  // ✨ Agregar identificador para animaciones FLIP
         .attr('transform', d => `translate(${d.x},${d.y})`)
         .style('cursor', 'pointer')
         .on('click', (event, d) => {
@@ -466,6 +518,14 @@ function renderTree(treeData) {
         .attr('font-size', '10px')
         .attr('fill', '#fff')
         .text(d => `$${d.data.precioFinal ?? d.data.precioBase ?? '?'}`);
+
+    // DEBUG: Verificar qué se renderizó
+    const renderedTexts = container.querySelectorAll('text');
+    const renderedCodes = Array.from(renderedTexts)
+        .map(t => t.textContent.trim())
+        .filter(t => t && !t.startsWith('$') && t.length < 20);
+    console.log(`✅ RENDERIZADO: ${renderedCodes.length} códigos: [${renderedCodes.join(', ')}]`);
+    console.log('🌳 === FIN RENDER TREE ===\n');
 }
 
 // Deshacer última acción
@@ -615,3 +675,136 @@ async function onOpenVersioning() {
         alert('Error: ' + (error.response?.data?.detail || error.message));
     }
 }
+
+/* ============================================
+   SIMULACIÓN DE CONCURRENCIA - COLA DE INSERCIONES
+   ============================================ */
+
+/**
+ * Abrir formulario para programar una inserción en la cola
+ */
+function abrirFormularioProgramarInsercion() {
+    modalManager.open('enqueue', 'Programar Inserción de Vuelo', {
+        visibleFields: ['field-codigo', 'field-origen', 'field-destino', 'field-horaSalida',
+                       'field-pasajeros', 'field-precioBase', 'field-promocion',
+                       'field-prioridad', 'field-alerta']
+    });
+}
+
+/**
+ * Procesar cola paso a paso con animación
+ */
+async function procesarColaPasoAPaso() {
+    const queueState = queueManager.getQueueState();
+    
+    if (queueState.count === 0) {
+        alert('⚠️ No hay vuelos en la cola');
+        return;
+    }
+
+    const btnProcesarCola = document.getElementById('btnProcesarCola');
+    let originalContent = ''; // Declarar fuera del try para que sea accesible en finally
+    
+    try {
+        // 1️⃣ DESABILITAR BOTÓN Y MOSTRAR ESTADO DE CARGA
+        btnProcesarCola.disabled = true;
+        originalContent = btnProcesarCola.innerHTML;
+        btnProcesarCola.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        
+        console.log('🚀 === INICIANDO PROCESAMIENTO DE COLA PASO A PASO ===');
+        console.log(`📋 Cola con ${queueState.count} vuelos pendientes`);
+        
+        // 2️⃣ OBTENER TODOS LOS PASOS DESDE EL BACKEND (UNA SOLA LLAMADA)
+        console.log('📡 Obteniendo pasos desde el backend...');
+        const { steps, summary } = await queueProcessingAnimationManager.fetchSteps();
+        console.log(`✅ Obtenidos ${steps.length} pasos del servidor`);
+        
+        // 3️⃣ PROCESAR PASOS SECUENCIALMENTE CON ANIMACIONES
+        await queueProcessingAnimationManager.processStepsSequentially(steps, {
+            // Callback inicial
+            onStarting: async () => {
+                console.log('🎬 Iniciando secuencia de animaciones...');
+            },
+            
+            // Callback para actualizar árbol
+            onUpdateTree: async (step) => {
+                console.log(`🌳 Renderizando árbol con inserción de ${step.codigo_insertado}`);
+                if (step.tree) {
+                    console.log(`   📊 step.tree existe. Estructura:`, step.tree);
+                    console.log(`   📊 step.tree.tree existe:`, !!step.tree.tree);
+                    
+                    // El backend devuelve step.tree como el nodo raíz directo
+                    // Pero renderTree() espera {tree: ..., metrics: ...}
+                    // Entonces envolverlo en la estructura correcta
+                    const treeDataForRender = {
+                        tree: step.tree,
+                        metrics: step.metrics || {}
+                    };
+                    console.log(`   ✅ Envolviendo en estructura correcta para renderTree`);
+                    renderTree(treeDataForRender);
+                } else {
+                    console.error(`   ❌ step.tree NO EXISTE!`);
+                }
+            },
+            
+            // Callback para animar entrada de nodo
+            onAnimateNodeEntry: async (nodeCode, duration) => {
+                await queueProcessingAnimationManager.animateNodeEntry(nodeCode, duration);
+            },
+            
+            // Callback para mostrar rotación
+            onShowRotationBadge: async (rotation, duration) => {
+                await queueProcessingAnimationManager.animateRotationBadge(rotation, duration);
+            },
+            
+            // Callback para remover de cola
+            onRemoveFromQueue: async (flightCode, duration) => {
+                await queueProcessingAnimationManager.removeFromQueueDisplay(flightCode, duration);
+            },
+            
+            // Callback para actualizar métricas
+            onUpdateMetrics: async () => {
+                if (metricsManager) {
+                    await metricsManager.updateMetricsPanel();
+                }
+            },
+            
+            // Callback final
+            onFinished: async (allSteps) => {
+                console.log('🎉 Todos los pasos procesados correctamente');
+                
+                // Mostrar resumen final con animación
+                await queueProcessingAnimationManager.showSummary(allSteps, summary);
+                
+                // Limpiar cola del backend
+                await queueManager.clearQueue();
+                
+                // Recargar árbol final
+                await loadTree();
+            }
+        });
+        
+        console.log('✅ === PROCESAMIENTO COMPLETADO EXITOSAMENTE ===\n');
+        
+    } catch (error) {
+        console.error('❌ Error procesando cola:', error);
+        alert('❌ Error procesando cola:\n' + (error.response?.data?.detail || error.message));
+        
+    } finally {
+        // 4️⃣ REHABILITAR BOTÓN
+        btnProcesarCola.disabled = false;
+        btnProcesarCola.innerHTML = originalContent;
+        console.log('✅ Botón Procesar Cola rehabilitado');
+    }
+}
+
+/**
+ * NOTA: Las funciones showProcessingIndicator() y showConflictsPanel()
+ * se han reemplazado por funciones más sofisticadas en QueueProcessingAnimationManager:
+ * - animateConflict(): Muestra alerta de conflicto con animación
+ * - processStepsSequentially(): Orquesta toda la animación
+ * 
+ * El QueueProcessingAnimationManager mantiene la responsabilidad única
+ * de gestionar animaciones durante el procesamiento de cola (SOLID SRP).
+ */
+

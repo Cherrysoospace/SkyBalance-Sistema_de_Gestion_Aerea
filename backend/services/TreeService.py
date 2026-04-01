@@ -121,15 +121,56 @@ class TreeService:
 				self.avl.insert(avl_node)
 				self.bst.insert(bst_node)
 				processed += 1
+				
+				# 🔍 DETECCIÓN DE CONFLICTOS DE BALANCE CRÍTICO
+				balance_conflicts = self._detect_critical_balance_conflicts(avl_node)
+				if balance_conflicts:
+					for balance_conflict in balance_conflicts:
+						conflict_item = {
+							"codigo": payload.get("codigo"),
+							"tipo": "balance_crítico",
+							"detalles": balance_conflict
+						}
+						conflicts.append(conflict_item)
+				
+				self.avl.applyDepthPenalty(self.depthLimit)
 			except Exception as exc:
-				conflicts.append({"codigo": payload.get("codigo"), "error": str(exc)})
+				conflict_item = {
+					"codigo": payload.get("codigo"),
+					"tipo": "excepción",
+					"error": str(exc)
+				}
+				conflicts.append(conflict_item)
 
-		self.avl.applyDepthPenalty(self.depthLimit)
 		return {
 			"processed": processed,
 			"conflicts": conflicts,
 			"pendientes": self.queue.size(),
 		}
+
+	def _detect_critical_balance_conflicts(self, node):
+		"""
+		Verifica el camino desde el nodo insertado hacia la raíz,
+		detectando nodos con factor de balance crítico (±2 o peor).
+		Retorna una lista de conflictos detectados.
+		"""
+		critical_imbalances = []
+		current = node
+		
+		while current is not None:
+			bf = self.avl.getBalanceFactor(current)
+			# Factor de balance crítico: fuera del rango [-1, 0, 1]
+			if bf > 1 or bf < -1:
+				critical_imbalances.append({
+					"codigo_nodo": current.getValue(),
+					"factor_balance": bf,
+					"altura_izquierda": self.avl.calculateHeight(current.getLeftChild()),
+					"altura_derecha": self.avl.calculateHeight(current.getRightChild()),
+					"tipo_desbalance": "izquierda pesada" if bf > 0 else "derecha pesada"
+				})
+			current = current.getParent()
+		
+		return critical_imbalances
 
 	def process_queue_with_steps(self):
 		"""Procesa la cola pero retorna pasos intermedios para animación."""
@@ -143,21 +184,54 @@ class TreeService:
 				self._push_undo_state()
 				avl_node = Node(payload)
 				bst_node = Node(payload)
+				
+				# ACTIVAR STRESS MODE: Insertar SIN rebalancear automáticamente
+				stress_mode_was_on = self.avl.stressMode
+				self.avl.stressMode = True
+				
+				# Insertar nodo en stress mode (sin rotaciones automáticas)
 				self.avl.insert(avl_node)
 				self.bst.insert(bst_node)
+				
+				# 🔍 DETECTAR CONFLICTOS DE BALANCE mientras el árbol aún está desbalanceado
+				balance_conflicts = self._detect_critical_balance_conflicts(avl_node)
+				
+				# DESACTIVAR STRESS MODE y aplicar rebalanceo si hay conflictos
+				self.avl.stressMode = stress_mode_was_on
+				if balance_conflicts:
+					# Si hay conflictos, aplicar checkBalance para rebalancear
+					self.avl._AVL__checkBalance(avl_node)
+					for balance_conflict in balance_conflicts:
+						conflict_item = {
+							"codigo": payload.get("codigo"),
+							"tipo": "balance_crítico",
+							"detalles": balance_conflict
+						}
+						conflicts.append(conflict_item)
+				
 				processed += 1
 				self.avl.applyDepthPenalty(self.depthLimit)
 
 				# Capturar estado intermediario
-				steps.append({
+				step_data = {
 					"step": processed,
 					"codigo_insertado": payload.get("codigo"),
 					"tree": self.avl.toDict(),
 					"metrics": self.avl.getMetrics(),
 					"conflictos": len(conflicts),
-				})
+				}
+				
+				# Agregar conflictos de balance al paso si los hay
+				if balance_conflicts:
+					step_data["balance_criticos"] = balance_conflicts
+				
+				steps.append(step_data)
 			except Exception as exc:
-				conflict_item = {"codigo": payload.get("codigo"), "error": str(exc)}
+				conflict_item = {
+					"codigo": payload.get("codigo"),
+					"tipo": "excepción",
+					"error": str(exc)
+				}
 				conflicts.append(conflict_item)
 				steps.append({
 					"step": processed + 1,
@@ -174,6 +248,34 @@ class TreeService:
 			"steps": steps,
 			"pendientes": self.queue.size(),
 		}
+
+	def load_demo_conflict_scenario(self):
+		"""
+		Carga un escenario de demostración con datos que causarán desbalance observable.
+		Simula inserciones secuenciales sin rebalanceo para visualizar conflictos.
+		"""
+		# Limpiar estado actual
+		self.avl = AVL()
+		self.bst = BST()
+		self.queue = InsertionQueue()
+		self.undoStack = ActionStack()
+		
+		# Datos que causarán desbalance en ambos lados
+		# El truco: usar códigos que generen búsqueda descendente/ascendente
+		demo_flights = [
+			{"codigo": "SB050", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
+			{"codigo": "SB025", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
+			{"codigo": "SB075", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
+			{"codigo": "SB010", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
+			{"codigo": "SB100", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
+		]
+		
+		# Encolar todos
+		for flight in demo_flights:
+			self.queue_insert(flight)
+		
+		# Procesar y retornar con steps para animación
+		return self.process_queue_with_steps()
 
 	def get_queue(self):
 		return {
