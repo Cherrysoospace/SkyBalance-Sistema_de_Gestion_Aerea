@@ -238,7 +238,7 @@ export class ApiClient {
     // QUEUE
     // ============================================
     async enqueueInsertion(payload) {
-        return this.post('/queue/add', payload);
+        return this.post('/queue/enqueue', payload);
     }
 
     async getQueue() {
