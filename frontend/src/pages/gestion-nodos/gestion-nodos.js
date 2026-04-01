@@ -312,6 +312,7 @@ function initializeManagers() {
 
     try {
         rebalanceManager = new RebalanceAnimationManager(apiClient);
+        rebalanceManager.setupCloseButton();
         console.log('  ✅ RebalanceAnimationManager inicializado');
     } catch (e) {
         console.error('  ❌ Error inicializando RebalanceAnimationManager:', e);

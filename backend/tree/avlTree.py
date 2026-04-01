@@ -384,14 +384,22 @@ class AVL:
 
   def rebalanceGlobalStepByStep(self):
     """Retorna información detallada para animar paso a paso.
-    Cada rotación incluye: tipo, nodo, y estado del árbol después."""
+    Cada rotación incluye: tipo, nodo, y estado del árbol ANTES y DESPUÉS."""
     if self.root is None:
       return {"steps": [], "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0}}
 
     passes = 0
     changed = True
     steps = []  # Lista de pasos con rotación y snapshots del árbol
-    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Reset solo para este rebalanceo
+    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    
+    # 🔑 AGREGAR ÁRBOL INICIAL COMO REFERENCIA
+    initial_tree_snapshot = {
+      "type": "INITIAL",
+      "node_codigo": self.root.codigo if self.root else None,
+      "tree_snapshot": self.toDict()
+    }
+    steps.append(initial_tree_snapshot)
     
     while changed and passes < 100:
       passes += 1
@@ -402,19 +410,27 @@ class AVL:
       for node in nodes:
         bf = self.getBalanceFactor(node)
         if bf > 1 or bf < -1:
+          # 🔑 AGREGAR SNAPSHOT PRE-ROTACIÓN (nodo desbalanceado visible)
+          steps.append({
+            "type": "PRE_" + self.__identifyRebalanceCase(node, bf),
+            "node_codigo": node.codigo,
+            "tree_snapshot": self.toDict(),
+            "is_pre_rotation": True  # Indicador para el frontend
+          })
+          
           self.__rebalanceWithTrackingStepByStep(node, bf, rotations_in_pass)
           changed = True
           
-          # Guardar snapshot después de cada rotación
+          # AGREGAR SNAPSHOT POST-ROTACIÓN (nodo balanceado tras rotación)
           for rotation_info in rotations_in_pass:
             steps.append({
               "type": rotation_info["type"],
               "node_codigo": rotation_info["node_codigo"],
-              "tree_snapshot": self.toDict()  # Estado actual del árbol
+              "tree_snapshot": self.toDict(),
+              "is_post_rotation": True  # Indicador para el frontend
             })
           rotations_in_pass = []
 
-    # Retornar resumen del rebalanceo global actual, no el total
     return {
       "steps": steps,
       "summary": self.rotationCountsLastGlobalRebalance

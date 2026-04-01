@@ -13,7 +13,7 @@ const REBALANCE_ANIMATION_CONFIG = {
      * Tiempo que tarda en interpolarse de una posición a otra
      * Recomendado: 800-1200ms para visibilidad clara
      */
-    ROTATION_ANIMATION_DURATION: 1500,
+    ROTATION_ANIMATION_DURATION: 10500,
     
     /**
      * Función de easing para animaciones suaves
@@ -26,7 +26,7 @@ const REBALANCE_ANIMATION_CONFIG = {
      * Mayor valor = más tiempo entre rotaciones
      * Recomendado: 200-400ms
      */
-    PAUSE_BETWEEN_ROTATIONS: 400,
+    PAUSE_BETWEEN_ROTATIONS: 700,
     
     /**
      * Tiempo (ms) que el nodo permanece resaltado durante la rotación
@@ -60,7 +60,7 @@ const REBALANCE_ANIMATION_CONFIG = {
     /**
      * Opciones de debug - logs detallados en consola
      */
-    DEBUG_MODE: false,
+    DEBUG_MODE: true,
     
     /**
      * Suavidad de links durante animación

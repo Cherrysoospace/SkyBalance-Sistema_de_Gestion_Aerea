@@ -357,6 +357,13 @@ class TreeService:
 		"""Rebalanceo global pero retornando snapshots para animación paso a paso."""
 		self._push_undo_state()
 		response = self.avl.rebalanceGlobalStepByStep()
+		
+		# DEBUG: Loguear información
+		import sys
+		print(f"✅ DEBUG rebalance_global_animated - Total pasos: {len(response.get('steps', []))}", file=sys.stderr)
+		if response.get('steps'):
+			print(f"   Primer paso: {response['steps'][0]}", file=sys.stderr)
+		
 		# Sincronizar BST con el nuevo estado del AVL
 		self.bst.loadFromTopology(self.avl.toDict())
 		self.avl.applyDepthPenalty(self.depthLimit)

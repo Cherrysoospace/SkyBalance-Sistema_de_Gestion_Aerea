@@ -98,26 +98,44 @@ class RebalanceAnimationManager {
         panel.classList.add('active');
         rotationsList.innerHTML = '';
 
-        const totalRotations = steps.length;
-        console.log(`🎬 Iniciando animación de ${totalRotations} rotaciones`);
+        // 🔑 NUEVA LÓGICA: Agrupar pasos PRE_XX con XX
+        // Saltar INITIAL y agrupar pares de desbalance-rotación
+        let rotationPairs = this._groupPrePostSteps(steps);
+        const initialSnapshot = steps.find(step => step.type === 'INITIAL')?.tree_snapshot;
+        
+        const totalRotations = rotationPairs.length;
+        console.log(`🎬 Iniciando animación de ${totalRotations} rotaciones (pares PRE/POST)`);
+        console.log(`📊 DEBUG - Total steps del backend: ${steps.length}, Rotaciones agrupadas: ${totalRotations}`);
+        console.log(`📊 DEBUG - Snapshot inicial encontrado:`, !!initialSnapshot);
 
         // Inicializar motor de animación si no existe
         if (!this.rebalanceEngine) {
             this.rebalanceEngine = new RebalanceAnimationEngine('#tree-container');
         }
 
+        if (totalRotations === 0) {
+            alert('El árbol ya está balanceado. No se necesitan rotaciones.');
+            return;
+        }
+
         // Renderizar árbol inicial
+        const treeToRender = initialSnapshot || initialTree; 
+        console.log(`🌳 Árbol inicial para animación:`, treeToRender);
+        
         this.rebalanceEngine.renderInitialTree(
-            { tree: steps[0]?.tree_snapshot || initialTree.tree },
+            { tree: treeToRender },
             { width: 800, height: 500 }
         );
 
         // Crear cola de rotaciones (OCP: Extensible)
         this.rotationQueueAnimator = new RotationQueueAnimator(this.rebalanceEngine);
 
-        // Encolar rotaciones
-        for (const step of steps) {
-            this.rotationQueueAnimator.enqueue(step);
+        // Encolar pares PRE/POST
+        console.log(`📝 Encolando ${totalRotations} pares de rotación PRE/POST...`);
+        for (const pair of rotationPairs) {
+            console.log(`  - Rotación: ${pair.type} | Nodo: ${pair.node_codigo}`);
+            console.log(`    PRE: ${pair.preStep.type} | POST: ${pair.postStep.type}`);
+            this.rotationQueueAnimator.enqueue(pair);
         }
 
         // Procesar cola con callbacks de progreso
@@ -133,7 +151,7 @@ class RebalanceAnimationManager {
 
         // Mostrar alerta final si está configurado
         if (this.config.animationConfig.SHOW_FINAL_ALERT) {
-            this._showRebalanceSummary(steps, summary);
+            this._showRebalanceSummary(rotationPairs, summary);
         }
     }
 
@@ -295,6 +313,82 @@ El árbol ha sido rebalanceado exitosamente.
      */
     _sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Cierra el panel de rebalanceo
+     * SRP: Responsable de limpiar la UI del panel
+     */
+    closePanel() {
+        const panel = document.getElementById(this.config.rebalancePanel);
+        if (panel) {
+            panel.classList.remove('active');
+            // Limpiar contenido del panel
+            const rotationsList = document.getElementById(this.config.rotationsList);
+            if (rotationsList) {
+                rotationsList.innerHTML = '';
+            }
+            console.log('✅ Panel de rebalanceo cerrado');
+        }
+    }
+
+    /**
+     * Inicializa event listeners para el panel de rebalanceo
+     * DIP: Descacopla la lógica de eventos
+     */
+    setupCloseButton() {
+        const closeBtn = document.getElementById('btn-close-rebalance');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closePanel());
+            console.log('✅ Botón de cierre del panel configurado');
+        }
+    }
+
+    /**
+     * Agrupa pasos PRE_XX con sus correspondientes XX
+     * Esto permite mostrar el desbalance ANTES de la rotación
+     * @private
+     */
+    _groupPrePostSteps(steps) {
+        const pairs = [];
+        let i = 0;
+
+        while (i < steps.length) {
+            const current = steps[i];
+
+            // Saltar INITIAL
+            if (current.type === 'INITIAL') {
+                i++;
+                continue;
+            }
+
+            // Si es un paso PRE_XX, agrupar con el siguiente XX
+            if (current.type.startsWith('PRE_')) {
+                const rotationType = current.type.substring(4); // Remover "PRE_"
+                const nextStep = steps[i + 1];
+
+                if (nextStep && nextStep.type === rotationType) {
+                    pairs.push({
+                        type: rotationType,
+                        node_codigo: current.node_codigo,
+                        preStep: current,       // Árbol CON desbalance
+                        postStep: nextStep,     // Árbol DESPUÉS rotación
+                        isRotationPair: true
+                    });
+                    i += 2;
+                } else {
+                    // Si no hay POST después de PRE, omitir
+                    console.warn(`⚠️ PRE_${rotationType} sin POST correspondiente`);
+                    i++;
+                }
+            } else {
+                // Si encuentra un paso XX sin PRE, omitir (caso edge)
+                console.warn(`⚠️ Paso ${current.type} sin PRE- correspondiente, omitido`);
+                i++;
+            }
+        }
+
+        return pairs;
     }
 
     /**

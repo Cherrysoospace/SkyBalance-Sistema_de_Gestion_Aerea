@@ -68,8 +68,11 @@ class RebalanceAnimationEngine {
         
         const root = d3.hierarchy(treeData.tree ?? treeData, d => {
             const children = [];
+            // Soportar ambos formatos: left/right (inglés) e izquierdo/derecho (español)
             if (d.left) children.push(d.left);
             if (d.right) children.push(d.right);
+            if (d.izquierdo && !d.left) children.push(d.izquierdo);
+            if (d.derecho && !d.right) children.push(d.derecho);
             return children.length ? children : null;
         });
         
@@ -226,8 +229,11 @@ class RebalanceAnimationEngine {
             
             const newRoot = d3.hierarchy(newTreeData.tree ?? newTreeData, d => {
                 const children = [];
+                // Soportar ambos formatos: left/right (inglés) e izquierdo/derecho (español)
                 if (d.left) children.push(d.left);
                 if (d.right) children.push(d.right);
+                if (d.izquierdo && !d.left) children.push(d.izquierdo);
+                if (d.derecho && !d.right) children.push(d.derecho);
                 return children.length ? children : null;
             });
             
@@ -432,6 +438,7 @@ class RotationQueueAnimator {
 
     /**
      * Procesa todas las rotaciones en la cola de forma secuencial
+     * Ahora soporta pares PRE/POST para mostrar desbalance ANTES de rotación
      */
     async processQueue(onStepComplete = null) {
         if (this.isProcessing) {
@@ -445,17 +452,49 @@ class RotationQueueAnimator {
         try {
             for (let i = 0; i < totalSteps; i++) {
                 const { step, duration } = this.queue[i];
-                
-                // Animar transición - usa configuración si duration es null
-                await this.engine.animateTreeTransition(
-                    { tree: step.tree_snapshot },
-                    duration,  // null → usa config
-                    null       // null → usa config
-                );
-                
-                // Resaltar el nodo que fue rotado
-                this.engine.highlightNode(step.node_codigo, 300);
-                
+
+                if (step.isRotationPair) {
+                    // 🔑 NUEVA LÓGICA: Pares PRE/POST
+                    console.log(`🔄 Animando rotación ${step.type} (PAR PRE/POST)`);
+                    console.log(`  1️⃣  Mostrando árbol DESBALANCEADO (PRE)`);
+                    
+                    // FASE 1: Animar a PRE (árbol desbalanceado)
+                    await this.engine.animateTreeTransition(
+                        { tree: step.preStep.tree_snapshot },
+                        500,  // Más rápido para mostrar desbalance
+                        null
+                    );
+
+                    // Resaltar el nodo desbalanceado
+                    this.engine.highlightNode(step.node_codigo, 800);
+                    
+                    // Esperar a que se vea el desbalance
+                    await this._sleep(1000);
+
+                    console.log(`  2️⃣  Animando ROTACIÓN a árbol balanceado (POST)`);
+                    
+                    // FASE 2: Animar a POST (árbol balanceado con rotación)
+                    await this.engine.animateTreeTransition(
+                        { tree: step.postStep.tree_snapshot },
+                        duration,  // null → usa duración del config (2500ms)
+                        null
+                    );
+
+                    // Esperar pausa entre rotaciones
+                    await this._sleep(700);
+
+                } else {
+                    // Lógica antigua para pasos individuales (fallback)
+                    await this.engine.animateTreeTransition(
+                        { tree: step.tree_snapshot },
+                        duration,
+                        null
+                    );
+                    
+                    this.engine.highlightNode(step.node_codigo, 300);
+                    await this._sleep(700);
+                }
+
                 // Callback con progreso
                 if (onStepComplete) {
                     await onStepComplete({
