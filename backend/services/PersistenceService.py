@@ -12,26 +12,62 @@ class PersistenceService:
 
 	def validate_and_normalize_topology(self, payload):
 		"""
-		Valida y normaliza una topología JSON:
-		1. Rechaza formato INSERCION ([] de vuelos)
-		2. Acepta formato TOPOLOGIA (árbol jerárquico)
-		3. Convierte codigo int → string
-		4. Establece prioridad = 1 si falta
+		Detecta y normaliza ambos formatos:
+		1. TOPOLOGIA: árbol jerárquico {codigo, izquierdo, derecho}
+		   → Retorna dict normalizado (recursivo)
+		2. INSERCION: lista de vuelos {tipo: "INSERCION", vuelos: [...]}
+		   → Retorna array de vuelos normalizados
+
+		Ammbos: convierte codigo int→string, establece prioridad=1 si falta
 		"""
-		# Verificar si es INSERCION (no permitido)
+		# INSERCION: lista de vuelos
 		if isinstance(payload, dict) and payload.get("tipo") == "INSERCION":
-			raise ValueError("❌ No se puede cargar formato INSERCION. Use formato TOPOLOGIA (árbol jerárquico)")
+			vuelos = payload.get("vuelos", [])
+			if not isinstance(vuelos, list):
+				raise ValueError("❌ Campo 'vuelos' debe ser una lista en INSERCION")
+			if len(vuelos) == 0:
+				raise ValueError("❌ INSERCION vacío: no hay vuelos para insertar")
 
-		if isinstance(payload, dict) and isinstance(payload.get("vuelos"), list):
-			raise ValueError("❌ No se puede cargar formato de lista de vuelos. Use formato TOPOLOGIA (árbol jerárquico)")
+			# Normalizar cada vuelo
+			normalized_vuelos = []
+			for i, vuelo in enumerate(vuelos):
+				try:
+					normalized = self._normalize_vuelo(vuelo)
+					normalized_vuelos.append(normalized)
+				except ValueError as e:
+					raise ValueError(f"❌ Error en vuelo {i}: {str(e)}")
+			return normalized_vuelos  # Array de vuelos normalizados
 
-		# Debe ser un árbol (dict con estructura jerárquica)
-		if not isinstance(payload, dict):
-			raise ValueError("❌ Topología debe ser un objeto JSON (árbol jerárquico)")
+		# TOPOLOGIA: árbol jerárquico
+		if isinstance(payload, dict):
+			# Debe tener estructura de árbol (al menos codigo o izquierdo/derecho)
+			if "codigo" in payload or "izquierdo" in payload or "derecho" in payload:
+				normalized = self._normalize_node(payload)
+				return normalized  # Dict (árbol normalizado)
 
-		# Normalizar el árbol recursivamente
-		normalized = self._normalize_node(payload)
-		return normalized
+		raise ValueError("❌ JSON inválido. Esperado: TOPOLOGIA (árbol jerárquico) o INSERCION (lista de vuelos)")
+
+	def _normalize_vuelo(self, vuelo):
+		"""
+		Normaliza un vuelo individual (para INSERCION):
+		- Convierte codigo int → string
+		- Establece prioridad = 1 si falta
+		"""
+		if not isinstance(vuelo, dict):
+			raise ValueError("vuelo debe ser un objeto JSON")
+
+		# Convertir codigo: int → string
+		if "codigo" in vuelo:
+			if isinstance(vuelo["codigo"], int):
+				vuelo["codigo"] = str(vuelo["codigo"])
+			elif not isinstance(vuelo["codigo"], str):
+				raise ValueError(f"codigo debe ser string o int, recibido: {type(vuelo['codigo'])}")
+
+		# Establecer prioridad por defecto
+		if "prioridad" not in vuelo or vuelo["prioridad"] is None:
+			vuelo["prioridad"] = 1
+
+		return vuelo
 
 	def _normalize_node(self, node):
 		"""

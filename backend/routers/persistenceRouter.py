@@ -14,17 +14,29 @@ async def load_json(file: UploadFile = File(...), depthLimit: int = Form(...)):
 		if depthLimit <= 0:
 			raise ValueError("La profundidad máxima debe ser mayor a 0")
 
-		# Establecer depthLimit ANTES de cargar
-		treeService.set_depth_limit(depthLimit)
-
 		# Cargar y validar el JSON
 		content = await file.read()
 		payload = persistenceService.parse_json_text(content.decode("utf-8"))
 
-		# 🔍 VALIDAR Y NORMALIZAR TOPOLOGÍA
+		# 🔍 VALIDAR Y NORMALIZAR (detecta TOPOLOGIA o INSERCION)
 		normalized_payload = persistenceService.validate_and_normalize_topology(payload)
 
-		info = treeService.load_from_json_data(normalized_payload)
+		# Reconvertir INSERCION a formato dict para compatibilidad con load_from_json_data
+		if isinstance(normalized_payload, list):
+			# Es INSERCION (array de vuelos)
+			payload_to_load = {
+				"tipo": "INSERCION",
+				"vuelos": normalized_payload
+			}
+		else:
+			# Es TOPOLOGIA (dict)
+			payload_to_load = normalized_payload
+
+		# Cargar árbol (limpia automáticamente antes de cargar)
+		info = treeService.load_from_json_data(payload_to_load)
+
+		# ✅ Establecer depthLimit DESPUES de cargar (para aplicar penalidad correctamente)
+		treeService.set_depth_limit(depthLimit)
 
 		return {
 			"info": info,

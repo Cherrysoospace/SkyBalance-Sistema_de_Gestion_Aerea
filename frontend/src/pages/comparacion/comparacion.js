@@ -162,8 +162,10 @@ function renderTree(treeData, containerId, label) {
 
     const root = d3.hierarchy(treeData, d => {
         const ch = [];
-        if (d.left)  ch.push(d.left);
-        if (d.right) ch.push(d.right);
+        if (d.left)      ch.push(d.left);
+        if (d.right)     ch.push(d.right);
+        if (d.izquierdo) ch.push(d.izquierdo);
+        if (d.derecho)   ch.push(d.derecho);
         return ch.length ? ch : null;
     });
 

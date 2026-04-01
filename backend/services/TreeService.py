@@ -59,6 +59,7 @@ class TreeService:
 	def set_depth_limit(self, depth_limit):
 		self.depthLimit = max(0, int(depth_limit))
 		self.avl.applyDepthPenalty(self.depthLimit)
+		self.bst.applyDepthPenalty(self.depthLimit)
 		return {"depthLimit": self.depthLimit}
 
 	def insert_flight(self, payload):
@@ -68,6 +69,7 @@ class TreeService:
 		self.avl.insert(avl_node)
 		self.bst.insert(bst_node)
 		self.avl.applyDepthPenalty(self.depthLimit)
+		self.bst.applyDepthPenalty(self.depthLimit)
 		return {"ok": True}
 
 	def delete_node(self, codigo):
@@ -76,6 +78,7 @@ class TreeService:
 		if deleted:
 			self.bst.delete(codigo)
 		self.avl.applyDepthPenalty(self.depthLimit)
+		self.bst.applyDepthPenalty(self.depthLimit)
 		return {"ok": deleted}
 
 	def modify_node(self, codigo, updates):
@@ -85,6 +88,7 @@ class TreeService:
 		if updated_avl:
 			self.bst.updateNode(codigo, updates)
 			self.avl.applyDepthPenalty(self.depthLimit)
+			self.bst.applyDepthPenalty(self.depthLimit)
 			return {"ok": True}
 		return {"ok": False}
 
@@ -94,6 +98,7 @@ class TreeService:
 		if response["removed"] > 0:
 			self.bst.delete(codigo)
 		self.avl.applyDepthPenalty(self.depthLimit)
+		self.bst.applyDepthPenalty(self.depthLimit)
 		return response
 
 	def undo(self):
@@ -287,20 +292,25 @@ class TreeService:
 	def load_from_json_data(self, data):
 		self._push_undo_state()
 
+		# LIMPIAR AMBOS ÁRBOLES antes de cargar nuevos datos
+		self.avl.clear()
+		self.bst.clear()
+
 		if isinstance(data, dict) and data.get("tipo", "").upper() == "INSERCION":
 			vuelos = data.get("vuelos", [])
 			self.avl.loadFromInsertionList(vuelos)
-			self.bst.clear()
 			for vuelo in vuelos:
 				node = Node(vuelo)
 				self.bst.insert(node)
 			self.avl.applyDepthPenalty(self.depthLimit)
+			self.bst.applyDepthPenalty(self.depthLimit)
 			return {"mode": "INSERCION", "nodos": len(vuelos)}
 
 		# Fallback to topology mode.
 		self.avl.loadFromTopology(data)
 		self.bst.loadFromTopology(data)
 		self.avl.applyDepthPenalty(self.depthLimit)
+		self.bst.applyDepthPenalty(self.depthLimit)
 		return {"mode": "TOPOLOGIA", "nodos": len(self.avl.breadthFirstSearch())}
 
 	def export_json(self):

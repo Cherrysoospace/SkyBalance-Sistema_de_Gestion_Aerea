@@ -519,6 +519,7 @@ class AVL:
       "precioFinal": node.precioFinal,
       "promocion": node.promocion,
       "prioridad": node.prioridad,
+      "critico": node.critico,
       "alerta": node.alerta,
       "altura": self.calculateHeight(node),
       "factorEquilibrio": self.getBalanceFactor(node),

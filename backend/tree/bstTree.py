@@ -270,9 +270,10 @@ class BST:
       "precioFinal": node.precioFinal,
       "promocion": node.promocion,
       "prioridad": node.prioridad,
+      "critico": node.critico,
       "alerta": node.alerta,
       "altura": self.calculateHeight(node),
-      "factorEquilibrio": self.getBalanceFactor(node),
+      "factorEquilibrio": 0,
       "izquierdo": self.__serializeNode(node.getLeftChild()),
       "derecho": self.__serializeNode(node.getRightChild()),
     }
@@ -289,6 +290,24 @@ class BST:
         "posOrder": self.posOrderTraversal() if self.root is not None else [],
       },
     }
+
+  # Aplica penalidad de precio por profundidad (similar a AVL)
+  def applyDepthPenalty(self, depthLimit):
+    self.__applyDepthPenalty(self.root, 0, depthLimit)
+
+  def __applyDepthPenalty(self, node, depth, depthLimit):
+    if node is None:
+      return
+
+    if depth > depthLimit:
+      node.critico = True
+      node.precioFinal = round(node.precioBase * 1.25, 2)
+    else:
+      node.critico = False
+      node.precioFinal = node.precioBase
+
+    self.__applyDepthPenalty(node.getLeftChild(), depth + 1, depthLimit)
+    self.__applyDepthPenalty(node.getRightChild(), depth + 1, depthLimit)
 
   # Método para limpiar el árbol
   def clear(self):
