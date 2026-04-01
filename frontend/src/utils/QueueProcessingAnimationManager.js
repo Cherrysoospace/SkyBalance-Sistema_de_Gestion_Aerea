@@ -154,7 +154,38 @@ export class QueueProcessingAnimationManager {
             // ═══════════════════════════════════════════════════════════
             console.log(`\n[FASE 1️⃣] INSERCIÓN NORMAL - Renderizar nodo en posición inicial`);
 
-            // Capturar posiciones iniciales ANTES de actualizar árbol si hay rotaciones
+            // ═══════════════════════════════════════════════════════════
+            // FASE 1.1: RENDERIZAR ÁRBOL PRE-ROTACIÓN (si hay desbalance)
+            // ═══════════════════════════════════════════════════════════
+            
+            // Revisar si hay conflictos de balance ANTES de renderizar
+            const conflictosArray = step.balance_criticos || [];
+            const hasConflicts = conflictosArray && Array.isArray(conflictosArray) && conflictosArray.length > 0;
+            
+            if (hasConflicts && step.tree_pre_rotation) {
+                console.log(`   🌳 ÁRBOL PRE-ROTACIÓN: Renderizando árbol DESBALANCEADO con nuevo nodo ${step.codigo_insertado}...`);
+                
+                // Usar tree_pre_rotation para mostrar el árbol ANTES de las rotaciones
+                const preRotationData = {
+                    tree: step.tree_pre_rotation,
+                    metrics: step.metrics || {}
+                };
+                
+                if (callbacks.onUpdateTree) {
+                    await callbacks.onUpdateTree(preRotationData);
+                    await this._delay(150); // Esperar render de D3
+                    console.log(`   ✅ Árbol pre-rotación renderizado`);
+                }
+            } else {
+                console.log(`   🌳 Renderizando árbol con nuevo nodo ${step.codigo_insertado}...`);
+                if (callbacks.onUpdateTree) {
+                    await callbacks.onUpdateTree(step);
+                    await this._delay(150); // Esperar render de D3
+                    console.log(`   ✅ Árbol renderizado`);
+                }
+            }
+
+            // Capturar posiciones iniciales DESPUÉS de renderizar árbol PRE-ROTACIÓN si hay rotaciones
             let initialPositions = new Map();
             if (step.rotaciones && step.rotaciones.length > 0) {
                 const nodeElements = document.querySelectorAll('#tree-container g[data-node-code]');
@@ -171,16 +202,8 @@ export class QueueProcessingAnimationManager {
                             centerY: rect.y - containerRect.y + rect.height / 2
                         });
                     });
-                    console.log(`   ✅ Capturadas posiciones iniciales: ${initialPositions.size} nodos`);
+                    console.log(`   ✅ Capturadas posiciones PRE-ROTACIÓN para animación FLIP: ${initialPositions.size} nodos`);
                 }
-            }
-
-            // Actualizar árbol con el nuevo nodo
-            if (callbacks.onUpdateTree) {
-                console.log(`   🌳 Renderizando árbol con nuevo nodo ${step.codigo_insertado}...`);
-                await callbacks.onUpdateTree(step);
-                await this._delay(150); // Esperar render de D3
-                console.log(`   ✅ Árbol renderizado`);
             }
 
             // Animar entrada del nodo recién insertado
@@ -201,10 +224,8 @@ export class QueueProcessingAnimationManager {
             // DEBUG: Ver qué campos tiene el step
             console.log(`\n🔍 [FASE 2 DEBUG] Campos del step: ${Object.keys(step).join(', ')}`);
             console.log(`   step.balance_criticos:`, step.balance_criticos);
-            console.log(`   step.conflictos:`, step.conflictos);
-            
-            // Buscar en balance_criticos (ese es el array real del backend)
-            const conflictosArray = step.balance_criticos || [];
+            console.log(`   step.tree_pre_rotation:`, !!step.tree_pre_rotation);
+            console.log(`   step.tree_post_rotation:`, !!step.tree_post_rotation);
             
             if (conflictosArray && Array.isArray(conflictosArray) && conflictosArray.length > 0) {
                 console.log(`\n[FASE 2️⃣] DETECCIÓN DE DESBALANCE - ${conflictosArray.length} conflicto(s) detectado(s)`);
@@ -214,18 +235,42 @@ export class QueueProcessingAnimationManager {
                 for (const conflict of conflictosArray) {
                     const nodeCode = conflict.codigo_nodo;
                     const balanceFactor = conflict.factor_balance;
+                    const tipoDesbalance = conflict.tipo_desbalance;
+                    const alturaIzq = conflict.altura_izquierda;
+                    const alturaDer = conflict.altura_derecha;
                     
-                    console.log(`   ⚠️ Conflicto: Nodo ${nodeCode}, Factor: ${balanceFactor}`);
-                    console.log(`   Detalles:`, conflict);
+                    console.log(`   ⚠️ FACTOR DE BALANCE DETECTADO: Nodo ${nodeCode}`);
+                    console.log(`      Factor: ${balanceFactor} (Fuera de rango [-1, 0, +1])`);
+                    console.log(`      Tipo: ${tipoDesbalance}`);
+                    console.log(`      Alturas: Izq=${alturaIzq}, Der=${alturaDer}`);
                     
                     // Ejecutar animación de conflicto en el nodo
-                    console.log(`   🎬 Iniciando alerta visual...`);
-                    await this.animateConflict(nodeCode, balanceFactor);
-                    console.log(`   ✅ Alerta visual completada`);
+                    console.log(`   🎬 Iniciando alerta visual del FACTOR DE BALANCE...`);
+                    await this.animateConflict(nodeCode, balanceFactor, tipoDesbalance);
+                    console.log(`   ✅ Alerta visual completada - Factor de balance VISIBLE ${this.config.CONFLICT_ALERT_VISIBLE_MIN_DURATION || 1000}ms`);
+                }
+                
+                // ═══════════════════════════════════════════════════════════
+                // FASE 2.1: RENDERIZAR ÁRBOL POST-ROTACIÓN (después de alerta)
+                // ═══════════════════════════════════════════════════════════
+                if (hadConflict && step.tree_post_rotation) {
+                    console.log(`\n   🌳 ÁRBOL POST-ROTACIÓN: Renderizando árbol REBALANCEADO tras completar alertas...`);
+                    
+                    // Usar tree_post_rotation para mostrar el árbol DESPUÉS de las rotaciones
+                    const postRotationData = {
+                        tree: step.tree_post_rotation,
+                        metrics: step.metrics || {}
+                    };
+                    
+                    if (callbacks.onUpdateTree) {
+                        await callbacks.onUpdateTree(postRotationData);
+                        await this._delay(150); // Esperar render de D3
+                        console.log(`   ✅ Árbol post-rotación renderizado - REBALANCEO COMPLETADO`);
+                    }
                 }
 
             } else {
-                console.log(`\n[FASE 2️⃣] SIN DESBALANCE - El árbol está balanceado, procediendo a rotación si aplica`);
+                console.log(`\n[FASE 2️⃣] SIN DESBALANCE - El árbol está balanceado después de inserción`);
             }
 
             // ═══════════════════════════════════════════════════════════
@@ -454,13 +499,16 @@ export class QueueProcessingAnimationManager {
      * 
      * @param {String} nodeCode - Código del nodo desbalanceado
      * @param {Number} balanceFactor - Factor de balance (ej: -2, 2)
+     * @param {String} tipoDesbalance - Tipo de desbalance ("izquierda pesada" o "derecha pesada")
      * @returns {Promise} Resuelve cuando terminan todas las animaciones
      * @public
      */
-    async animateConflict(nodeCode, balanceFactor) {
+    async animateConflict(nodeCode, balanceFactor, tipoDesbalance = '') {
         return new Promise((resolve) => {
             try {
-                console.log(`\n⚠️ CONFLICTO ANIMADO: ${nodeCode} (Balance=${balanceFactor})`);
+                console.log(`\n⚠️ CONFLICTO DETECTADO: Nodo ${nodeCode}`);
+                console.log(`   Factor de balance ANTES de rotación: ${balanceFactor > 0 ? '+' : ''}${balanceFactor}`);
+                console.log(`   Tipo de desbalance: ${tipoDesbalance}`);
 
                 const svgContainer = document.getElementById('tree-container');
                 if (!svgContainer) {
@@ -485,15 +533,29 @@ export class QueueProcessingAnimationManager {
                     return resolve();
                 }
 
-                console.log(`✅ [1/5] Nodo encontrado, activando alerta visual`);
+                console.log(`✅ [1/5] Nodo encontrado, activando alerta visual con FACTOR DE BALANCE`);
                 
                 // PASO 1: Agregar clase de pulso al nodo
                 nodeElement.classList.add('conflict-node-alert');
 
-                // Crear tooltip
+                // Crear tooltip mejorado que muestre el factor de balance claramente
                 const tooltip = document.createElement('div');
                 tooltip.className = 'conflict-node-tooltip';
-                tooltip.innerHTML = `<strong>Balance: ${balanceFactor > 0 ? '+' : ''}${balanceFactor}</strong><div class="tooltip-icon">⚠️</div>`;
+                
+                // Mostrar factor de balance de forma prominente
+                const balanceSign = balanceFactor > 0 ? '+' : '';
+                const balanceColor = balanceFactor > 0 ? '#ff6b6b' : '#4ecdc4'; // Rojo para izq pesada, azul para der pesada
+                
+                tooltip.innerHTML = `
+                    <div class="tooltip-content">
+                        <div class="tooltip-label">FACTOR DE BALANCE</div>
+                        <div class="tooltip-value" style="color: ${balanceColor}; font-size: 24px; font-weight: bold;">
+                            ${balanceSign}${balanceFactor}
+                        </div>
+                        <div class="tooltip-type">${tipoDesbalance}</div>
+                        <div class="tooltip-icon">⚠️ DESBALANCE</div>
+                    </div>
+                `;
                 
                 // Agregar tooltip al body
                 document.body.appendChild(tooltip);
@@ -501,13 +563,13 @@ export class QueueProcessingAnimationManager {
                 // Posicionar tooltip sobre el nodo
                 const nodeRect = nodeElement.getBoundingClientRect();
                 tooltip.style.position = 'fixed';
-                tooltip.style.left = (nodeRect.left + nodeRect.width / 2 - 50) + 'px';
-                tooltip.style.top = (nodeRect.top - 70) + 'px';
+                tooltip.style.left = (nodeRect.left + nodeRect.width / 2 - 70) + 'px';
+                tooltip.style.top = (nodeRect.top - 100) + 'px';
 
                 // PASO 2: Mostrar tooltip con animación
                 requestAnimationFrame(() => {
                     tooltip.classList.add('tooltip-visible');
-                    console.log(`✅ [2/5] Tooltip visible`);
+                    console.log(`✅ [2/5] Tooltip visible - FACTOR DE BALANCE MOSTRADO`);
                 });
 
                 // Obtener duraciones
@@ -522,14 +584,14 @@ export class QueueProcessingAnimationManager {
 
                 // T1: PASO 3 - Completar alerta visual, iniciar salida tooltip
                 setTimeout(() => {
-                    console.log(`✅ [3/5] Alerta completada (${alertDuration}ms), iniciando salida tooltip...`);
+                    console.log(`✅ [3/5] Alerta completada (${alertDuration}ms), factor de balance visible ${alertDuration}ms, iniciando salida tooltip...`);
                     tooltip.classList.remove('tooltip-visible');
                     tooltip.classList.add('tooltip-hidden');
                 }, alertDuration);
 
                 // T2: PASO 4 - Remover tooltip del DOM
                 setTimeout(() => {
-                    console.log(`✅ [4/5] Tooltip removido (${alertDuration + exitDuration}ms), esperando delay...`);
+                    console.log(`✅ [4/5] Tooltip removido (${alertDuration + exitDuration}ms), esperando rotación...`);
                     tooltip.remove();
                 }, alertDuration + exitDuration);
 
@@ -543,7 +605,7 @@ export class QueueProcessingAnimationManager {
                 // FINAL: Limpiar y RESOLVER PROMISE
                 setTimeout(() => {
                     nodeElement.classList.remove('conflict-node-resolved');
-                    console.log(`   ✅ CONFLICTO COMPLETO (${totalTime}ms) - LISTA PARA ROTACIÓN\n`);
+                    console.log(`   ✅ FACTOR DE BALANCE MOSTRADO COMPLETAMENTE (${totalTime}ms) - LISTO PARA ROTACIÓN\n`);
                     resolve(); // ← AQUÍ y SOLO AQUÍ resolvemos la promise
                 }, totalTime);  // Este es el tiempo TOTAL
 

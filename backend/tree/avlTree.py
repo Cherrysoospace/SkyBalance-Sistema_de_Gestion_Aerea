@@ -474,7 +474,11 @@ class AVL:
       return {"removed": 0}
 
     # Sort by rentability ascending, depth descending, code descending.
-    candidates.sort(key=lambda item: (item[0], -item[1], -item[2]))
+    # Extraer número del código para ordenamiento (ej: "SB050" -> 50)
+    def extract_code_number(codigo):
+      return int(''.join(filter(str.isdigit, str(codigo)))) if codigo else 0
+    
+    candidates.sort(key=lambda item: (item[0], -item[1], -extract_code_number(item[2])))
     _, _, code = candidates[0]
     response = self.cancelSubtree(code)
     return {"removed": response["removed"], "codigo": code}

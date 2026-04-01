@@ -230,8 +230,8 @@ export class ApiClient {
         return this.post('/metrics/depth-penalty', { depthLimit: value });
     }
 
-    async deleteLeastProfitable() {
-        return this.delete('/tree/least-profitable');
+    async removeLeastProfitable() {
+        return this.delete('/metrics/least-profitable');
     }
 
     // ============================================

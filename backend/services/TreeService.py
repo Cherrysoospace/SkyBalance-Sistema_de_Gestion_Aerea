@@ -201,6 +201,9 @@ class TreeService:
 				# 🔍 DETECTAR CONFLICTOS DE BALANCE mientras el árbol aún está desbalanceado
 				balance_conflicts = self._detect_critical_balance_conflicts(avl_node)
 				
+				# ✅ CAPTURAR ESTADO PRE-ROTACIÓN (desbalanceado)
+				tree_pre_rotation = self.avl.toDict()
+				
 				# DESACTIVAR STRESS MODE y aplicar rebalanceo si hay conflictos
 				self.avl.stressMode = stress_mode_was_on
 				if balance_conflicts:
@@ -214,21 +217,23 @@ class TreeService:
 						}
 						conflicts.append(conflict_item)
 				
+				# ✅ CAPTURAR ESTADO POST-ROTACIÓN (balanceado)
+				tree_post_rotation = self.avl.toDict()
+				
 				processed += 1
 				self.avl.applyDepthPenalty(self.depthLimit)
 
-				# Capturar estado intermediario
+				# Capturar estado intermediario con AMBOS estados (pre y post rotación)
 				step_data = {
 					"step": processed,
 					"codigo_insertado": payload.get("codigo"),
-					"tree": self.avl.toDict(),
+					"tree_pre_rotation": tree_pre_rotation,  # Estado ANTES de rotaciones
+					"tree": tree_post_rotation,              # Estado DESPUÉS de rotaciones (para compatibilidad)
+					"tree_post_rotation": tree_post_rotation, # Estado DESPUÉS de rotaciones (explícito)
 					"metrics": self.avl.getMetrics(),
 					"conflictos": len(conflicts),
+					"balance_criticos": balance_conflicts if balance_conflicts else [],  # Array vacío si no hay
 				}
-				
-				# Agregar conflictos de balance al paso si los hay
-				if balance_conflicts:
-					step_data["balance_criticos"] = balance_conflicts
 				
 				steps.append(step_data)
 			except Exception as exc:

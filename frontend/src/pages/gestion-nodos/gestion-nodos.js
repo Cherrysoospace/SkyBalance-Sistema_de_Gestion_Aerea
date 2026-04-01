@@ -14,6 +14,7 @@ import { RebalanceAnimationManager } from '../../utils/RebalanceAnimationManager
 import { VersioningManager } from '../../utils/VersioningManager.js';
 import { QueueManager } from '../../utils/QueueManager.js';
 import { QueueProcessingAnimationManager } from '../../utils/QueueProcessingAnimationManager.js';
+import { LeastProfitableNodeManager } from '../../utils/LeastProfitableNodeManager.js';
 import { initializeAuditManager } from '../../utils/avl-audit-manager.js';
 
 // D3 es cargado desde CDN en el HTML (disponible como global)
@@ -32,6 +33,7 @@ let rebalanceManager = null;
 let versioningManager = null;
 let queueManager = null;
 let queueProcessingAnimationManager = null;
+let leastProfitableNodeManager = null;
 let auditManager = null; // Será inicializado con initializeAuditManager()
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -59,6 +61,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Cargar el árbol inicial
     await loadTree();
+
+    // ========================================
+    // INICIALIZAR LEAST PROFITABLE NODE MANAGER (después de cargar árbol)
+    // ========================================
+    if (leastProfitableNodeManager) {
+        try {
+            const treeData = await apiClient.getTree();
+            await leastProfitableNodeManager.initialize(treeData);
+        } catch (e) {
+            console.error('❌ Error inicializando LeastProfitableNodeManager en DOMContentLoaded:', e);
+        }
+    }
 
     // ========================================
     // EVENT LISTENERS - Operaciones CRUD
@@ -129,6 +143,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ========================================
     document.addEventListener('versionRestored', async (event) => {
         console.log('📢 Evento versionRestored recibido:', event.detail.versionName);
+        await loadTree();
+        await metricsManager.updateMetricsPanel();
+    });
+
+    // ========================================
+    // ESCUCHAR EVENTOS DE ELIMINACIÓN POR MENOR RENTABILIDAD
+    // ========================================
+    document.addEventListener('leastProfitableNodeRemoved', async (event) => {
+        console.log('📢 Evento leastProfitableNodeRemoved recibido:', event.detail);
+        console.log(`   ✅ Nodo ${event.detail.codigo} eliminado`);
+        console.log(`   📊 Total removidos: ${event.detail.removed}`);
+        
+        // Actualizar árbol y métricas
         await loadTree();
         await metricsManager.updateMetricsPanel();
     });
@@ -273,6 +300,17 @@ function initializeManagers() {
         console.error('  ❌ Error inicializando QueueProcessingAnimationManager:', e);
     }
 
+    try {
+        leastProfitableNodeManager = new LeastProfitableNodeManager(apiClient, {
+            button: 'btnEliminarMenorRentabilidad',
+            highlightColor: '#ff6b6b',
+            highlightStroke: 4
+        });
+        console.log('  ✅ LeastProfitableNodeManager inicializado');
+    } catch (e) {
+        console.error('  ❌ Error inicializando LeastProfitableNodeManager:', e);
+    }
+
     // Nota: auditManager (AVLAuditManager) ya está inicializado globalmente
     if (!auditManager) {
         console.error('  ❌ auditManager no está inicializado');
@@ -290,6 +328,7 @@ function initializeManagers() {
         versioningManager,
         queueManager,
         queueProcessingAnimationManager,
+        leastProfitableNodeManager,
         auditManager
     };
     console.log('🔍 Managers disponibles en window.managers para debugging');
@@ -404,6 +443,12 @@ async function loadTree() {
         ocultarSeccionCarga();
         renderTree(data);
         await metricsManager.updateMetricsPanel();
+        
+        // Actualizar datos en el LeastProfitableNodeManager
+        if (leastProfitableNodeManager) {
+            leastProfitableNodeManager.updateTreeData(data);
+        }
+        
         console.log('✅ Árbol cargado');
     } catch (error) {
         console.error('❌ Error cargando el árbol:', error);
