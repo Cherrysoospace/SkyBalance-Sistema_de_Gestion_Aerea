@@ -59,8 +59,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ========================================
     initializeManagers();
 
+    // ✅ RESTAURAR depthLimit desde localStorage MÁS TEMPRANO
+    const savedDepthLimit = localStorage.getItem('currentDepthLimit');
+    if (savedDepthLimit) {
+        const inputDepthLimit = document.getElementById('input-depth-limit');
+        if (inputDepthLimit) {
+            inputDepthLimit.value = savedDepthLimit;
+            console.log('✅ depthLimit restaurado desde localStorage:', savedDepthLimit);
+        }
+    }
+
     // Cargar el árbol inicial
     await loadTree();
+
+    // ✅ VERIFICAR que el valor se mantuvo después de loadTree()
+    const finalValue = document.getElementById('input-depth-limit')?.value;
+    console.log('📍 Valor del input después de loadTree():', finalValue);
 
     // ========================================
     // INICIALIZAR LEAST PROFITABLE NODE MANAGER (después de cargar árbol)
@@ -197,7 +211,7 @@ async function mostrarModalDepthLimit(file, btnCargar) {
                 <p>Ingresa la profundidad máxima permitida para el árbol. Este parámetro se usa para calcular el precio final de los vuelos.</p>
                 <div class="form-group">
                     <label for="depth-input">Profundidad máxima (mínimo 2):</label>
-                    <input type="number" id="depth-input" min="2" value="5" placeholder="Ej: 5, 10, 15" required>
+                    <input type="number" id="depth-input" min="2" placeholder="Ej: 5, 10, 15" required>
                 </div>
                 <div class="form-buttons" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                     <button type="button" class="btn-cancel" onclick="this.closest('.modal').remove()">Cancelar</button>
@@ -213,12 +227,20 @@ async function mostrarModalDepthLimit(file, btnCargar) {
 
         // Enfocar en el input automáticamente
         depthInput.focus();
+        
+        // 📝 LOG PARA DEBUG
+        console.log('📍 Modal abierto, input vacío listo para entrada');
 
         submitBtn.addEventListener('click', async () => {
-            const depthLimit = parseInt(depthInput.value);
+            const inputValue = depthInput.value.trim();
+            console.log('📍 Valor capturado del input:', inputValue);
+            
+            const depthLimit = parseInt(inputValue);
+            console.log('📍 depthLimit parseado:', depthLimit);
 
             if (isNaN(depthLimit) || depthLimit < 2) {
                 alert('❌ Ingresa un número válido mayor o igual a 2');
+                console.warn('⚠️ Validación fallida:', { inputValue, depthLimit, isNaN: isNaN(depthLimit) });
                 return;
             }
 
@@ -226,10 +248,27 @@ async function mostrarModalDepthLimit(file, btnCargar) {
             btnCargar.disabled = true;
             btnCargar.textContent = 'Cargando...';
 
+            // ✅ ACTUALIZAR EL INPUT INMEDIATAMENTE (antes de cualquier async)
+            const inputDepthLimit = document.getElementById('input-depth-limit');
+            if (inputDepthLimit) {
+                inputDepthLimit.value = depthLimit;
+                console.log('✅ INPUT ACTUALIZADO INMEDIATAMENTE A:', depthLimit);
+                console.log('📍 Verificación del DOM:', document.getElementById('input-depth-limit').value);
+            } else {
+                console.error('❌ NO ENCONTRÉ EL ELEMENTO input-depth-limit en el DOM');
+            }
+
             try {
-                await apiClient.loadTreeFromJSON(file, depthLimit);
-                console.log('✅ JSON cargado desde gestión con depthLimit:', depthLimit);
+                // Cargar el archivo con la API
+                const response = await apiClient.loadTreeFromJSON(file, depthLimit);
+                console.log('✅ JSON cargado. depthLimit retornado:', response?.depthLimit);
+                
+                // Recargar el árbol en la pantalla
                 await loadTree();
+                
+                // ✅ VERIFICAR que el valor sigue siendo el correcto después de loadTree()
+                const finalInputValue = document.getElementById('input-depth-limit')?.value;
+                console.log('📍 Valor del input DESPUÉS de loadTree():', finalInputValue);
             } catch (e) {
                 console.error('❌ Error cargando JSON:', e);
                 alert('❌ Error al cargar el archivo: ' + e.message);

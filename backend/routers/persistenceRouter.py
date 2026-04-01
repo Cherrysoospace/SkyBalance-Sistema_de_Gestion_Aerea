@@ -36,11 +36,11 @@ async def load_json(file: UploadFile = File(...), depthLimit: int = Form(...)):
 		info = treeService.load_from_json_data(payload_to_load)
 
 		# ✅ Establecer depthLimit DESPUES de cargar (para aplicar penalidad correctamente)
-		treeService.set_depth_limit(depthLimit)
+		depth_response = treeService.set_depth_limit(depthLimit)
 
 		return {
 			"info": info,
-			"depthLimit": depthLimit,
+			"depthLimit": depth_response["depthLimit"],  # Usar el valor confirmado del backend
 			"tree": treeService.get_tree(),
 			"metrics": treeService.get_metrics(),
 		}

@@ -75,6 +75,10 @@ async function handleLoad() {
         const mode = response?.info?.mode;
         console.log(`✅ JSON cargado — modo detectado: ${mode}, nodos: ${response?.info?.nodos}, depthLimit: ${depthLimit}`);
 
+        // ✅ GUARDAR depthLimit en localStorage ANTES de redirigir
+        localStorage.setItem('currentDepthLimit', depthLimit);
+        console.log('💾 depthLimit guardado en localStorage:', depthLimit);
+
         // Redirigir según el modo retornado por el backend
         if (mode === 'INSERCION') {
             window.location.href = './pages/comparacion.html';
