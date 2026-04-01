@@ -519,12 +519,11 @@ class AVL:
       "precioFinal": node.precioFinal,
       "promocion": node.promocion,
       "prioridad": node.prioridad,
-      "critico": node.critico,
       "alerta": node.alerta,
       "altura": self.calculateHeight(node),
       "factorEquilibrio": self.getBalanceFactor(node),
-      "left": self.__serializeNode(node.getLeftChild()),
-      "right": self.__serializeNode(node.getRightChild()),
+      "izquierdo": self.__serializeNode(node.getLeftChild()),
+      "derecho": self.__serializeNode(node.getRightChild()),
     }
 
   def getMetrics(self):
