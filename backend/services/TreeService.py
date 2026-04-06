@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from models.Version import Version
+from services.PersistenceService import persistenceService
 from tree.actionStack import ActionStack
 from tree.avlTree import AVL
 from tree.bstTree import BST
@@ -301,25 +302,70 @@ class TreeService:
 		self.avl.clear()
 		self.bst.clear()
 
-		if isinstance(data, dict) and data.get("tipo", "").upper() == "INSERCION":
-			vuelos = data.get("vuelos", [])
-			self.avl.loadFromInsertionList(vuelos)
-			for vuelo in vuelos:
-				node = Node(vuelo)
-				self.bst.insert(node)
+		# Use unified parser to detect format and parse
+		try:
+			format_type, parsed_data, historical_metrics = persistenceService.parse_json(data)
+		except ValueError as e:
+			raise ValueError(f"Error parsing JSON: {str(e)}")
+
+		# Handle each format
+		if format_type == "INSERCION":
+			# parsed_data is List[NodoVuelo]
+			# Insert each vuelo individually (with rebalancing)
+			nodos_count = len(parsed_data)
+			for nodo_vuelo in parsed_data:
+				# Convert NodoVuelo to dict for Node constructor
+				payload = nodo_vuelo.to_dict(include_tree=False)
+				node = Node(payload)
+				self.avl.insert(node)
+				bst_node = Node(payload)
+				self.bst.insert(bst_node)
+
 			self.avl.applyDepthPenalty(self.depthLimit)
 			self.bst.applyDepthPenalty(self.depthLimit)
-			return {"mode": "INSERCION", "nodos": len(vuelos)}
+			return {"mode": "INSERCION", "nodos": nodos_count}
 
-		# Fallback to topology mode.
-		self.avl.loadFromTopology(data)
-		self.bst.loadFromTopology(data)
-		self.avl.applyDepthPenalty(self.depthLimit)
-		self.bst.applyDepthPenalty(self.depthLimit)
-		return {"mode": "TOPOLOGIA", "nodos": len(self.avl.breadthFirstSearch())}
+		elif format_type == "TOPOLOGIA":
+			# parsed_data is NodoVuelo (root)
+			# Load pre-built structure (no rebalancing)
+			topology_dict = parsed_data.to_dict(include_tree=True) if parsed_data else None
+			self.avl.loadFromTopology(topology_dict)
+			self.bst.loadFromTopology(topology_dict)
+			nodos_count = len(self.avl.breadthFirstSearch()) if self.avl.getRoot() else 0
+			self.avl.applyDepthPenalty(self.depthLimit)
+			self.bst.applyDepthPenalty(self.depthLimit)
+			return {"mode": "TOPOLOGIA", "nodos": nodos_count}
+
+		elif format_type == "SYSTEM_EXPORT":
+			# parsed_data is NodoVuelo (root), historical_metrics is Dict
+			# Load topology first
+			topology_dict = parsed_data.to_dict(include_tree=True) if parsed_data else None
+			self.avl.loadFromTopology(topology_dict)
+			self.bst.loadFromTopology(topology_dict)
+
+			# Restore historical metrics (rotations, cancelations, etc.)
+			if historical_metrics:
+				self.avl.restoreHistoricalMetrics(historical_metrics)
+
+			nodos_count = len(self.avl.breadthFirstSearch()) if self.avl.getRoot() else 0
+			self.avl.applyDepthPenalty(self.depthLimit)
+			self.bst.applyDepthPenalty(self.depthLimit)
+			return {"mode": "SYSTEM_EXPORT", "nodos": nodos_count, "metrics_restored": True}
+
+		else:
+			raise ValueError(f"Unknown format type: {format_type}")
 
 	def export_json(self):
-		return self.avl.toDict()
+		"""
+		Export tree and metrics in unified Format 3 (SYSTEM_EXPORT).
+
+		Returns:
+			Dict with 'tree' (structure) and 'metrics' (historical + structural).
+		"""
+		return {
+			"tree": self.avl.toDict(),
+			"metrics": self.avl.getMetrics()
+		}
 
 	def save_version(self, name):
 		snapshot = self.avl.toDict()

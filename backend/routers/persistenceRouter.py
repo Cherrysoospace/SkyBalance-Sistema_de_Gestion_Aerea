@@ -18,19 +18,29 @@ async def load_json(file: UploadFile = File(...), depthLimit: int = Form(...)):
 		content = await file.read()
 		payload = persistenceService.parse_json_text(content.decode("utf-8"))
 
-		# 🔍 VALIDAR Y NORMALIZAR (detecta TOPOLOGIA o INSERCION)
-		normalized_payload = persistenceService.validate_and_normalize_topology(payload)
+		# 🔍 DETECTAR FORMATO usando el nuevo parser
+		try:
+			fmt = persistenceService.detect_json_format(payload)
+		except ValueError:
+			# Fallback: try old validation method for backward compat
+			fmt = None
 
-		# Reconvertir INSERCION a formato dict para compatibilidad con load_from_json_data
-		if isinstance(normalized_payload, list):
-			# Es INSERCION (array de vuelos)
-			payload_to_load = {
-				"tipo": "INSERCION",
-				"vuelos": normalized_payload
-			}
+		# Usa el nuevo parser directamente para Format 3 (SYSTEM_EXPORT)
+		if fmt == "SYSTEM_EXPORT":
+			# Pass directly - parse_json() will handle it
+			payload_to_load = payload
 		else:
-			# Es TOPOLOGIA (dict)
-			payload_to_load = normalized_payload
+			# Use old validation for Format 1 & 2
+			normalized_payload = persistenceService.validate_and_normalize_topology(payload)
+
+			# Reconstruct INSERCION if needed
+			if isinstance(normalized_payload, list):
+				payload_to_load = {
+					"tipo": "INSERCION",
+					"vuelos": normalized_payload
+				}
+			else:
+				payload_to_load = normalized_payload
 
 		# Cargar árbol (limpia automáticamente antes de cargar)
 		info = treeService.load_from_json_data(payload_to_load)

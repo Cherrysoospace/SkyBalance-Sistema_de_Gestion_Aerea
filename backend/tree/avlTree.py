@@ -577,6 +577,62 @@ class AVL:
     self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
     self.massCancelations = 0
 
+  def restoreHistoricalMetrics(self, metrics_dict):
+    """
+    Restore historical metrics from a Format 3 (SYSTEM_EXPORT) JSON.
+
+    This is called after loadFromTopology() to restore metrics that were
+    preserved in a previous export. Structural metrics (altura, hojas, etc.)
+    are recalculated and NOT loaded.
+
+    Args:
+        metrics_dict: Dict from exported JSON["metrics"] containing:
+            - rotaciones: {"LL": int, "RR": int, "LR": int, "RL": int}
+            - rotacionesDetallado: {sesionActual, historico, ultimoRebalanceoGlobal}
+            - cancelacionesMasivas: int
+            - modoEstres: bool
+    """
+    if not metrics_dict:
+      return
+
+    # Restore rotation counts (session total)
+    if "rotaciones" in metrics_dict:
+      rot = metrics_dict.get("rotaciones", {})
+      self.rotationCounts = {
+        "LL": rot.get("LL", 0),
+        "RR": rot.get("RR", 0),
+        "LR": rot.get("LR", 0),
+        "RL": rot.get("RL", 0),
+      }
+
+    # Restore detailed rotation breakdown if available
+    if "rotacionesDetallado" in metrics_dict:
+      detailed = metrics_dict.get("rotacionesDetallado", {})
+
+      historico = detailed.get("historico", {})
+      self.rotationCountsHistorical = {
+        "LL": historico.get("LL", 0),
+        "RR": historico.get("RR", 0),
+        "LR": historico.get("LR", 0),
+        "RL": historico.get("RL", 0),
+      }
+
+      ultimo_rebal = detailed.get("ultimoRebalanceoGlobal", {})
+      self.rotationCountsLastGlobalRebalance = {
+        "LL": ultimo_rebal.get("LL", 0),
+        "RR": ultimo_rebal.get("RR", 0),
+        "LR": ultimo_rebal.get("LR", 0),
+        "RL": ultimo_rebal.get("RL", 0),
+      }
+
+    # Restore mass cancelations count
+    if "cancelacionesMasivas" in metrics_dict:
+      self.massCancelations = int(metrics_dict.get("cancelacionesMasivas", 0))
+
+    # Restore stress mode flag
+    if "modoEstres" in metrics_dict:
+      self.stressMode = bool(metrics_dict.get("modoEstres", False))
+
   def loadFromInsertionList(self, vuelos):
     self.clear()
     for vuelo in vuelos:
