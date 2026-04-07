@@ -4,8 +4,8 @@
  * SOLID Compliance: SRP + OCP + DIP
  */
 
-import { RebalanceAnimationEngine, RotationQueueAnimator } from './rebalance-animation-engine.js';
-import { REBALANCE_ANIMATION_CONFIG } from './animation-config.js';
+import { RebalanceAnimationEngine, RotationQueueAnimator } from '../utils/rebalance-animation-engine.js';
+import { REBALANCE_ANIMATION_CONFIG } from '../utils/animation-config.js';
 
 class RebalanceAnimationManager {
     /**

@@ -15,7 +15,7 @@
  * Todas las duraciones y parámetros de animación vienen de QUEUE_ANIMATION_CONFIG
  */
 
-import { QUEUE_ANIMATION_CONFIG } from './animation-config.js';
+import { QUEUE_ANIMATION_CONFIG } from '../utils/animation-config.js';
 
 export class QueueProcessingAnimationManager {
     constructor(apiClient) {
