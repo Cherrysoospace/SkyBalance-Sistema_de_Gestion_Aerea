@@ -11,8 +11,6 @@ export default defineConfig({
         main:        resolve(__dirname, 'index.html'),
         gestion:     resolve(__dirname, 'pages/gestion-nodos.html'),
         comparacion: resolve(__dirname, 'pages/comparacion.html'),
-        estres:      resolve(__dirname, 'pages/modo-estres.html'),
-        simulacion:  resolve(__dirname, 'pages/simulacion.html'),
       }
     }
   },

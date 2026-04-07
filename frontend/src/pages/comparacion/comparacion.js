@@ -36,19 +36,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Listeners existentes
-    const btnExportar = document.getElementById('btn-exportar');
     const btnVolver = document.getElementById('btn-volver');
-    const btnGuardarVersion = document.getElementById('btn-guardar-version');
-    const btnRestaurarVersion = document.getElementById('btn-restaurar-version');
 
-    if (btnExportar) btnExportar.addEventListener('click', exportComparison);
     if (btnVolver) {
         btnVolver.addEventListener('click', () => {
             window.location.href = '../index.html';
         });
     }
-    if (btnGuardarVersion) btnGuardarVersion.addEventListener('click', saveVersion);
-    if (btnRestaurarVersion) btnRestaurarVersion.addEventListener('click', restoreVersion);
 
     // Intentar cargar árbol existente en el backend silenciosamente
     await tryLoadExisting();
@@ -122,8 +116,6 @@ async function loadComparison() {
 
         renderTree(comparisonData.avl?.tree, 'avl-tree-container', 'AVL');
         renderTree(comparisonData.bst?.tree, 'bst-tree-container', 'BST');
-
-        await loadVersions();
     } catch (error) {
         console.error('❌ Error cargando comparación:', error);
     }
@@ -213,72 +205,4 @@ function renderTree(treeData, containerId, label) {
         .text(d => `h:${d.data.altura ?? '?'} fb:${d.data.factorEquilibrio ?? '?'}`);
 
     console.log(`✅ Árbol ${label} renderizado — ${root.descendants().length} nodos`);
-}
-
-async function exportComparison() {
-    try {
-        const data = await apiClient.getComparison();
-        const jsonString = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'comparacion_avl_bst.json';
-        a.click();
-        URL.revokeObjectURL(url);
-        console.log('Comparación exportada');
-    } catch (error) {
-        console.error('Error exportando:', error);
-        alert('Error al exportar');
-    }
-}
-
-// Carga y muestra las versiones guardadas en el selector
-async function loadVersions() {
-    try {
-        const versions = await apiClient.listVersions();
-        const selector = document.getElementById('version-selector');
-        selector.innerHTML = '<option value="">-- Selecciona versión --</option>';
-        versions.forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v.name;
-            opt.textContent = `${v.name} (${new Date(v.timestamp).toLocaleString()})`;
-            selector.appendChild(opt);
-        });
-        console.log(`✅ ${versions.length} versiones cargadas`);
-    } catch (e) {
-        console.error('❌ Error cargando versiones:', e);
-    }
-}
-
-// Guarda el estado actual del árbol con un nombre
-async function saveVersion() {
-    const input = document.getElementById('version-name');
-    const name  = input.value.trim();
-    if (!name) { alert('Ingresa un nombre para la versión'); return; }
-    try {
-        await apiClient.saveVersion(name);
-        input.value = '';
-        await loadVersions();
-        console.log(`✅ Versión "${name}" guardada`);
-    } catch (e) {
-        console.error('❌ Error guardando versión:', e);
-        alert('Error al guardar versión');
-    }
-}
-
-// Restaura el árbol a la versión seleccionada
-async function restoreVersion() {
-    const selector = document.getElementById('version-selector');
-    const name = selector.value;
-    if (!name) { alert('Selecciona una versión primero'); return; }
-    if (!confirm(`¿Restaurar árbol a la versión "${name}"?`)) return;
-    try {
-        await apiClient.restoreVersion(name);
-        await loadComparison();
-        console.log(`✅ Versión "${name}" restaurada`);
-    } catch (e) {
-        console.error('❌ Error restaurando versión:', e);
-        alert('Error al restaurar versión');
-    }
 }
