@@ -16,6 +16,7 @@ class StressModeManager {
             stressModeButton: 'btnModoEstres',
             rebalanceButton: 'btnRebalanceo',
             auditButton: 'btnAuditar',
+            concurrencyButtons: ['btnProgramarInsercion', 'btnProcesarCola'],
             ...config
         };
     }
@@ -45,11 +46,13 @@ class StressModeManager {
 
             if (this.enabled) {
                 btn.classList.add('active');
-                this._enableRelatedButtons();
+                this._enableAnalysisButtons();
+                this._disableConcurrencyButtons();
                 console.log('✅ Modo Estrés ACTIVADO');
             } else {
                 btn.classList.remove('active');
-                this._disableRelatedButtons();
+                this._disableAnalysisButtons();
+                this._enableConcurrencyButtons();
                 console.log('✅ Modo Estrés DESACTIVADO');
             }
 
@@ -70,31 +73,57 @@ class StressModeManager {
     }
 
     /**
-     * Habilita botones relacionados
+     * Habilita botones de análisis (solo en modo estrés)
      * @private
      */
-    _enableRelatedButtons() {
+    _enableAnalysisButtons() {
         const btnRebalance = document.getElementById(this.config.rebalanceButton);
         const btnAudit = document.getElementById(this.config.auditButton);
 
         if (btnRebalance) btnRebalance.disabled = false;
         if (btnAudit) btnAudit.disabled = false;
 
-        console.log('✅ Botones ACTIVADOS: Rebalanceo Global y Auditoría AVL');
+        console.log('✅ Botones de análisis HABILITADOS: Rebalanceo Global y Auditoría AVL');
     }
 
     /**
-     * Desactiva botones relacionados
+     * Desactiva botones de análisis (fuera del modo estrés)
      * @private
      */
-    _disableRelatedButtons() {
+    _disableAnalysisButtons() {
         const btnRebalance = document.getElementById(this.config.rebalanceButton);
         const btnAudit = document.getElementById(this.config.auditButton);
 
         if (btnRebalance) btnRebalance.disabled = true;
         if (btnAudit) btnAudit.disabled = true;
 
-        console.log('✅ Botones DESACTIVADOS: Rebalanceo Global y Auditoría AVL');
+        console.log('✅ Botones de análisis DESHABILITADOS: Rebalanceo Global y Auditoría AVL');
+    }
+
+    /**
+     * Desactiva botones de concurrencia (cuando modo estrés está activo)
+     * @private
+     */
+    _disableConcurrencyButtons() {
+        this.config.concurrencyButtons.forEach(buttonId => {
+            const btn = document.getElementById(buttonId);
+            if (btn) btn.disabled = true;
+        });
+
+        console.log('✅ Botones de concurrencia DESHABILITADOS');
+    }
+
+    /**
+     * Habilita botones de concurrencia (cuando modo estrés está inactivo)
+     * @private
+     */
+    _enableConcurrencyButtons() {
+        this.config.concurrencyButtons.forEach(buttonId => {
+            const btn = document.getElementById(buttonId);
+            if (btn) btn.disabled = false;
+        });
+
+        console.log('✅ Botones de concurrencia HABILITADOS');
     }
 }
 
