@@ -19,6 +19,84 @@ export class TreeUIRenderer {
         this.loadSection = document.getElementById(loadSectionId);
         this.onNodeClick = null;
         this.selectedNode = null;
+        this.tooltip = this._createTooltip();
+    }
+
+    /**
+     * Crear el elemento tooltip en el DOM
+     * @private
+     */
+    _createTooltip() {
+        const existing = document.getElementById('flight-tooltip');
+        if (existing) return existing;
+
+        const tooltip = document.createElement('div');
+        tooltip.id = 'flight-tooltip';
+        tooltip.className = 'flight-tooltip';
+        tooltip.innerHTML = '<div class="tooltip-content"></div>';
+        document.body.appendChild(tooltip);
+        return tooltip;
+    }
+
+    /**
+     * Mostrar tooltip con información del vuelo
+     * @private
+     */
+    _showTooltip(event, nodeData) {
+        const tooltipContent = this.tooltip.querySelector('.tooltip-content');
+
+        const info = `
+            <div class="tooltip-header">${nodeData.codigo}</div>
+            <div class="tooltip-row">
+                <span class="label">Origen:</span>
+                <span class="value">${nodeData.origen || '—'}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Destino:</span>
+                <span class="value">${nodeData.destino || '—'}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Salida:</span>
+                <span class="value">${nodeData.horaSalida || '—'}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Pasajeros:</span>
+                <span class="value">${nodeData.pasajeros || 0}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Precio Base:</span>
+                <span class="value">$${nodeData.precioBase || 0}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Precio Final:</span>
+                <span class="value">$${nodeData.precioFinal || nodeData.precioBase || 0}</span>
+            </div>
+            <div class="tooltip-row">
+                <span class="label">Prioridad:</span>
+                <span class="value">${nodeData.prioridad || 0}</span>
+            </div>
+            ${nodeData.promocion ? '<div class="tooltip-badge badge-promocion">🎉 Promoción</div>' : ''}
+            ${nodeData.alerta ? '<div class="tooltip-badge badge-alerta">⚠️ Alerta</div>' : ''}
+            ${nodeData.critico ? '<div class="tooltip-badge badge-critico">🔴 Crítico</div>' : ''}
+        `;
+
+        tooltipContent.innerHTML = info;
+
+        const rect = this.container.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        this.tooltip.style.display = 'block';
+        this.tooltip.style.left = Math.min(x + 10, window.innerWidth - 250) + 'px';
+        this.tooltip.style.top = (y + 10) + 'px';
+    }
+
+    /**
+     * Ocultar tooltip
+     * @private
+     */
+    _hideTooltip() {
+        this.tooltip.style.display = 'none';
     }
 
     /**
@@ -96,7 +174,9 @@ export class TreeUIRenderer {
             .attr('data-node-code', d => d.data.codigo)  // ✨ Para animaciones FLIP
             .attr('transform', d => `translate(${d.x},${d.y})`)
             .style('cursor', 'pointer')
-            .on('click', (event, d) => this._handleNodeClick(event, d, g));
+            .on('click', (event, d) => this._handleNodeClick(event, d, g))
+            .on('mouseover', (event, d) => this._showTooltip(event, d.data))
+            .on('mouseout', () => this._hideTooltip());
 
         node.append('circle')
             .attr('r', 28)
