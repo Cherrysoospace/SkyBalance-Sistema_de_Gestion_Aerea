@@ -9,7 +9,7 @@
 import { apiClient } from '../../api/apiClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 SkyBalance iniciando...');
+    console.log('🚀 FAC Airways iniciando...');
 
     // Verificar conectividad con backend
     try {

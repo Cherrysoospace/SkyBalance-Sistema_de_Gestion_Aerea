@@ -221,6 +221,15 @@ p {
 
 .tree-viewer .tree-container {
     min-height: 420px;
+    width: 100%;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Hero Section */
