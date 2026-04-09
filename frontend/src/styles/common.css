@@ -129,6 +129,100 @@ p {
     padding: 2rem;
 }
 
+/* ==========================================
+   INDEX PAGE - Layout & centering
+   (Scoped to avoid impacting other pages)
+   ========================================== */
+
+.page-index .container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: stretch;
+}
+
+.page-index .hero,
+.page-index .tree-viewer {
+    width: 100%;
+}
+
+.tree-viewer {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.tree-viewer h2 {
+    text-align: center;
+    color: var(--primary-dark);
+}
+
+.tree-viewer .controls {
+    max-width: 780px;
+    margin: 0 auto 1.5rem;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    text-align: center;
+}
+
+.tree-viewer .load-controls {
+    justify-content: center;
+}
+
+.tree-viewer .control-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tree-viewer .control-group label {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.tree-viewer input[type="number"] {
+    width: min(420px, 100%);
+    padding: 0.75rem 1rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.tree-viewer input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.tree-viewer .load-hint {
+    max-width: 720px;
+}
+
+.tree-viewer .file-name {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.6rem;
+    background-color: white;
+}
+
+.tree-viewer .tree-container {
+    min-height: 420px;
+}
+
 /* Hero Section */
 .hero {
     text-align: center;
