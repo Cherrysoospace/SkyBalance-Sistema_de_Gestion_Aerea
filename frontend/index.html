@@ -39,7 +39,11 @@
             <div class="controls">
                 <div class="control-group">
                     <label for="file-picker">Cargar JSON:</label>
-                    <input type="file" id="file-picker" accept=".json">
+                    <div class="load-controls">
+                        <input type="file" id="file-picker" class="file-input" accept=".json">
+                        <label for="file-picker" class="btn btn-secondary">Seleccionar archivo</label>
+                        <span id="file-name" class="file-name">Ningún archivo seleccionado</span>
+                    </div>
                 </div>
                 <p class="load-hint">
                     El modo se detecta automáticamente desde el JSON

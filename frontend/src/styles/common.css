@@ -105,6 +105,23 @@ p {
     cursor: not-allowed;
 }
 
+/* File input (custom trigger) */
+.file-input {
+    display: none;
+}
+
+.load-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.file-name {
+    font-size: 0.95rem;
+    color: #64748b;
+}
+
 /* Containers */
 .container {
     max-width: 1200px;
