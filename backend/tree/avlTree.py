@@ -357,7 +357,17 @@ class AVL:
   # Rechecks all nodes bottom-up and rebalances when needed.
   def rebalanceGlobal(self):
     if self.root is None:
-      return {"passes": 0, "rotations": [], "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0}}
+      return {
+        "passes": 0,
+        "rotations": [],
+        "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0},
+        "rebuildApplied": False,
+      }
+
+    rebuild_applied = False
+    if not self.__isBSTValid(self.root):
+      self.__rebuildTreeFromCurrentNodes()
+      rebuild_applied = True
 
     passes = 0
     changed = True
@@ -379,18 +389,24 @@ class AVL:
     return {
       "passes": passes, 
       "rotations": rotations,
-      "summary": self.rotationCountsLastGlobalRebalance
+      "summary": self.rotationCountsLastGlobalRebalance,
+      "rebuildApplied": rebuild_applied,
     }
 
   def rebalanceGlobalStepByStep(self):
     """Retorna información detallada para animar paso a paso.
     Cada rotación incluye: tipo, nodo, y estado del árbol ANTES y DESPUÉS."""
     if self.root is None:
-      return {"steps": [], "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0}}
+      return {
+        "steps": [],
+        "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0},
+        "rebuildApplied": False,
+      }
 
     passes = 0
     changed = True
     steps = []  # Lista de pasos con rotación y snapshots del árbol
+    rebuild_applied = False
     self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
     
     # 🔑 AGREGAR ÁRBOL INICIAL COMO REFERENCIA
@@ -400,6 +416,16 @@ class AVL:
       "tree_snapshot": self.toDict()
     }
     steps.append(initial_tree_snapshot)
+
+    if not self.__isBSTValid(self.root):
+      self.__rebuildTreeFromCurrentNodes()
+      rebuild_applied = True
+      steps.append({
+        "type": "BST_REBUILD",
+        "node_codigo": self.root.codigo if self.root else None,
+        "tree_snapshot": self.toDict(),
+        "is_structure_rebuild": True,
+      })
     
     while changed and passes < 100:
       passes += 1
@@ -433,7 +459,8 @@ class AVL:
 
     return {
       "steps": steps,
-      "summary": self.rotationCountsLastGlobalRebalance
+      "summary": self.rotationCountsLastGlobalRebalance,
+      "rebuildApplied": rebuild_applied,
     }
 
   def __rebalanceWithTrackingStepByStep(self, node, bf, rotations):
@@ -463,6 +490,78 @@ class AVL:
     self.__collectPostOrderNodes(node.getLeftChild(), result)
     self.__collectPostOrderNodes(node.getRightChild(), result)
     result.append(node)
+
+  def __isBSTValid(self, node, lower=None, upper=None):
+    if node is None:
+      return True
+
+    value = node.getValue()
+
+    if lower is not None and self.__compareValues(value, lower) <= 0:
+      return False
+    if upper is not None and self.__compareValues(value, upper) >= 0:
+      return False
+
+    return self.__isBSTValid(node.getLeftChild(), lower, value) and self.__isBSTValid(node.getRightChild(), value, upper)
+
+  def __compareValues(self, left, right):
+    left_key = self.__valueSortKey(left)
+    right_key = self.__valueSortKey(right)
+    if left_key < right_key:
+      return -1
+    if left_key > right_key:
+      return 1
+    return 0
+
+  def __valueSortKey(self, value):
+    if isinstance(value, (int, float)):
+      return (0, float(value), str(value))
+
+    if isinstance(value, str):
+      stripped = value.strip()
+      if stripped.lstrip("-").isdigit():
+        return (0, float(int(stripped)), stripped)
+      return (1, stripped, stripped)
+
+    return (2, str(value), str(value))
+
+  def __collectNodes(self, node, result):
+    if node is None:
+      return
+    result.append(node)
+    self.__collectNodes(node.getLeftChild(), result)
+    self.__collectNodes(node.getRightChild(), result)
+
+  def __rebuildTreeFromCurrentNodes(self):
+    nodes = []
+    self.__collectNodes(self.root, nodes)
+    if len(nodes) == 0:
+      self.root = None
+      return
+
+    # Ordenar por clave normalizada para reconstruir un BST válido.
+    nodes.sort(key=lambda node: self.__valueSortKey(node.getValue()))
+
+    for node in nodes:
+      node.setParent(None)
+      node.setLeftChild(None)
+      node.setRightChild(None)
+
+    self.root = self.__buildBalancedFromSortedNodes(nodes, 0, len(nodes) - 1, None)
+
+  def __buildBalancedFromSortedNodes(self, nodes, start, end, parent):
+    if start > end:
+      return None
+
+    middle = (start + end) // 2
+    root = nodes[middle]
+    root.setParent(parent)
+
+    left = self.__buildBalancedFromSortedNodes(nodes, start, middle - 1, root)
+    right = self.__buildBalancedFromSortedNodes(nodes, middle + 1, end, root)
+    root.setLeftChild(left)
+    root.setRightChild(right)
+    return root
 
   # Applies depth penalty rule and marks critical nodes.
   def applyDepthPenalty(self, depthLimit):

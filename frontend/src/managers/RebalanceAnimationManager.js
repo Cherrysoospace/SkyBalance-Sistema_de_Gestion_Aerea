@@ -101,7 +101,9 @@ class RebalanceAnimationManager {
         // 🔑 NUEVA LÓGICA: Agrupar pasos PRE_XX con XX
         // Saltar INITIAL y agrupar pares de desbalance-rotación
         let rotationPairs = this._groupPrePostSteps(steps);
+        const hasStructureRebuild = steps.some(step => step.type === 'BST_REBUILD');
         const initialSnapshot = steps.find(step => step.type === 'INITIAL')?.tree_snapshot;
+        const rebuiltSnapshot = steps.find(step => step.type === 'BST_REBUILD')?.tree_snapshot;
         
         const totalRotations = rotationPairs.length;
         console.log(`🎬 Iniciando animación de ${totalRotations} rotaciones (pares PRE/POST)`);
@@ -114,6 +116,24 @@ class RebalanceAnimationManager {
         }
 
         if (totalRotations === 0) {
+            if (hasStructureRebuild) {
+                const treeToRender = rebuiltSnapshot || initialSnapshot || initialTree;
+                this.rebalanceEngine.renderInitialTree(
+                    { tree: treeToRender },
+                    { width: 800, height: 500 }
+                );
+
+                const messageEl = document.createElement('div');
+                messageEl.className = 'rotation-message done';
+                messageEl.innerHTML = '<div class="rotation-type">Reconstrucción Estructural</div><div class="rotation-node">Se corrigieron violaciones BST sin rotaciones adicionales.</div>';
+                rotationsList.appendChild(messageEl);
+                rotationCounter.textContent = '0/0 rotaciones';
+                progressBar.style.width = '100%';
+
+                alert('Se corrigió la estructura BST del árbol. No se requirieron rotaciones AVL adicionales.');
+                return;
+            }
+
             alert('El árbol ya está balanceado. No se necesitan rotaciones.');
             return;
         }

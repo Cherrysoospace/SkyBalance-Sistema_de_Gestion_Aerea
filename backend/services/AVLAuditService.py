@@ -37,7 +37,7 @@ class AVLNodeValidator:
         left_child = node.getLeftChild()
         right_child = node.getRightChild()
         
-        if left_child and left_child.getValue() >= node.getValue():
+        if left_child and self._compare_values(left_child.getValue(), node.getValue()) >= 0:
             issues.append({
                 "type": "bst_violation_left",
                 "severity": "critical",
@@ -45,7 +45,7 @@ class AVLNodeValidator:
                 "location": "left_child"
             })
         
-        if right_child and right_child.getValue() <= node.getValue():
+        if right_child and self._compare_values(right_child.getValue(), node.getValue()) <= 0:
             issues.append({
                 "type": "bst_violation_right",
                 "severity": "critical",
@@ -75,6 +75,29 @@ class AVLNodeValidator:
             return 0
         return 1 + max(self._get_height(node.getLeftChild()), 
                       self._get_height(node.getRightChild()))
+
+    def _compare_values(self, left, right):
+        """Compara valores de nodos de forma consistente para códigos numéricos y alfanuméricos."""
+        left_key = self._value_sort_key(left)
+        right_key = self._value_sort_key(right)
+
+        if left_key < right_key:
+            return -1
+        if left_key > right_key:
+            return 1
+        return 0
+
+    def _value_sort_key(self, value):
+        if isinstance(value, (int, float)):
+            return (0, float(value), str(value))
+
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped.lstrip("-").isdigit():
+                return (0, float(int(stripped)), stripped)
+            return (1, stripped, stripped)
+
+        return (2, str(value), str(value))
 
 
 class AVLAuditService:
