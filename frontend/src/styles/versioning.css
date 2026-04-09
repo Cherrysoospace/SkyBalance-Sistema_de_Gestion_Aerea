@@ -39,7 +39,8 @@
 .versioning-modal {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-lg);
+    border-top: 4px solid var(--primary-color);
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
@@ -61,7 +62,7 @@
 /* Header del modal */
 .versioning-modal .modal-header {
     padding: 24px 24px 20px;
-    border-bottom: 2px solid var(--color-accent);
+    border-bottom: 2px solid var(--primary-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -77,13 +78,13 @@
 }
 
 .versioning-modal .modal-header h2 i {
-    color: var(--color-accent);
+    color: var(--primary-color);
 }
 
 .versioning-modal .close-modal {
     font-size: 28px;
     font-weight: bold;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     cursor: pointer;
     background: none;
     border: none;
@@ -98,7 +99,7 @@
 }
 
 .versioning-modal .close-modal:hover {
-    background-color: var(--bg-hover);
+    background-color: var(--bg-light);
     color: var(--text-primary);
 }
 
@@ -112,8 +113,12 @@
 
 /* Sección de guardar versión */
 .save-version-section {
-    background: linear-gradient(135deg, rgba(192, 132, 252, 0.1), rgba(147, 112, 219, 0.1));
-    border: 1px solid var(--color-accent);
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--primary-light) 12%, transparent),
+        color-mix(in srgb, var(--primary-color) 8%, transparent)
+    );
+    border: 1px solid var(--primary-color);
     border-radius: 8px;
     padding: 16px;
 }
@@ -128,7 +133,7 @@
 }
 
 .save-version-section h3 i {
-    color: var(--color-accent);
+    color: var(--primary-color);
 }
 
 .version-input-group {
@@ -147,8 +152,8 @@
 
 .version-input-group input:focus {
     outline: none;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-light) 35%, transparent);
 }
 
 .version-input-group input::placeholder {
@@ -171,14 +176,14 @@
 }
 
 #btn-save-version {
-    background: linear-gradient(135deg, #9370db, #c084fc);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
     min-width: 140px;
 }
 
 #btn-save-version:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-color) 35%, transparent);
 }
 
 #btn-save-version:disabled {
@@ -187,13 +192,13 @@
 }
 
 #btn-refresh-versions {
-    background: var(--bg-secondary);
+    background: white;
     color: var(--text-primary);
     border: 1px solid var(--border-color);
 }
 
 #btn-refresh-versions:hover:not(:disabled) {
-    background: var(--bg-hover);
+    background: var(--bg-light);
 }
 
 #btn-refresh-versions:disabled {
@@ -210,7 +215,7 @@
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 12px;
-    background: var(--bg-hover);
+    background: var(--bg-light);
 }
 
 .versions-section h3 {
@@ -222,12 +227,12 @@
     gap: 8px;
     position: sticky;
     top: 0;
-    background: var(--bg-hover);
+    background: var(--bg-light);
     padding-bottom: 8px;
 }
 
 .versions-section h3 i {
-    color: var(--color-accent);
+    color: var(--primary-color);
 }
 
 #versions-list-container {
@@ -261,9 +266,9 @@
 }
 
 .version-item:hover {
-    border-color: var(--color-accent);
-    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.15);
-    background: #fafbff;
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color) 18%, transparent);
+    background: color-mix(in srgb, var(--primary-light) 8%, white);
 }
 
 .version-info {
@@ -279,7 +284,7 @@
 
 .version-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #9370db, #c084fc);
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
     color: white;
     padding: 2px 8px;
     border-radius: 4px;
@@ -302,7 +307,7 @@
 }
 
 .version-timestamp i {
-    color: var(--color-accent);
+    color: var(--primary-color);
 }
 
 .version-actions {
@@ -325,13 +330,13 @@
 }
 
 .btn-action-small.restore {
-    background: linear-gradient(135deg, #9370db, #c084fc);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
 }
 
 .btn-action-small.restore:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.3);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color) 28%, transparent);
 }
 
 .btn-action-small.delete {
@@ -378,7 +383,7 @@
 
 .btn-close-versioning {
     padding: 10px 20px;
-    background: var(--bg-secondary);
+    background: white;
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -388,7 +393,7 @@
 }
 
 .btn-close-versioning:hover {
-    background: var(--bg-hover);
+    background: var(--bg-light);
 }
 
 /* Responsive */
@@ -424,15 +429,15 @@
 }
 
 #versions-list-container::-webkit-scrollbar-track {
-    background: var(--bg-hover);
+    background: var(--bg-light);
     border-radius: 3px;
 }
 
 #versions-list-container::-webkit-scrollbar-thumb {
-    background: var(--color-accent);
+    background: var(--primary-color);
     border-radius: 3px;
 }
 
 #versions-list-container::-webkit-scrollbar-thumb:hover {
-    background: #9370db;
+    background: var(--primary-dark);
 }

@@ -304,15 +304,16 @@ p {
 .flight-tooltip {
     display: none;
     position: fixed;
-    background: var(--bg-dark);
-    color: var(--text-light);
-    border: 2px solid var(--primary-color);
+    background: white;
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
     border-radius: 0.75rem;
     padding: 0;
     min-width: 280px;
     max-width: 350px;
     z-index: 10000;
-    box-shadow: var(--shadow-lg), 0 0 20px rgba(8, 145, 178, 0.3);
+    box-shadow: var(--shadow-lg);
     pointer-events: none;
     animation: tooltipFadeIn 0.2s ease-out;
 }
@@ -335,10 +336,10 @@ p {
 .tooltip-header {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--primary-light);
+    color: var(--primary-dark);
     margin-bottom: 0.75rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .tooltip-row {
@@ -350,12 +351,12 @@ p {
 }
 
 .tooltip-row .label {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
 }
 
 .tooltip-row .value {
-    color: var(--primary-light);
+    color: var(--primary-color);
     font-weight: 500;
     word-break: break-word;
     text-align: right;
@@ -373,19 +374,19 @@ p {
 }
 
 .badge-promocion {
-    background-color: rgba(22, 163, 74, 0.2);
+    background-color: color-mix(in srgb, var(--success-color) 12%, transparent);
     color: var(--success-color);
     border: 1px solid var(--success-color);
 }
 
 .badge-alerta {
-    background-color: rgba(234, 88, 12, 0.2);
+    background-color: color-mix(in srgb, var(--warning-color) 12%, transparent);
     color: var(--warning-color);
     border: 1px solid var(--warning-color);
 }
 
 .badge-critico {
-    background-color: rgba(220, 38, 38, 0.2);
+    background-color: color-mix(in srgb, var(--danger-color) 12%, transparent);
     color: var(--danger-color);
     border: 1px solid var(--danger-color);
 }

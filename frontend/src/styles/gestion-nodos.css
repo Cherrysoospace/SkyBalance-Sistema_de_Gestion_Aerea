@@ -93,7 +93,8 @@
 /* Tree Visualization */
 .tree-visualization {
     width: 100%;
-    height: 500px;
+    height: min(72vh, 720px);
+    min-height: 560px;
     background: var(--bg-light);
     border-radius: 0.75rem;
     border: 2px solid var(--border-color);
@@ -142,6 +143,7 @@
     padding: 2rem;
     border-radius: 1rem;
     box-shadow: var(--shadow-lg);
+    border-top: 4px solid var(--primary-color);
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
@@ -486,7 +488,7 @@
 .metrics-section {
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: #f8f9fa;
+    background: var(--bg-light);
     border-left: 4px solid var(--primary-color);
     border-radius: 0.5rem;
 }
@@ -540,7 +542,7 @@
 }
 
 .rotation-row:hover {
-    background: #f0f7ff;
+    background: color-mix(in srgb, var(--primary-light) 10%, white);
     border-color: var(--primary-color);
 }
 
@@ -608,10 +610,10 @@
 .metrics-info {
     margin-top: 2rem;
     padding: 1rem;
-    background: #e3f2fd;
-    border-left: 4px solid #0288d1;
+    background: color-mix(in srgb, var(--primary-light) 12%, transparent);
+    border-left: 4px solid var(--primary-color);
     border-radius: 0.5rem;
-    color: #0d47a1;
+    color: var(--primary-dark);
     font-size: 0.9rem;
     display: flex;
     gap: 0.75rem;
@@ -620,7 +622,7 @@
 
 .metrics-info i {
     margin-top: 2px;
-    color: #0288d1;
+    color: var(--primary-color);
 }
 
 .metric-badge {
@@ -633,7 +635,7 @@
     border-radius: 20px;
     font-weight: 600;
     font-size: 0.85rem;
-    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color) 25%, transparent);
 }
 
 .metric-badge i {
@@ -650,9 +652,9 @@
 }
 
 .audit-modal h2 {
-    color: #f59e0b;
+    color: var(--primary-color);
     margin-bottom: 1.5rem;
-    border-bottom: 3px solid #f59e0b;
+    border-bottom: 3px solid var(--primary-color);
     padding-bottom: 1rem;
     display: flex;
     align-items: center;
@@ -664,11 +666,11 @@
 }
 
 .audit-report-container.valid {
-    border-left: 5px solid #10b981;
+    border-left: 5px solid var(--success-color);
 }
 
 .audit-report-container.invalid {
-    border-left: 5px solid #ef4444;
+    border-left: 5px solid var(--danger-color);
 }
 
 .report-header {
@@ -677,12 +679,12 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .report-header h2 {
     margin: 0;
-    color: #1f2937;
+    color: var(--primary-dark);
     font-size: 1.3rem;
 }
 
@@ -696,19 +698,19 @@
 }
 
 .status-badge.valid {
-    background: #d1fae5;
-    color: #065f46;
+    background: color-mix(in srgb, var(--success-color) 15%, white);
+    color: color-mix(in srgb, var(--success-color) 75%, black);
 }
 
 .status-badge.invalid {
-    background: #fee2e2;
-    color: #7f1d1d;
+    background: color-mix(in srgb, var(--danger-color) 12%, white);
+    color: color-mix(in srgb, var(--danger-color) 75%, black);
 }
 
 .report-summary {
     margin-bottom: 2rem;
     padding: 1.5rem;
-    background: #f9fafb;
+    background: var(--bg-light);
     border-radius: 0.75rem;
 }
 
@@ -725,13 +727,13 @@
     padding: 1rem;
     background: white;
     border-radius: 0.5rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     text-align: center;
 }
 
 .summary-item .label {
     font-size: 0.85rem;
-    color: #6b7280;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
     font-weight: 600;
 }
@@ -739,7 +741,7 @@
 .summary-item .value {
     font-size: 1.8rem;
     font-weight: 800;
-    color: #1f2937;
+    color: var(--text-dark);
 }
 
 .summary-item .value.critical {
@@ -755,8 +757,8 @@
     padding: 1rem;
     background: white;
     border-radius: 0.5rem;
-    border: 2px solid #f59e0b;
-    color: #92400e;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-dark);
     font-weight: 600;
 }
 
@@ -1078,7 +1080,8 @@
     }
 
     .tree-visualization {
-        height: 400px;
+        height: 460px;
+        min-height: 420px;
     }
 
     .modal-content {
@@ -1096,7 +1099,8 @@
     }
 
     .tree-visualization {
-        height: 300px;
+        height: 340px;
+        min-height: 320px;
     }
 
     .btn-action,
