@@ -130,7 +130,7 @@
 
 .tree-visualization:focus-within {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-light);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-light) 35%, transparent);
 }
 
 /* Controls */
