@@ -53,18 +53,15 @@ class PersistenceService:
 	def _normalize_vuelo(self, vuelo):
 		"""
 		Normaliza un vuelo individual (para INSERCION):
-		- Convierte codigo int → string
+		- Convierte codigo a formato SB###
 		- Establece prioridad = 1 si falta
 		"""
 		if not isinstance(vuelo, dict):
 			raise ValueError("vuelo debe ser un objeto JSON")
 
-		# Convertir codigo: int → string
+		# Convertir codigo a formato SB###
 		if "codigo" in vuelo:
-			if isinstance(vuelo["codigo"], int):
-				vuelo["codigo"] = str(vuelo["codigo"])
-			elif not isinstance(vuelo["codigo"], str):
-				raise ValueError(f"codigo debe ser string o int, recibido: {type(vuelo['codigo'])}")
+			vuelo["codigo"] = self._normalize_code(vuelo["codigo"])
 
 		# Establecer prioridad por defecto
 		if "prioridad" not in vuelo or vuelo["prioridad"] is None:
@@ -75,7 +72,7 @@ class PersistenceService:
 	def _normalize_node(self, node):
 		"""
 		Normaliza recursivamente un nodo:
-		- Convierte codigo int → string
+		- Convierte codigo a formato SB###
 		- Establece prioridad = 1 si falta
 		- Procesa hijos (izquierdo/derecho)
 		"""
@@ -85,12 +82,9 @@ class PersistenceService:
 		if not isinstance(node, dict):
 			raise ValueError("❌ Nodo debe ser un objeto JSON")
 
-		# Convertir codigo: int → string
+		# Convertir codigo a formato SB###
 		if "codigo" in node:
-			if isinstance(node["codigo"], int):
-				node["codigo"] = str(node["codigo"])
-			elif not isinstance(node["codigo"], str):
-				raise ValueError(f"❌ codigo debe ser string o int, recibido: {type(node['codigo'])}")
+			node["codigo"] = self._normalize_code(node["codigo"])
 
 		# Establecer prioridad por defecto
 		if "prioridad" not in node or node["prioridad"] is None:
@@ -104,6 +98,30 @@ class PersistenceService:
 			node["derecho"] = self._normalize_node(node["derecho"])
 
 		return node
+
+	def _normalize_code(self, code):
+		"""Convierte un código numérico o texto numérico al formato SB###."""
+		if isinstance(code, int):
+			if code < 0 or code > 999:
+				raise ValueError("codigo debe estar entre 0 y 999")
+			return f"SB{code:03d}"
+
+		if isinstance(code, str):
+			clean = code.strip().upper()
+			if clean.startswith("SB"):
+				digits = clean[2:]
+			else:
+				digits = clean
+
+			if not digits.isdigit():
+				raise ValueError(f"codigo inválido: {code}")
+
+			numeric_value = int(digits)
+			if numeric_value < 0 or numeric_value > 999:
+				raise ValueError("codigo debe estar entre 0 y 999")
+			return f"SB{numeric_value:03d}"
+
+		raise ValueError(f"codigo debe ser string o int, recibido: {type(code)}")
 
 	def validate_exported_json(self, payload):
 		"""

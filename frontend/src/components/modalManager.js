@@ -10,7 +10,10 @@ export class ModalManager {
         this.currentAction = null;
         this.onSubmit = null;
 
+        this.codeInput = document.getElementById('field-codigo');
+
         this.setupHandlers();
+        this.setupCodeField();
     }
 
     setupHandlers() {
@@ -33,6 +36,7 @@ export class ModalManager {
         this.currentAction = action;
         this.titleEl.textContent = title;
         this.form.reset();
+        this.setupCodeField();
 
         // Aplicar configuración (campos a mostrar/ocultar, pre-llenar datos, etc)
         if (config.visibleFields) {
@@ -71,6 +75,8 @@ export class ModalManager {
             if (input) {
                 if (input.type === 'checkbox') {
                     input.checked = data[fieldId];
+                } else if (fieldId === 'field-codigo') {
+                    input.value = this.extractNumericCode(data[fieldId]);
                 } else {
                     input.value = data[fieldId];
                 }
@@ -79,8 +85,9 @@ export class ModalManager {
     }
 
     getFormData() {
+        const numericCode = this.normalizeCodeValue(document.getElementById('field-codigo').value);
         return {
-            codigo: document.getElementById('field-codigo').value,
+            codigo: numericCode,
             origen: document.getElementById('field-origen').value,
             destino: document.getElementById('field-destino').value,
             horaSalida: document.getElementById('field-horaSalida').value,
@@ -108,6 +115,45 @@ export class ModalManager {
                 throw error;
             }
         }
+    }
+
+    setupCodeField() {
+        if (!this.codeInput) {
+            this.codeInput = document.getElementById('field-codigo');
+        }
+
+        if (!this.codeInput || this.codeInput.dataset.codeSanitized === 'true') {
+            return;
+        }
+
+        this.codeInput.setAttribute('inputmode', 'numeric');
+        this.codeInput.setAttribute('maxlength', '3');
+        this.codeInput.setAttribute('pattern', '[0-9]{1,3}');
+
+        this.codeInput.addEventListener('input', () => {
+            this.codeInput.value = this.extractNumericCode(this.codeInput.value);
+        });
+
+        this.codeInput.addEventListener('blur', () => {
+            this.codeInput.value = this.extractNumericCode(this.codeInput.value).padStart(3, '0');
+        });
+
+        this.codeInput.dataset.codeSanitized = 'true';
+    }
+
+    extractNumericCode(value) {
+        const raw = String(value || '').trim().toUpperCase();
+        const digits = raw.startsWith('SB') ? raw.slice(2) : raw;
+        return digits.replace(/\D/g, '').slice(0, 3);
+    }
+
+    normalizeCodeValue(value) {
+        const digits = this.extractNumericCode(value);
+        if (!digits) {
+            return '';
+        }
+
+        return `SB${digits.padStart(3, '0')}`;
     }
 }
 

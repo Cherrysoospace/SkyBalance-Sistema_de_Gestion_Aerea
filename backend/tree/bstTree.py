@@ -21,11 +21,12 @@ class BST:
   # Método privado que maneja del recursividad de insertar en el árbol
   def __insert(self, currentRoot, node):
     # Verificar si el valor es igual
-    if(node.getValue() == currentRoot.getValue()):
+    comparison = self.__compareCodes(node.getValue(), currentRoot.getValue())
+    if(comparison == 0):
       raise Exception(f"El valor {node.getValue()} ya existe en el árbol.")
     else:
       # Se verifica si el valor a insertar es mayor que el actual raiz
-      if(node.getValue() > currentRoot.getValue()):
+      if(comparison > 0):
         # Si no tiene hijo derecho, se asigna el nuevo nodo como hijo derecho,
         # y el padre de ese nuevo nodo será el actual raiz
         if(currentRoot.getRightChild() is None):
@@ -57,9 +58,10 @@ class BST:
 
   # Método para la búsqueda de manera recursiva
   def __search(self, currentRoot, value):
-    if value == currentRoot.getValue():
+    comparison = self.__compareCodes(value, currentRoot.getValue())
+    if comparison == 0:
       return currentRoot
-    if value > currentRoot.getValue():
+    if comparison > 0:
       if currentRoot.getRightChild() is None:
         return None
       else:
@@ -122,11 +124,11 @@ class BST:
 
   # Método para eliminar un nodo hoja (caso 1)
   def __deleteLeafNode(self, node):
-    if node.getValue() == self.root.getValue():
+    if self.__compareCodes(node.getValue(), self.root.getValue()) == 0:
       self.root = None
     else:
       parentNode = node.getParent()
-      if node.getValue() < parentNode.getValue():
+      if self.__compareCodes(node.getValue(), parentNode.getValue()) < 0:
         parentNode.setLeftChild(None)
       else:
         parentNode.setRightChild(None)
@@ -277,6 +279,25 @@ class BST:
       "izquierdo": self.__serializeNode(node.getLeftChild()),
       "derecho": self.__serializeNode(node.getRightChild()),
     }
+
+  def __compareCodes(self, left, right):
+    return self.__codeKey(left) - self.__codeKey(right)
+
+  def __codeKey(self, value):
+    if isinstance(value, (int, float)):
+      return int(value)
+
+    if isinstance(value, str):
+      stripped = value.strip().upper()
+      if stripped.startswith("SB") and stripped[2:].isdigit():
+        return int(stripped[2:])
+      if stripped.isdigit():
+        return int(stripped)
+
+    try:
+      return int(str(value))
+    except Exception:
+      return 0
 
   # Método para obtener métricas del árbol
   def getMetrics(self):

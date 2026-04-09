@@ -37,10 +37,11 @@ class AVL:
       self.__checkBalance(inserted)
 
   def __insert(self, currentRoot, node):
-    if node.getValue() == currentRoot.getValue():
+    comparison = self.__compareCodes(node.getValue(), currentRoot.getValue())
+    if comparison == 0:
       raise Exception(f"El valor {node.getValue()} ya existe en el árbol.")
 
-    if node.getValue() < currentRoot.getValue():
+    if comparison < 0:
       if currentRoot.getLeftChild() is None:
         currentRoot.setLeftChild(node)
         node.setParent(currentRoot)
@@ -61,9 +62,10 @@ class AVL:
   def __search(self, currentRoot, value):
     if currentRoot is None:
       return None
-    if value == currentRoot.getValue():
+    comparison = self.__compareCodes(value, currentRoot.getValue())
+    if comparison == 0:
       return currentRoot
-    if value < currentRoot.getValue():
+    if comparison < 0:
       return self.__search(currentRoot.getLeftChild(), value)
     return self.__search(currentRoot.getRightChild(), value)
 
@@ -497,28 +499,30 @@ class AVL:
 
     value = node.getValue()
 
-    if lower is not None and self.__compareValues(value, lower) <= 0:
+    if lower is not None and self.__compareCodes(value, lower) <= 0:
       return False
-    if upper is not None and self.__compareValues(value, upper) >= 0:
+    if upper is not None and self.__compareCodes(value, upper) >= 0:
       return False
 
     return self.__isBSTValid(node.getLeftChild(), lower, value) and self.__isBSTValid(node.getRightChild(), value, upper)
 
-  def __compareValues(self, left, right):
-    left_key = self.__valueSortKey(left)
-    right_key = self.__valueSortKey(right)
+  def __compareCodes(self, left, right):
+    left_key = self.__codeSortKey(left)
+    right_key = self.__codeSortKey(right)
     if left_key < right_key:
       return -1
     if left_key > right_key:
       return 1
     return 0
 
-  def __valueSortKey(self, value):
+  def __codeSortKey(self, value):
     if isinstance(value, (int, float)):
       return (0, float(value), str(value))
 
     if isinstance(value, str):
       stripped = value.strip()
+      if stripped.upper().startswith("SB") and stripped[2:].isdigit():
+        return (0, float(int(stripped[2:])), stripped.upper())
       if stripped.lstrip("-").isdigit():
         return (0, float(int(stripped)), stripped)
       return (1, stripped, stripped)
@@ -540,7 +544,7 @@ class AVL:
       return
 
     # Ordenar por clave normalizada para reconstruir un BST válido.
-    nodes.sort(key=lambda node: self.__valueSortKey(node.getValue()))
+    nodes.sort(key=lambda node: self.__codeSortKey(node.getValue()))
 
     for node in nodes:
       node.setParent(None)
