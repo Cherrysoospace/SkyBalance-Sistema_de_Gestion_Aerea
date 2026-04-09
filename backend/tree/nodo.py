@@ -1,5 +1,8 @@
 # Node model used by AVL/BST. It keeps tree references and flight attributes.
 class Node:
+  PROMOTION_DISCOUNT_RATE = 0.10
+  CRITICAL_PENALTY_RATE = 0.25
+
   # The constructor accepts either a raw value or a flight-like dict.
   def __init__(self, value=None, **kwargs):
     if isinstance(value, dict):
@@ -13,12 +16,11 @@ class Node:
     self.horaSalida = kwargs.get("horaSalida", "")
     self.pasajeros = int(kwargs.get("pasajeros", 0))
     self.precioBase = float(kwargs.get("precioBase", 0))
-    precioFinal = kwargs.get("precioFinal")
-    self.precioFinal = float(precioFinal if precioFinal is not None else self.precioBase)
     self.promocion = bool(kwargs.get("promocion", False))
     self.prioridad = int(kwargs.get("prioridad", 0))
     self.critico = bool(kwargs.get("critico", False))
     self.alerta = bool(kwargs.get("alerta", False))
+    self.precioFinal = self.calculatePrecioFinal()
 
     self.parent = None
     self.leftChild = None
@@ -84,3 +86,18 @@ class Node:
       "critico": self.critico,
       "alerta": self.alerta,
     }
+
+  # Centralized pricing rule used by both trees.
+  def calculatePrecioFinal(self):
+    precio_final = float(self.precioBase)
+
+    if self.critico:
+      precio_final *= (1 + self.CRITICAL_PENALTY_RATE)
+
+    if self.promocion:
+      precio_final *= (1 - self.PROMOTION_DISCOUNT_RATE)
+
+    return round(precio_final, 2)
+
+  def recalculatePrecioFinal(self):
+    self.precioFinal = self.calculatePrecioFinal()

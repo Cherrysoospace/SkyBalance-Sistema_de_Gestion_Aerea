@@ -91,13 +91,14 @@ class AVL:
           target.pasajeros = int(value)
         elif key == "precioBase":
           target.precioBase = float(value)
-          target.precioFinal = float(value)  # Resetear precioFinal
         elif key in ("promocion", "alerta"):
           setattr(target, key, bool(value))
         elif key == "prioridad":
           target.prioridad = int(value)
         else:
           setattr(target, key, str(value))
+
+    target.recalculatePrecioFinal()
 
     # Rebalancear si no estamos en stress mode
     if not self.stressMode:
@@ -577,10 +578,10 @@ class AVL:
 
     if depth > depthLimit:
       node.critico = True
-      node.precioFinal = round(node.precioBase * 1.25, 2)
     else:
       node.critico = False
-      node.precioFinal = node.precioBase
+
+    node.recalculatePrecioFinal()
 
     self.__applyDepthPenalty(node.getLeftChild(), depth + 1, depthLimit)
     self.__applyDepthPenalty(node.getRightChild(), depth + 1, depthLimit)
