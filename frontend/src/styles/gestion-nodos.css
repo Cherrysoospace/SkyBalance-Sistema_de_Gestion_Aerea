@@ -59,9 +59,9 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    background: linear-gradient(135deg, var(--secondary-color), #1e3a8a);
+    background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
     color: white;
-    border: 2px solid #1e3a8a;
+    border: 2px solid var(--secondary-dark);
     border-radius: 2rem;
     font-size: 0.9rem;
     font-weight: 600;
@@ -71,7 +71,7 @@
 }
 
 .btn-export:hover {
-    background: linear-gradient(135deg, #1e3a8a, var(--secondary-color));
+    background: linear-gradient(135deg, var(--secondary-dark), var(--secondary-color));
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
 }
@@ -826,7 +826,7 @@
 }
 
 .nodes-section h3 {
-    color: #0891b2;
+    color: var(--primary-dark);
     margin-bottom: 1rem;
     font-size: 1.1rem;
 }
@@ -873,7 +873,7 @@
 }
 
 .nodes-table td strong {
-    color: #0891b2;
+    color: var(--primary-dark);
     font-weight: 700;
 }
 
@@ -1256,12 +1256,12 @@
 
 /* Botón Ver Métricas Analíticas */
 .btn-action.analytics {
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
-    border-color: #0891b2;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    border-color: var(--primary-color);
 }
 
 .btn-action.analytics:hover {
-    background: linear-gradient(135deg, #0891b2, #06b6d4);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
 }
@@ -1417,13 +1417,13 @@
 }
 
 .btn-action.procesar-cola {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    border-color: #1d4ed8;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    border-color: var(--primary-color);
     width: 100%;
 }
 
 .btn-action.procesar-cola:hover:not(:disabled) {
-    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
 }
 
 .btn-action.procesar-cola:disabled {
@@ -1433,7 +1433,11 @@
 }
 
 .queue-section {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--primary-light) 10%, transparent),
+        rgba(16, 185, 129, 0.05)
+    );
     border: 1px solid var(--primary-color);
     border-radius: 0.8rem;
     padding: 1rem;
@@ -1531,7 +1535,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
     color: white;
     padding: 0.75rem;
     border-radius: 0.6rem;
@@ -1764,13 +1768,13 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
     color: white;
     padding: 1rem 1.5rem;
     border-radius: 0.75rem;
     font-weight: 700;
     font-size: 1.1rem;
-    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--primary-color) 35%, transparent);
     z-index: 2500;
     pointer-events: none;
     border: 2px solid rgba(255, 255, 255, 0.2);
