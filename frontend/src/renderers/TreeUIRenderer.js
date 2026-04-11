@@ -123,9 +123,6 @@ export class TreeUIRenderer {
         console.log('📊 treeData.tree:', treeData.tree);
         console.log('📊 Campos del nodo raíz:', Object.keys(treeData.tree));
 
-        const width = this.container.clientWidth || 800;
-        const height = this.container.clientHeight || 500;
-
         const root = d3.hierarchy(treeData.tree ?? treeData, d => {
             const children = [];
             if (d.left) children.push(d.left);
@@ -145,14 +142,27 @@ export class TreeUIRenderer {
 
         console.log(`✅ Árbol procesado - Total nodos: ${root.descendants().length}`);
 
-        const treeLayout = d3.tree().size([width - 80, height - 100]);
+        const width = this.container.clientWidth || 800;
+        const containerHeight = this.container.clientHeight || 500;
+
+        const horizontalPadding = 80;
+        const topPadding = 60;
+        const bottomPadding = 80;
+        const levelHeight = 110;
+        const requiredHeight = topPadding + bottomPadding + (Math.max(root.height, 1) * levelHeight);
+        const height = Math.max(containerHeight, requiredHeight);
+
+        const treeLayout = d3.tree().size([
+            width - horizontalPadding,
+            height - (topPadding + bottomPadding)
+        ]);
         treeLayout(root);
 
         const svg = d3.select(this.container).append('svg')
             .attr('width', width)
             .attr('height', height);
 
-        const g = svg.append('g').attr('transform', 'translate(40, 60)');
+        const g = svg.append('g').attr('transform', `translate(${horizontalPadding / 2}, ${topPadding})`);
 
         // Links (conexiones entre nodos)
         g.selectAll('.link')

@@ -101,8 +101,8 @@
     overflow: auto;
     padding: 0.75rem;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
 }
 
 .tree-visualization:focus-within {
@@ -111,8 +111,8 @@
 }
 
 .tree-visualization svg {
-    width: 100%;
-    height: 100%;
+    display: block;
+    min-width: 100%;
 }
 
 /* Modal */
