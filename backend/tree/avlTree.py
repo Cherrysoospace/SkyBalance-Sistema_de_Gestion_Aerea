@@ -609,7 +609,7 @@ class AVL:
 
     promotionImpact = node.precioBase * 0.1 if node.promocion else 0
     penaltyImpact = node.precioBase * 0.25 if node.critico else 0
-    rentability = (node.pasajeros * node.precioFinal) - promotionImpact + penaltyImpact
+    rentability = (node.pasajeros * node.precioFinal) 
 
     result.append((rentability, depth, node.codigo))
     self.__collectProfitCandidates(node.getLeftChild(), depth + 1, result)
