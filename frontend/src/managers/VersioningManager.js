@@ -62,6 +62,12 @@ export class VersioningManager {
             });
         }
 
+        // Use one listener for all restore and delete buttons.
+        const listContainer = document.getElementById(this.config.versionsListContainer);
+        if (listContainer) {
+            listContainer.addEventListener('click', (e) => this._handleListActions(e));
+        }
+
         // Cerrar modal
         const modal = document.getElementById(this.config.versioningModal);
         if (modal) {
@@ -208,20 +214,6 @@ export class VersioningManager {
 
             container.innerHTML = html;
 
-            // Agregar event listeners a los botones de restauración
-            this.versions.forEach(version => {
-                const restoreBtn = document.getElementById(`btn-restore-${version.name}`);
-                const deleteBtn = document.getElementById(`btn-delete-${version.name}`);
-
-                if (restoreBtn) {
-                    restoreBtn.addEventListener('click', () => this.handleRestoreVersion(version.name));
-                }
-
-                if (deleteBtn) {
-                    deleteBtn.addEventListener('click', () => this.handleDeleteVersion(version.name));
-                }
-            });
-
             console.log(`✅ Lista de versiones actualizada: ${this.versions.length} versiones`);
 
         } catch (error) {
@@ -246,7 +238,7 @@ export class VersioningManager {
 
             console.log('🔄 Restaurando versión:', versionName);
 
-            const restoreBtn = document.getElementById(`btn-restore-${versionName}`);
+            const restoreBtn = document.querySelector(`[data-action="restore"][data-version="${this._escapeSelector(versionName)}"]`);
             if (restoreBtn) {
                 restoreBtn.disabled = true;
                 restoreBtn.textContent = 'Restaurando...';
@@ -270,7 +262,7 @@ export class VersioningManager {
         } catch (error) {
             console.error('❌ Error restaurando versión:', error);
             alert('Error al restaurar versión: ' + error.message);
-            const restoreBtn = document.getElementById(`btn-restore-${versionName}`);
+            const restoreBtn = document.querySelector(`[data-action="restore"][data-version="${this._escapeSelector(versionName)}"]`);
             if (restoreBtn) {
                 restoreBtn.disabled = false;
                 restoreBtn.textContent = 'Restaurar';
@@ -326,29 +318,67 @@ export class VersioningManager {
      */
     _buildVersionItemHTML(version, index) {
         const timestamp = new Date(version.timestamp).toLocaleString('es-ES');
-        const versionId = version.name; // Usar name como ID único
+        const versionName = this._escapeHTML(version.name);
+        const versionAttr = this._escapeHTML(version.name);
 
         return `
-            <div class="version-item" data-version="${versionId}">
+            <div class="version-item" data-version="${versionAttr}">
                 <div class="version-info">
                     <div class="version-name">
                         <span class="version-badge">#${index + 1}</span>
-                        <strong>${version.name}</strong>
+                        <strong>${versionName}</strong>
                     </div>
                     <div class="version-timestamp">
                         <i class="fas fa-clock"></i> ${timestamp}
                     </div>
                 </div>
                 <div class="version-actions">
-                    <button id="btn-restore-${versionId}" class="btn-action-small restore" title="Restaurar esta versión">
+                    <button class="btn-action-small restore" data-action="restore" data-version="${versionAttr}" title="Restaurar esta versión">
                         <i class="fas fa-undo"></i> Restaurar
                     </button>
-                    <button id="btn-delete-${versionId}" class="btn-action-small delete" title="Eliminar esta versión">
+                    <button class="btn-action-small delete" data-action="delete" data-version="${versionAttr}" title="Eliminar esta versión">
                         <i class="fas fa-trash"></i> Eliminar
                     </button>
                 </div>
             </div>
         `;
+    }
+
+    _handleListActions(event) {
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+            return;
+        }
+
+        const action = button.dataset.action;
+        const versionName = button.dataset.version;
+        if (!versionName) {
+            return;
+        }
+
+        if (action === 'restore') {
+            this.handleRestoreVersion(versionName);
+            return;
+        }
+
+        if (action === 'delete') {
+            this.handleDeleteVersion(versionName);
+        }
+    }
+
+    _escapeHTML(value) {
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    _escapeSelector(value) {
+        return String(value)
+            .replaceAll('\\', '\\\\')
+            .replaceAll('"', '\\"');
     }
 
     /**

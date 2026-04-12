@@ -261,7 +261,7 @@ export class ApiClient {
     }
 
     async restoreVersion(name) {
-        return this.post(`/versions/${name}/restore`, {});
+        return this.post('/versions/restore', { name });
     }
 }
 

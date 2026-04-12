@@ -410,10 +410,10 @@ class TreeService:
 		return version.to_dict()
 
 	def list_versions(self):
-		result = []
-		for version in self.versions.values():
-			result.append({"name": version.name, "timestamp": version.timestamp})
-		return result
+		return [
+			{"name": version.name, "timestamp": version.timestamp}
+			for version in self.versions.values()
+		]
 
 	def restore_version(self, name):
 		version = self.versions.get(name)
@@ -422,6 +422,12 @@ class TreeService:
 		self._push_undo_state()
 		self.avl.loadFromTopology(deepcopy(version.snapshot))
 		self.bst.loadFromTopology(deepcopy(version.snapshot))
+		return {"ok": True, "name": name}
+
+	def delete_version(self, name):
+		if name not in self.versions:
+			return {"ok": False, "message": "Versión no encontrada."}
+		del self.versions[name]
 		return {"ok": True, "name": name}
 
 	def verify_avl(self):

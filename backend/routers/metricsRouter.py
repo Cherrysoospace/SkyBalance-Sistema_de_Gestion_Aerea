@@ -4,7 +4,17 @@ from schemas.metricsSchema import DepthLimitSchema, StressModeSchema
 from services.TreeService import treeService
 
 
+# This router handles metrics and analysis endpoints.
 router = APIRouter(prefix="/metrics", tags=["metrics"])
+
+
+# This helper keeps response format simple and consistent.
+def _tree_metrics_response(result_key, result_value):
+	return {
+		result_key: result_value,
+		"tree": treeService.get_tree(),
+		"metrics": treeService.get_metrics(),
+	}
 
 
 @router.get("/")
@@ -24,32 +34,20 @@ def set_stress_mode(payload: StressModeSchema):
 @router.post("/depth-penalty")
 def set_depth_penalty(payload: DepthLimitSchema):
 	response = treeService.set_depth_limit(payload.depthLimit)
-	return {
-		"state": response,
-		"tree": treeService.get_tree(),
-		"metrics": treeService.get_metrics(),
-	}
+	return _tree_metrics_response("state", response)
 
 
 @router.post("/rebalance-global")
 def rebalance_global():
 	response = treeService.rebalance_global()
-	return {
-		"result": response,
-		"tree": treeService.get_tree(),
-		"metrics": treeService.get_metrics(),
-	}
+	return _tree_metrics_response("result", response)
 
 
 @router.post("/rebalance-global-animated")
 def rebalance_global_animated():
-	"""Retorna detalles paso a paso para animar el rebalanceo."""
+	"""Return step-by-step details for frontend animation."""
 	response = treeService.rebalance_global_animated()
-	return {
-		"result": response,
-		"tree": treeService.get_tree(),
-		"metrics": treeService.get_metrics(),
-	}
+	return _tree_metrics_response("result", response)
 
 
 @router.get("/audit")
@@ -60,9 +58,4 @@ def audit_avl():
 @router.delete("/least-profitable")
 def remove_least_profitable():
 	response = treeService.remove_least_profitable()
-	return {
-		"result": response,
-		"tree": treeService.get_tree(),
-		"metrics": treeService.get_metrics(),
-	}
-# Endpoints para consultar métricas y auditoría del árbol
+	return _tree_metrics_response("result", response)
