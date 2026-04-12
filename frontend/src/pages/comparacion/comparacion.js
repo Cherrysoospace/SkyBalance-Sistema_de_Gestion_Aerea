@@ -109,6 +109,13 @@ async function loadComparison() {
         const comparisonData = await apiClient.getComparison();
         console.log('📊 Datos de comparación recibidos:', comparisonData);
 
+        // Verificar si hay error (carga de TOPOLOGIA)
+        if (comparisonData.error) {
+            showComparisonError(comparisonData);
+            showLoadSection(); // Volver a mostrar sección de carga
+            return;
+        }
+
         updateComparisonStats(comparisonData);
         console.log('✅ Stats actualizados');
         console.log('📌 AVL tree:', comparisonData.avl?.tree);
@@ -119,6 +126,96 @@ async function loadComparison() {
     } catch (error) {
         console.error('❌ Error cargando comparación:', error);
     }
+}
+
+// Muestra popup de error cuando se intenta comparación con TOPOLOGIA
+function showComparisonError(errorData) {
+    // Crear modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 450px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+        text-align: center;
+        animation: slideIn 0.3s ease-out;
+    `;
+
+    modalContent.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto;">
+                <circle cx="30" cy="30" r="28" stroke="#e74c3c" stroke-width="2"/>
+                <text x="30" y="38" font-size="36" fill="#e74c3c" text-anchor="middle" font-weight="bold">!</text>
+            </svg>
+        </div>
+        <h2 style="margin: 1rem 0; color: #333; font-size: 1.5rem;">Comparación no disponible</h2>
+        <p style="color: #666; margin: 1rem 0; line-height: 1.5;">
+            Se detectó que se cargó una <strong>TOPOLOGIA</strong> (árbol jerárquico predefinido).
+        </p>
+        <p style="color: #666; margin: 1rem 0; line-height: 1.5;">
+            La comparación entre AVL y BST solo funciona cuando se carga en modo <strong>INSERCION</strong> (vuelos individuales).
+        </p>
+        <p style="color: #999; margin: 1rem 0; font-size: 0.9rem;">
+            Por favor, carga un archivo JSON en modo INSERCION para usar la comparación.
+        </p>
+        <button id="close-error-popup" style="
+            margin-top: 1.5rem;
+            padding: 0.75rem 2rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        ">Entendido</button>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Agregar evento al botón
+    document.getElementById('close-error-popup').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    // Cerrar al hacer click fuera
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+
+    // Agregar animación
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 function updateComparisonStats(data) {

@@ -19,6 +19,7 @@ class TreeService:
 		self.queue = InsertionQueue()
 		self.versions = {}
 		self.depthLimit = 3
+		self.loadMode = None  # Track current load mode: INSERCION, TOPOLOGIA, SYSTEM_EXPORT
 
 	# Saves the full tree snapshot before mutating operations.
 	def _push_undo_state(self):
@@ -32,6 +33,38 @@ class TreeService:
 
 	def get_comparison(self):
 		"""Devuelve una comparación entre AVL y BST con sus métricas"""
+		# Validar que se cargó en modo INSERCION
+		if self.loadMode == "TOPOLOGIA":
+			return {
+				"error": "La comparación solo está disponible para carga en modo INSERCION",
+				"message": "Se detectó que se cargó una TOPOLOGIA. La comparación solo funciona con INSERCION de vuelos.",
+				"mode": "TOPOLOGIA"
+			}
+
+		# Si no se ha cargado nada aún, retornar estructura vacía
+		if self.loadMode is None:
+			return {
+				"avl": {
+					"tree": self.avl.toDict(),
+					"metrics": {
+						"raiz": self.avl.getRoot().getValue() if self.avl.getRoot() is not None else None,
+						"profundidad": self.avl.calculateHeight(self.avl.getRoot()),
+						"hojas": self.avl.countLeaves(),
+						"alturaActual": self.avl.calculateHeight(self.avl.getRoot()),
+					}
+				},
+				"bst": {
+					"tree": self.bst.toDict(),
+					"metrics": {
+						"raiz": self.bst.getRoot().getValue() if self.bst.getRoot() is not None else None,
+						"profundidad": self.bst.calculateHeight(self.bst.getRoot()),
+						"hojas": self.bst.countLeaves(),
+						"alturaActual": self.bst.calculateHeight(self.bst.getRoot()),
+					}
+				}
+			}
+
+		# Retornar comparación normal para INSERCION
 		return {
 			"avl": {
 				"tree": self.avl.toDict(),
@@ -323,6 +356,7 @@ class TreeService:
 
 			self.avl.applyDepthPenalty(self.depthLimit)
 			self.bst.applyDepthPenalty(self.depthLimit)
+			self.loadMode = "INSERCION"  # Set load mode
 			return {"mode": "INSERCION", "nodos": nodos_count}
 
 		elif format_type == "TOPOLOGIA":
@@ -334,6 +368,7 @@ class TreeService:
 			nodos_count = len(self.avl.breadthFirstSearch()) if self.avl.getRoot() else 0
 			self.avl.applyDepthPenalty(self.depthLimit)
 			self.bst.applyDepthPenalty(self.depthLimit)
+			self.loadMode = "TOPOLOGIA"  # Set load mode
 			return {"mode": "TOPOLOGIA", "nodos": nodos_count}
 
 		elif format_type == "SYSTEM_EXPORT":
@@ -350,6 +385,7 @@ class TreeService:
 			nodos_count = len(self.avl.breadthFirstSearch()) if self.avl.getRoot() else 0
 			self.avl.applyDepthPenalty(self.depthLimit)
 			self.bst.applyDepthPenalty(self.depthLimit)
+			self.loadMode = "SYSTEM_EXPORT"  # Set load mode
 			return {"mode": "SYSTEM_EXPORT", "nodos": nodos_count, "metrics_restored": True}
 
 		else:
