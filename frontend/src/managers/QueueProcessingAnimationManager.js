@@ -328,13 +328,21 @@ export class QueueProcessingAnimationManager {
 
             summaryContainer.innerHTML = summaryHtml;
             summaryContainer.style.animation = `summarySlidIn ${this.config.SUMMARY_ANIMATION_DURATION}ms ease-out`;
+            
+            const closeSummary = () => {
+                summaryContainer.style.animation = `summarySlideOut ${this.config.SUMMARY_ANIMATION_DURATION}ms ease-in forwards`;
+                setTimeout(() => {
+                    summaryContainer.remove();
+                    resolve();
+                }, this.config.SUMMARY_ANIMATION_DURATION);
+            };
+            
             summaryContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('btn-summary-close')) {
-                    summaryContainer.style.animation = `summarySlideOut ${this.config.SUMMARY_ANIMATION_DURATION}ms ease-in forwards`;
-                    setTimeout(() => resolve(), this.config.SUMMARY_ANIMATION_DURATION);
+                    closeSummary();
                 }
             });
-            setTimeout(() => summaryContainer.querySelector('.btn-summary-close')?.click(), 10000);
+            setTimeout(() => closeSummary(), 10000);
         });
     }
 
