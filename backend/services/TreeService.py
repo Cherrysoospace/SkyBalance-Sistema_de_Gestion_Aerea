@@ -2,6 +2,7 @@ from copy import deepcopy
 
 from models.Version import Version
 from services.PersistenceService import persistenceService
+from services.TreeComparisonService import treeComparisonService
 from tree.actionStack import ActionStack
 from tree.avlTree import AVL
 from tree.bstTree import BST
@@ -72,58 +73,7 @@ class TreeService:
 
 	def get_comparison(self):
 		"""Return AVL vs BST comparison with basic metrics."""
-		# Comparison is only available for insertion mode.
-		if self.loadMode == "TOPOLOGIA":
-			return {
-				"error": "La comparación solo está disponible para carga en modo INSERCION",
-				"message": "Se detectó que se cargó una TOPOLOGIA. La comparación solo funciona con INSERCION de vuelos.",
-				"mode": "TOPOLOGIA"
-			}
-
-		# Return empty trees when nothing is loaded.
-		if self.loadMode is None:
-			return {
-				"avl": {
-					"tree": self.avl.toDict(),
-					"metrics": {
-						"raiz": self.avl.getRoot().getValue() if self.avl.getRoot() is not None else None,
-						"profundidad": self.avl.calculateHeight(self.avl.getRoot()),
-						"hojas": self.avl.countLeaves(),
-						"alturaActual": self.avl.calculateHeight(self.avl.getRoot()),
-					}
-				},
-				"bst": {
-					"tree": self.bst.toDict(),
-					"metrics": {
-						"raiz": self.bst.getRoot().getValue() if self.bst.getRoot() is not None else None,
-						"profundidad": self.bst.calculateHeight(self.bst.getRoot()),
-						"hojas": self.bst.countLeaves(),
-						"alturaActual": self.bst.calculateHeight(self.bst.getRoot()),
-					}
-				}
-			}
-
-		# Return standard comparison for insertion mode.
-		return {
-			"avl": {
-				"tree": self.avl.toDict(),
-				"metrics": {
-					"raiz": self.avl.getRoot().getValue() if self.avl.getRoot() is not None else None,
-					"profundidad": self.avl.calculateHeight(self.avl.getRoot()),
-					"hojas": self.avl.countLeaves(),
-					"alturaActual": self.avl.calculateHeight(self.avl.getRoot()),
-				}
-			},
-			"bst": {
-				"tree": self.bst.toDict(),
-				"metrics": {
-					"raiz": self.bst.getRoot().getValue() if self.bst.getRoot() is not None else None,
-					"profundidad": self.bst.calculateHeight(self.bst.getRoot()),
-					"hojas": self.bst.countLeaves(),
-					"alturaActual": self.bst.calculateHeight(self.bst.getRoot()),
-				}
-			}
-		}
+		return treeComparisonService.get_comparison(self.avl, self.bst, self.loadMode)
 
 	def set_stress_mode(self, enabled):
 		"""Enable or disable stress mode in AVL operations."""

@@ -1,5 +1,6 @@
 from tree.nodo import Node
 from services.AVLAuditService import AVLAuditService
+from services.AVLTreeMetricsService import avlTreeMetricsService
 
 
 # AVL tree used as the core structure for SkyBalance.
@@ -16,6 +17,7 @@ class AVL:
     self.massCancelations = 0
     # Audit service used to validate AVL property.
     self.auditService = AVLAuditService()
+    self.metricsService = avlTreeMetricsService
 
   def getRoot(self):
     return self.root
@@ -169,9 +171,7 @@ class AVL:
 
   # Height utilities.
   def calculateHeight(self, node):
-    if node is None:
-      return -1
-    return 1 + max(self.calculateHeight(node.getLeftChild()), self.calculateHeight(node.getRightChild()))
+    return self.metricsService.calculate_height(node)
 
   def getBalanceFactor(self, node):
     if node is None:
@@ -305,65 +305,19 @@ class AVL:
     return middleNode
 
   def breadthFirstSearch(self):
-    if self.root is None:
-      return []
-
-    queue = [self.root]
-    result = []
-    while len(queue) > 0:
-      current = queue.pop(0)
-      result.append(current.getValue())
-      if current.getLeftChild() is not None:
-        queue.append(current.getLeftChild())
-      if current.getRightChild() is not None:
-        queue.append(current.getRightChild())
-    return result
+    return self.metricsService.breadth_first_search(self.root)
 
   def preOrderTraversal(self):
-    result = []
-    self.__preOrder(self.root, result)
-    return result
-
-  def __preOrder(self, node, result):
-    if node is None:
-      return
-    result.append(node.getValue())
-    self.__preOrder(node.getLeftChild(), result)
-    self.__preOrder(node.getRightChild(), result)
+    return self.metricsService.pre_order_traversal(self.root)
 
   def inOrderTraversal(self):
-    result = []
-    self.__inOrder(self.root, result)
-    return result
-
-  def __inOrder(self, node, result):
-    if node is None:
-      return
-    self.__inOrder(node.getLeftChild(), result)
-    result.append(node.getValue())
-    self.__inOrder(node.getRightChild(), result)
+    return self.metricsService.in_order_traversal(self.root)
 
   def posOrderTraversal(self):
-    result = []
-    self.__postOrder(self.root, result)
-    return result
-
-  def __postOrder(self, node, result):
-    if node is None:
-      return
-    self.__postOrder(node.getLeftChild(), result)
-    self.__postOrder(node.getRightChild(), result)
-    result.append(node.getValue())
+    return self.metricsService.pos_order_traversal(self.root)
 
   def countLeaves(self):
-    return self.__countLeaves(self.root)
-
-  def __countLeaves(self, node):
-    if node is None:
-      return 0
-    if node.getLeftChild() is None and node.getRightChild() is None:
-      return 1
-    return self.__countLeaves(node.getLeftChild()) + self.__countLeaves(node.getRightChild())
+    return self.metricsService.count_leaves(self.root)
 
   def __resetGlobalRebalanceCounters(self):
     self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
@@ -628,51 +582,10 @@ class AVL:
 
   # Converts the full tree to a D3-friendly nested object.
   def toDict(self):
-    return self.__serializeNode(self.root)
-
-  def __serializeNode(self, node):
-    if node is None:
-      return None
-
-    return {
-      "codigo": node.codigo,
-      "origen": node.origen,
-      "destino": node.destino,
-      "horaSalida": node.horaSalida,
-      "pasajeros": node.pasajeros,
-      "precioBase": node.precioBase,
-      "precioFinal": node.precioFinal,
-      "promocion": node.promocion,
-      "prioridad": node.prioridad,
-      "critico": node.critico,
-      "alerta": node.alerta,
-      "altura": self.calculateHeight(node),
-      "factorEquilibrio": self.getBalanceFactor(node),
-      "izquierdo": self.__serializeNode(node.getLeftChild()),
-      "derecho": self.__serializeNode(node.getRightChild()),
-    }
+    return self.metricsService.serialize_node(self.root, self.calculateHeight, self.getBalanceFactor)
 
   def getMetrics(self):
-    return {
-      "alturaActual": self.calculateHeight(self.root),
-      "hojas": self.countLeaves(),
-      "bfs": self.breadthFirstSearch(),
-      "dfs": {
-        "preOrder": self.preOrderTraversal(),
-        "inOrder": self.inOrderTraversal(),
-        "posOrder": self.posOrderTraversal(),
-      },
-      # Keep legacy key for frontend compatibility.
-      "rotaciones": self.rotationCounts,
-      # Detailed rotation groups.
-      "rotacionesDetallado": {
-        "sesionActual": self.rotationCounts,
-        "historico": self.rotationCountsHistorical,
-        "ultimoRebalanceoGlobal": self.rotationCountsLastGlobalRebalance
-      },
-      "cancelacionesMasivas": self.massCancelations,
-      "modoEstres": self.stressMode,
-    }
+    return self.metricsService.build_metrics(self)
 
   def clear(self):
     self.root = None
@@ -778,22 +691,4 @@ class AVL:
     return node
 
   def print_tree(self):
-    if self.root is None:
-      print("El árbol está vacío.")
-      return
-    self.__print_tree(self.root, "", True)
-
-  def __print_tree(self, node=None, prefix="", is_left=True):
-    if node is None:
-      return
-
-    if node.getRightChild() is not None:
-      new_prefix = prefix + ("│   " if is_left else "    ")
-      self.__print_tree(node.getRightChild(), new_prefix, False)
-
-    connector = "└── " if is_left else "┌── "
-    print(prefix + connector + str(node.getValue()))
-
-    if node.getLeftChild() is not None:
-      new_prefix = prefix + ("    " if is_left else "│   ")
-      self.__print_tree(node.getLeftChild(), new_prefix, True)
+    self.metricsService.print_tree(self.root)

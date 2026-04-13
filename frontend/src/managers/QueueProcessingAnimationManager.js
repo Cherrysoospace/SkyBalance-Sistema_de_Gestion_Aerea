@@ -304,7 +304,6 @@ export class QueueProcessingAnimationManager {
     async showSummary(steps, summary = {}) {
         return new Promise((resolve) => {
             const totalFlights = steps.length;
-            const totalRotations = summary.total_rotations || 0;
             const totalConflicts = steps.reduce((acc, s) => acc + (s.balance_criticos?.length || 0), 0);
 
             const summaryHtml = `
@@ -312,7 +311,6 @@ export class QueueProcessingAnimationManager {
                     <div class="summary-header"><h3>✅ Procesamiento Completado</h3></div>
                     <div class="summary-stats">
                         <div class="stat-item"><div class="stat-content"><div class="stat-label">Vuelos</div><div class="stat-value">${totalFlights}</div></div></div>
-                        <div class="stat-item"><div class="stat-content"><div class="stat-label">Rotaciones</div><div class="stat-value">${totalRotations}</div></div></div>
                         <div class="stat-item"><div class="stat-content"><div class="stat-label">Conflictos</div><div class="stat-value">${totalConflicts}</div></div></div>
                     </div>
                     <button class="btn-summary-close">✕ Cerrar</button>

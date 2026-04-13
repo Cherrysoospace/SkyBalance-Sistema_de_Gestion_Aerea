@@ -271,20 +271,7 @@ class BST:
       return int(str(value))
     except Exception:
       return 0
-
-  # Return tree metrics.
-  def getMetrics(self):
-    return {
-      "alturaActual": self.calculateHeight(self.root),
-      "hojas": self.countLeaves(),
-      "bfs": self.breadthFirstSearch() if self.root is not None else [],
-      "dfs": {
-        "preOrder": self.preOrderTraversal() if self.root is not None else [],
-        "inOrder": self.inOrderTraversal() if self.root is not None else [],
-        "posOrder": self.posOrderTraversal() if self.root is not None else [],
-      },
-    }
-
+  
   # Apply depth-based critical flag and price penalty.
   def applyDepthPenalty(self, depthLimit):
     self.__applyDepthPenalty(self.root, 0, depthLimit)
