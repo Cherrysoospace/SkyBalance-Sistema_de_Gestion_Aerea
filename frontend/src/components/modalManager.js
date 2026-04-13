@@ -11,6 +11,7 @@ export class ModalManager {
         this.onSubmit = null;
 
         this.codeInput = document.getElementById('field-codigo');
+        this.codeLockAlertShown = false;
 
         this.setupHandlers();
         this.setupCodeField();
@@ -34,6 +35,7 @@ export class ModalManager {
 
     open(action, title, config = {}) {
         this.currentAction = action;
+        this.codeLockAlertShown = false;
         this.titleEl.textContent = title;
         this.form.reset();
         this.setupCodeField();
@@ -46,6 +48,8 @@ export class ModalManager {
         if (config.prefill) {
             this.prefillForm(config.prefill);
         }
+
+        this.configureCodeFieldByAction(action);
 
         this.modal.classList.add('show');
         this.modal.classList.remove('hidden');
@@ -131,14 +135,66 @@ export class ModalManager {
         this.codeInput.setAttribute('pattern', '[0-9]{1,3}');
 
         this.codeInput.addEventListener('input', () => {
+            if (this.codeInput.readOnly) {
+                this.showCodeLockedAlert();
+                return;
+            }
             this.codeInput.value = this.extractNumericCode(this.codeInput.value);
         });
 
         this.codeInput.addEventListener('blur', () => {
+            if (this.codeInput.readOnly) {
+                return;
+            }
             this.codeInput.value = this.extractNumericCode(this.codeInput.value).padStart(3, '0');
         });
 
+        this.codeInput.addEventListener('keydown', (event) => {
+            if (!this.codeInput.readOnly) {
+                return;
+            }
+
+            const allowedKeys = ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+            if (!allowedKeys.includes(event.key)) {
+                event.preventDefault();
+                this.showCodeLockedAlert();
+            }
+        });
+
+        this.codeInput.addEventListener('paste', (event) => {
+            if (!this.codeInput.readOnly) {
+                return;
+            }
+            event.preventDefault();
+            this.showCodeLockedAlert();
+        });
+
         this.codeInput.dataset.codeSanitized = 'true';
+    }
+
+    configureCodeFieldByAction(action) {
+        if (!this.codeInput) {
+            return;
+        }
+
+        const isEditAction = action === 'modificar';
+        this.codeInput.readOnly = isEditAction;
+
+        if (isEditAction) {
+            this.codeInput.classList.add('is-readonly');
+            this.codeInput.setAttribute('title', 'El ID del nodo no se puede modificar');
+        } else {
+            this.codeInput.classList.remove('is-readonly');
+            this.codeInput.removeAttribute('title');
+        }
+    }
+
+    showCodeLockedAlert() {
+        if (this.codeLockAlertShown) {
+            return;
+        }
+        this.codeLockAlertShown = true;
+        alert('⚠️ El ID del nodo no se puede modificar.');
     }
 
     extractNumericCode(value) {

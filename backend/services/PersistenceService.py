@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict, Optional
 from models.NodoVuelo import NodoVuelo
 
 
-# Utility service for reading/writing JSON payloads.
+# Service used to parse, normalize, validate, and convert JSON payloads.
 class PersistenceService:
 
 	def parse_json_text(self, content):
@@ -13,84 +13,68 @@ class PersistenceService:
 	def to_json_text(self, payload):
 		return json.dumps(payload, ensure_ascii=False, indent=2)
 
+	def _is_insertion_payload(self, payload):
+		return isinstance(payload, dict) and payload.get("tipo") == "INSERCION"
+
+	def _is_topology_payload(self, payload):
+		if not isinstance(payload, dict):
+			return False
+		return "codigo" in payload or "izquierdo" in payload or "derecho" in payload
+
+	def _normalize_insertion_list(self, payload):
+		vuelos = payload.get("vuelos", [])
+		if not isinstance(vuelos, list):
+			raise ValueError("Field 'vuelos' must be a list in INSERCION format")
+		if len(vuelos) == 0:
+			raise ValueError("INSERCION payload is empty")
+
+		normalized_vuelos = []
+		for i, vuelo in enumerate(vuelos):
+			try:
+				normalized_vuelos.append(self._normalize_vuelo(vuelo))
+			except ValueError as e:
+				raise ValueError(f"Invalid flight at index {i}: {str(e)}")
+		return normalized_vuelos
+
 	def validate_and_normalize_topology(self, payload):
-		"""
-		Detecta y normaliza ambos formatos:
-		1. TOPOLOGIA: árbol jerárquico {codigo, izquierdo, derecho}
-		   → Retorna dict normalizado (recursivo)
-		2. INSERCION: lista de vuelos {tipo: "INSERCION", vuelos: [...]}
-		   → Retorna array de vuelos normalizados
+		"""Normalize INSERCION or TOPOLOGIA input formats."""
+		if self._is_insertion_payload(payload):
+			return self._normalize_insertion_list(payload)
 
-		Ammbos: convierte codigo int→string, establece prioridad=1 si falta
-		"""
-		# INSERCION: lista de vuelos
-		if isinstance(payload, dict) and payload.get("tipo") == "INSERCION":
-			vuelos = payload.get("vuelos", [])
-			if not isinstance(vuelos, list):
-				raise ValueError("❌ Campo 'vuelos' debe ser una lista en INSERCION")
-			if len(vuelos) == 0:
-				raise ValueError("❌ INSERCION vacío: no hay vuelos para insertar")
+		if self._is_topology_payload(payload):
+			return self._normalize_node(payload)
 
-			# Normalizar cada vuelo
-			normalized_vuelos = []
-			for i, vuelo in enumerate(vuelos):
-				try:
-					normalized = self._normalize_vuelo(vuelo)
-					normalized_vuelos.append(normalized)
-				except ValueError as e:
-					raise ValueError(f"❌ Error en vuelo {i}: {str(e)}")
-			return normalized_vuelos  # Array de vuelos normalizados
-
-		# TOPOLOGIA: árbol jerárquico
-		if isinstance(payload, dict):
-			# Debe tener estructura de árbol (al menos codigo o izquierdo/derecho)
-			if "codigo" in payload or "izquierdo" in payload or "derecho" in payload:
-				normalized = self._normalize_node(payload)
-				return normalized  # Dict (árbol normalizado)
-
-		raise ValueError("❌ JSON inválido. Esperado: TOPOLOGIA (árbol jerárquico) o INSERCION (lista de vuelos)")
+		raise ValueError(
+			"Invalid JSON format. Expected TOPOLOGIA tree or INSERCION flight list"
+		)
 
 	def _normalize_vuelo(self, vuelo):
-		"""
-		Normaliza un vuelo individual (para INSERCION):
-		- Convierte codigo a formato SB###
-		- Establece prioridad = 1 si falta
-		"""
+		"""Normalize one INSERCION flight object."""
 		if not isinstance(vuelo, dict):
-			raise ValueError("vuelo debe ser un objeto JSON")
+			raise ValueError("Flight item must be a JSON object")
 
-		# Convertir codigo a formato SB###
 		if "codigo" in vuelo:
 			vuelo["codigo"] = self._normalize_code(vuelo["codigo"])
 
-		# Establecer prioridad por defecto
 		if "prioridad" not in vuelo or vuelo["prioridad"] is None:
 			vuelo["prioridad"] = 1
 
 		return vuelo
 
 	def _normalize_node(self, node):
-		"""
-		Normaliza recursivamente un nodo:
-		- Convierte codigo a formato SB###
-		- Establece prioridad = 1 si falta
-		- Procesa hijos (izquierdo/derecho)
-		"""
+		"""Normalize one tree node recursively."""
 		if node is None:
 			return None
 
 		if not isinstance(node, dict):
-			raise ValueError("❌ Nodo debe ser un objeto JSON")
+			raise ValueError("Tree node must be a JSON object")
 
-		# Convertir codigo a formato SB###
 		if "codigo" in node:
 			node["codigo"] = self._normalize_code(node["codigo"])
 
-		# Establecer prioridad por defecto
 		if "prioridad" not in node or node["prioridad"] is None:
 			node["prioridad"] = 1
 
-		# Procesar hijos recursivamente
 		if "izquierdo" in node and node["izquierdo"] is not None:
 			node["izquierdo"] = self._normalize_node(node["izquierdo"])
 
@@ -100,10 +84,10 @@ class PersistenceService:
 		return node
 
 	def _normalize_code(self, code):
-		"""Convierte un código numérico o texto numérico al formato SB###."""
+		"""Convert numeric-like code to SB### format."""
 		if isinstance(code, int):
 			if code < 0 or code > 999:
-				raise ValueError("codigo debe estar entre 0 y 999")
+				raise ValueError("codigo must be between 0 and 999")
 			return f"SB{code:03d}"
 
 		if isinstance(code, str):
@@ -114,20 +98,17 @@ class PersistenceService:
 				digits = clean
 
 			if not digits.isdigit():
-				raise ValueError(f"codigo inválido: {code}")
+				raise ValueError(f"invalid codigo: {code}")
 
 			numeric_value = int(digits)
 			if numeric_value < 0 or numeric_value > 999:
-				raise ValueError("codigo debe estar entre 0 y 999")
+				raise ValueError("codigo must be between 0 and 999")
 			return f"SB{numeric_value:03d}"
 
-		raise ValueError(f"codigo debe ser string o int, recibido: {type(code)}")
+		raise ValueError(f"codigo must be string or int, received: {type(code)}")
 
 	def validate_exported_json(self, payload):
-		"""
-		Valida la estructura de un JSON exportado.
-		Retorna reporte detallado.
-		"""
+		"""Validate one exported topology payload."""
 		errors = []
 		warnings = []
 		fields_present = set()
@@ -140,28 +121,25 @@ class PersistenceService:
 
 			nodes_count += 1
 
-			# Campos requeridos
 			required_fields = ["codigo", "origen", "destino", "horaSalida", "precioBase",
 							   "pasajeros", "promocion", "alerta", "altura", "factorEquilibrio"]
 
 			for field in required_fields:
 				if field not in node:
-					errors.append(f"Campo faltante '{field}' en {path}")
+					errors.append(f"Missing field '{field}' at {path}")
 				else:
 					fields_present.add(field)
 
-			# Validar tipos
 			if "codigo" in node and not isinstance(node["codigo"], str):
-				errors.append(f"codigo debe ser string en {path}")
+				errors.append(f"codigo must be string at {path}")
 
 			if "prioridad" in node:
 				fields_present.add("prioridad")
 				if not isinstance(node["prioridad"], int):
-					warnings.append(f"prioridad debe ser int en {path}")
+					warnings.append(f"prioridad should be int at {path}")
 			else:
-				warnings.append(f"Campo 'prioridad' no presente en {path}")
+				warnings.append(f"Field 'prioridad' is missing at {path}")
 
-			# Procesar hijos
 			if "izquierdo" in node and node["izquierdo"] is not None:
 				check_node(node["izquierdo"], f"{path}.izquierdo")
 
@@ -178,98 +156,63 @@ class PersistenceService:
 			"nodes_count": nodes_count
 		}
 
-	# ============================================================================
-	# UNIFIED JSON FORMAT DETECTION AND PARSING
-	# ============================================================================
-
 	def detect_json_format(self, payload) -> str:
-		"""
-		Detects which of the three JSON formats the payload belongs to.
-
-		Returns:
-			"INSERCION": Flight list with tipo field
-			"TOPOLOGIA": Tree structure (pre-built)
-			"SYSTEM_EXPORT": Tree structure with metrics (Format 3)
-
-		Raises:
-			ValueError: If format cannot be detected.
-		"""
+		"""Detect whether payload is INSERCION, TOPOLOGIA, or SYSTEM_EXPORT."""
 		if not isinstance(payload, dict):
-			raise ValueError("❌ JSON debe ser un objeto (dict)")
+			raise ValueError("JSON root must be an object")
 
-		# Format 3: SYSTEM_EXPORT (has "tree" key)
 		if "tree" in payload:
 			return "SYSTEM_EXPORT"
 
-		# Format 1: INSERCION (has tipo: "INSERCION" with vuelos array)
-		if payload.get("tipo") == "INSERCION":
+		if self._is_insertion_payload(payload):
 			if "vuelos" not in payload:
-				raise ValueError("❌ INSERCION debe tener campo 'vuelos'")
+				raise ValueError("INSERCION payload must include 'vuelos'")
 			if not isinstance(payload.get("vuelos"), list):
-				raise ValueError("❌ Campo 'vuelos' debe ser un array")
+				raise ValueError("Field 'vuelos' must be a list")
 			return "INSERCION"
 
-		# Format 2: TOPOLOGIA (tree structure with codigo or izquierdo/derecho)
-		if "codigo" in payload or "izquierdo" in payload or "derecho" in payload:
+		if self._is_topology_payload(payload):
 			return "TOPOLOGIA"
 
 		raise ValueError(
-			"❌ JSON no coincide con ningún formato esperado. "
-			"Debe ser INSERCION (tipo + vuelos), TOPOLOGIA (árbol), o SYSTEM_EXPORT (tree + metrics)"
+			"JSON does not match supported formats. "
+			"Expected INSERCION, TOPOLOGIA, or SYSTEM_EXPORT"
 		)
 
 	def parse_json(self, payload) -> Tuple[str, any, Optional[dict]]:
-		"""
-		Unified parser: detects format and returns parsed data with optional metrics.
-
-		Returns:
-			Tuple of (format_type, parsed_data, historical_metrics)
-			- format_type: "INSERCION", "TOPOLOGIA", or "SYSTEM_EXPORT"
-			- parsed_data: NodoVuelo (tree root) or List[NodoVuelo] (for INSERCION)
-			- historical_metrics: Dict or None (only for SYSTEM_EXPORT)
-
-		Raises:
-			ValueError: If parsing fails.
-		"""
+		"""Parse supported JSON formats into domain objects."""
 		try:
 			fmt = self.detect_json_format(payload)
 
 			if fmt == "INSERCION":
-				parsed = self._parse_insercion(payload)
-				return ("INSERCION", parsed, None)
+				return ("INSERCION", self._parse_insercion(payload), None)
 
-			elif fmt == "TOPOLOGIA":
-				parsed = self._parse_topologia(payload)
-				return ("TOPOLOGIA", parsed, None)
+			if fmt == "TOPOLOGIA":
+				return ("TOPOLOGIA", self._parse_topologia(payload), None)
 
-			elif fmt == "SYSTEM_EXPORT":
+			if fmt == "SYSTEM_EXPORT":
 				parsed, metrics = self._parse_system_export(payload)
 				return ("SYSTEM_EXPORT", parsed, metrics)
+
+			raise ValueError(f"Unsupported format: {fmt}")
 
 		except ValueError:
 			raise
 		except Exception as e:
-			raise ValueError(f"❌ Error al parsear JSON: {str(e)}")
+			raise ValueError(f"Error parsing JSON: {str(e)}")
 
 	def _parse_insercion(self, payload) -> List[NodoVuelo]:
-		"""
-		Parse Format 1: INSERCION (flight list).
-
-		Returns:
-			List of NodoVuelo objects (not connected as tree).
-		"""
+		"""Parse INSERCION format into a list of NodoVuelo objects."""
 		vuelos = payload.get("vuelos", [])
 
 		if not vuelos:
-			raise ValueError("❌ INSERCION vacío: no hay vuelos para insertar")
+			raise ValueError("INSERCION payload is empty")
 
 		parsed_vuelos = []
 		for i, vuelo in enumerate(vuelos):
 			try:
-				# Normalize the flight
 				normalized = self._normalize_vuelo(vuelo)
 
-				# Create NodoVuelo from normalized flight
 				nodo = NodoVuelo(
 					codigo=normalized["codigo"],
 					origen=normalized.get("origen", ""),
@@ -285,59 +228,36 @@ class PersistenceService:
 				)
 				parsed_vuelos.append(nodo)
 			except Exception as e:
-				raise ValueError(f"❌ Error en vuelo {i}: {str(e)}")
+				raise ValueError(f"Invalid flight at index {i}: {str(e)}")
 
 		return parsed_vuelos
 
 	def _parse_topologia(self, payload) -> NodoVuelo:
-		"""
-		Parse Format 2: TOPOLOGIA (tree structure).
-		Also used as the tree extractor for Format 3.
-
-		Returns:
-			NodoVuelo root node (possibly recursive structure).
-		"""
+		"""Parse TOPOLOGIA format into NodoVuelo tree."""
 		if payload is None:
 			return None
 
-		# Normalize the node recursively
 		normalized = self._normalize_node(payload)
 
-		# Convert normalized dict to NodoVuelo
 		return self._dict_to_nodo_vuelo(normalized)
 
 	def _parse_system_export(self, payload) -> Tuple[NodoVuelo, dict]:
-		"""
-		Parse Format 3: SYSTEM_EXPORT (tree + metrics).
-
-		Returns:
-			Tuple of (root NodoVuelo, historical_metrics dict)
-		"""
+		"""Parse SYSTEM_EXPORT format into tree and metrics tuple."""
 		tree_data = payload.get("tree")
 		if tree_data is None:
-			raise ValueError("❌ SYSTEM_EXPORT debe tener campo 'tree'")
+			raise ValueError("SYSTEM_EXPORT payload must include 'tree'")
 
-		# Parse the tree part using topologia parser
 		root = self._parse_topologia(tree_data)
 
-		# Extract metrics (if present)
 		metrics = payload.get("metrics", {})
 
 		return (root, metrics)
 
 	def _dict_to_nodo_vuelo(self, data: dict) -> NodoVuelo:
-		"""
-		Convert normalized dict to NodoVuelo (recursive).
-
-		Assumes:
-		- codigo is already string
-		- prioridad is already set to 1 if missing
-		- precioFinal defaults correctly
-		"""
+		"""Convert normalized dict tree into NodoVuelo recursively."""
 		if data is None:
 			return None
 
-		# Recursively process children
 		left = self._dict_to_nodo_vuelo(data.get("izquierdo") or data.get("left"))
 		right = self._dict_to_nodo_vuelo(data.get("derecho") or data.get("right"))
 

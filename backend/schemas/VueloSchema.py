@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class VueloRequestSchema(BaseModel):
-	"""Schema para crear/actualizar vuelos (entrada del cliente)"""
+	"""Input schema used to create or update flights."""
 	codigo: str
 	origen: str
 	destino: str
@@ -15,7 +15,7 @@ class VueloRequestSchema(BaseModel):
 
 
 class VueloResponseSchema(BaseModel):
-	"""Schema para respuestas de lectura (salida hacia cliente)"""
+	"""Output schema used for flight read responses."""
 	codigo: str
 	origen: str
 	destino: str
@@ -31,5 +31,5 @@ class VueloResponseSchema(BaseModel):
 	factorEquilibrio: int | None = None
 
 
-# Mantenemos VueloSchema como alias por compatibilidad
+# Keep alias for backward compatibility.
 VueloSchema = VueloRequestSchema

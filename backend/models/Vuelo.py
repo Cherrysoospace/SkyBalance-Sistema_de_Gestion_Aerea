@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Vuelo:
+	"""Simple DTO representing one flight payload."""
 	codigo: int
 	origen: str
 	destino: str
@@ -13,4 +14,3 @@ class Vuelo:
 	prioridad: int = 0
 	critico: bool = False
 	alerta: bool = False
-# Dataclass Vuelo

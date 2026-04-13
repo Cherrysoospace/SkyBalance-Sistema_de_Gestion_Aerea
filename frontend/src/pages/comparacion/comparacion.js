@@ -22,20 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Listeners de carga
-    const filePicker = document.getElementById('file-picker');
-    const btnCargar  = document.getElementById('btn-cargar');
-
-    if (filePicker && btnCargar) {
-        filePicker.addEventListener('change', () => {
-            const file = filePicker.files[0];
-            document.getElementById('file-name').textContent = file ? file.name : 'Ningún archivo seleccionado';
-            btnCargar.disabled = !file;
-        });
-        btnCargar.addEventListener('click', handleLoad);
-    }
-
-    // Listeners existentes
+    // Listener navegación
     const btnVolver = document.getElementById('btn-volver');
 
     if (btnVolver) {
@@ -48,46 +35,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     await tryLoadExisting();
 });
 
-// Intenta cargar árbol existente; si no hay, muestra sección de carga
+// Use current backend state only; if no tree exists, show informative message.
 async function tryLoadExisting() {
     try {
-        const avlData = await apiClient.getTree();
-        if (avlData && avlData.tree) {
-            await loadComparison();
-            showResults();
+        const currentState = await apiClient.getTree();
+        if (currentState && currentState.tree) {
+            const loaded = await loadComparison(currentState);
+            if (loaded) {
+                showResults();
+            } else {
+                showLoadSection();
+            }
         } else {
             // No hay árbol, mostrar sección de carga
             showLoadSection();
         }
     } catch (e) {
-        // Error al obtener árbol, mostrar sección de carga
+        // On fetch error, keep info section visible.
         showLoadSection();
-    }
-}
-
-// Maneja la carga del archivo JSON y construcción del árbol
-async function handleLoad() {
-    const file = document.getElementById('file-picker').files[0];
-    if (!file) return;
-
-    const btnCargar = document.getElementById('btn-cargar');
-    const errorEl  = document.getElementById('load-error');
-    btnCargar.disabled = true;
-    btnCargar.textContent = 'Cargando...';
-    errorEl.classList.add('hidden');
-    errorEl.textContent = '';
-
-    try {
-        await apiClient.loadTreeFromJSON(file);
-        console.log('✅ JSON cargado exitosamente');
-        await loadComparison();
-        showResults();
-    } catch (e) {
-        console.error('❌ Error cargando JSON:', e);
-        errorEl.textContent = 'Error al cargar el archivo. Verifica que sea un JSON válido.';
-        errorEl.classList.remove('hidden');
-        btnCargar.disabled = false;
-        btnCargar.innerHTML = '<i class="fas fa-upload"></i> Cargar y comparar';
     }
 }
 
@@ -104,18 +69,23 @@ function showLoadSection() {
 }
 
 // Carga AVL y BST para mostrar lado a lado
-async function loadComparison() {
+async function loadComparison(currentState = null) {
     try {
         const comparisonData = await apiClient.getComparison();
         console.log('📊 Datos de comparación recibidos:', comparisonData);
 
         // Verificar si hay error (carga de TOPOLOGIA)
         if (comparisonData.error) {
-            showComparisonError(comparisonData);
-            showLoadSection(); // Volver a mostrar sección de carga
-            return;
+            // Fallback: render current AVL tree even when BST comparison is unavailable.
+            const state = currentState || await apiClient.getTree();
+            if (state && state.tree) {
+                renderCurrentTreeOnly(state, comparisonData.message || comparisonData.error);
+                return true;
+            }
+            return false;
         }
 
+        clearInlineNotice();
         updateComparisonStats(comparisonData);
         console.log('✅ Stats actualizados');
         console.log('📌 AVL tree:', comparisonData.avl?.tree);
@@ -123,8 +93,65 @@ async function loadComparison() {
 
         renderTree(comparisonData.avl?.tree, 'avl-tree-container', 'AVL');
         renderTree(comparisonData.bst?.tree, 'bst-tree-container', 'BST');
+        return true;
     } catch (error) {
         console.error('❌ Error cargando comparación:', error);
+        // If comparison endpoint fails but current tree exists, still render AVL current state.
+        try {
+            const state = currentState || await apiClient.getTree();
+            if (state && state.tree) {
+                renderCurrentTreeOnly(state, 'No fue posible comparar BST vs AVL en este momento.');
+                return true;
+            }
+        } catch (fallbackError) {
+            console.error('❌ Error en fallback de comparación:', fallbackError);
+        }
+        return false;
+    }
+}
+
+function renderCurrentTreeOnly(state, message) {
+    showInlineNotice(message || 'Mostrando árbol AVL actual.');
+
+    // Render AVL current tree + stats from current state.
+    updateComparisonStats({
+        avl: {
+            tree: state.tree,
+            metrics: state.metrics || {},
+        },
+        bst: {
+            tree: null,
+            metrics: {},
+        },
+    });
+
+    renderTree(state.tree, 'avl-tree-container', 'AVL');
+    renderTree(null, 'bst-tree-container', 'BST');
+}
+
+function showInlineNotice(message) {
+    const resultsSection = document.getElementById('results-section');
+    if (!resultsSection) return;
+
+    let notice = document.getElementById('comparison-inline-notice');
+    if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'comparison-inline-notice';
+        notice.style.margin = '0 0 1rem 0';
+        notice.style.padding = '0.75rem 1rem';
+        notice.style.borderRadius = '10px';
+        notice.style.background = '#fff4e5';
+        notice.style.border = '1px solid #f5c26b';
+        notice.style.color = '#8a5800';
+        resultsSection.insertBefore(notice, resultsSection.firstChild);
+    }
+    notice.textContent = message;
+}
+
+function clearInlineNotice() {
+    const notice = document.getElementById('comparison-inline-notice');
+    if (notice) {
+        notice.remove();
     }
 }
 
@@ -171,7 +198,7 @@ function showComparisonError(errorData) {
             La comparación entre AVL y BST solo funciona cuando se carga en modo <strong>INSERCION</strong> (vuelos individuales).
         </p>
         <p style="color: #999; margin: 1rem 0; font-size: 0.9rem;">
-            Por favor, carga un archivo JSON en modo INSERCION para usar la comparación.
+            Para comparar, primero construye el árbol actual en Gestión de Nodos o Inicio con modo INSERCION.
         </p>
         <button id="close-error-popup" style="
             margin-top: 1.5rem;

@@ -1,3 +1,5 @@
+"""FastAPI application entry point for FAC Airways backend."""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,4 +29,5 @@ app.include_router(versionRouter)
 
 @app.get("/")
 def health_check():
+	"""Return a simple status payload for health checks."""
 	return {"status": "ok", "service": "FAC Airways AVL API"}

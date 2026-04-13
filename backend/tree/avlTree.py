@@ -8,13 +8,13 @@ class AVL:
   def __init__(self):
     self.root = None
     self.stressMode = False
-    # Contadores de rotaciones - ahora con trazabilidad separada
+    # Rotation counters for metrics and reports.
     self.rotationCounts = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
-    self.rotationCountsHistorical = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Acumulativo total
-    self.rotationCountsStressMode = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Durante stress mode
-    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Último rebalanceo global
+    self.rotationCountsHistorical = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.rotationCountsStressMode = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
     self.massCancelations = 0
-    # Inyección de dependencia: servicio de auditoría (Principio D - SOLID)
+    # Audit service used to validate AVL property.
     self.auditService = AVLAuditService()
 
   def getRoot(self):
@@ -78,12 +78,12 @@ class AVL:
     return True
 
   def updateNode(self, codigo, updates):
-    """Busca un nodo por código y actualiza sus campos, rebalanceando si es necesario."""
+    """Update one node payload and rebalance if needed."""
     target = self.search(codigo)
     if target is None:
       return False
 
-    # Actualizar campos permitidos
+    # Update only allowed fields.
     allowed_fields = {"origen", "destino", "horaSalida", "pasajeros", "precioBase", "promocion", "prioridad", "alerta"}
     for key, value in updates.items():
       if key in allowed_fields:
@@ -100,7 +100,7 @@ class AVL:
 
     target.recalculatePrecioFinal()
 
-    # Rebalancear si no estamos en stress mode
+    # Rebalance after update when stress mode is off.
     if not self.stressMode:
       self.__checkBalance(target)
 
@@ -157,8 +157,8 @@ class AVL:
     target.setParent(None)
     self.massCancelations += 1
 
-    if not self.stressMode and parent is not None:
-      self.__checkBalance(parent)
+    if not self.stressMode:
+      self.__checkBalance(parent if parent is not None else self.root)
 
     return {"removed": removedCount}
 
@@ -187,6 +187,14 @@ class AVL:
         current = self.__rebalance(current, bf)
       current = current.getParent()
 
+  def rebalanceFromNode(self, node):
+    """Public wrapper to rebalance from one node up to root."""
+    # If node is None, there is nothing to rebalance.
+    if node is None:
+      return
+    # Reuse the internal balance walk.
+    self.__checkBalance(node)
+
   def __rebalance(self, node, bf):
     caseName = self.__identifyRebalanceCase(node, bf)
     if caseName == "LL":
@@ -202,17 +210,17 @@ class AVL:
     return self.__balanceRL(node)
 
   def __rebalanceWithTracking(self, node, bf, rotations):
-    """Realiza rebalanceo registrando cada rotación sin duplicar conteo."""
+    """Run one rebalance and track the rotation type."""
     caseName = self.__identifyRebalanceCase(node, bf)
-    
-    # Registrar la rotación
+
+    # Store rotation info for reports and animations.
     rotations.append({"type": caseName, "node_codigo": node.codigo})
-    
-    # Incrementar contadores
+
+    # Update counters.
     self.rotationCountsLastGlobalRebalance[caseName] += 1
     self.rotationCounts[caseName] += 1
-    
-    # Ejecutar la rotación
+
+    # Apply the selected rotation.
     if caseName == "LL":
       return self.__balanceLL(node)
     elif caseName == "RR":
@@ -357,9 +365,21 @@ class AVL:
       return 1
     return self.__countLeaves(node.getLeftChild()) + self.__countLeaves(node.getRightChild())
 
-  # Rechecks all nodes bottom-up and rebalances when needed.
-  def rebalanceGlobal(self):
+  def __resetGlobalRebalanceCounters(self):
+    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
+
+  def __runGlobalRebalance(self, capture_steps=False):
+    """Run global rebalance and optionally collect animation steps."""
+    # If tree is empty, return the expected empty payload.
     if self.root is None:
+      # Step mode returns only step-related fields.
+      if capture_steps:
+        return {
+          "steps": [],
+          "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0},
+          "rebuildApplied": False,
+        }
+      # Standard mode returns passes and rotations.
       return {
         "passes": 0,
         "rotations": [],
@@ -367,125 +387,103 @@ class AVL:
         "rebuildApplied": False,
       }
 
+    # Track whether we needed to rebuild tree structure first.
     rebuild_applied = False
+    # Steps are used only for animation mode.
+    steps = []
+    if capture_steps:
+      # Save initial tree snapshot before any change.
+      steps.append({
+        "type": "INITIAL",
+        "node_codigo": self.root.codigo if self.root else None,
+        "tree_snapshot": self.toDict(),
+      })
+
+    # Ensure the structure still respects BST ordering.
     if not self.__isBSTValid(self.root):
+      # Rebuild into a valid balanced BST shape.
       self.__rebuildTreeFromCurrentNodes()
       rebuild_applied = True
+      if capture_steps:
+        # Save rebuild snapshot so frontend can explain this step.
+        steps.append({
+          "type": "BST_REBUILD",
+          "node_codigo": self.root.codigo if self.root else None,
+          "tree_snapshot": self.toDict(),
+          "is_structure_rebuild": True,
+        })
 
+    # Initialize iteration counters.
     passes = 0
     changed = True
-    rotations = []  # Registrar cada rotación
-    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}  # Reset solo para este rebalanceo
-    
+    rotations = []
+    # Reset last global summary counters.
+    self.__resetGlobalRebalanceCounters()
+
+    # Repeat until no more imbalances or max passes reached.
     while changed and passes < 100:
+      # New pass starts here.
       passes += 1
+      # Assume no changes; set true when one rotation happens.
       changed = False
+      # Collect nodes in post-order to rebalance bottom-up.
       nodes = []
       self.__collectPostOrderNodes(self.root, nodes)
+      # Visit each node and check its balance factor.
       for node in nodes:
         bf = self.getBalanceFactor(node)
         if bf > 1 or bf < -1:
-          self.__rebalanceWithTracking(node, bf, rotations)
+          # In step mode, store snapshot before rotation.
+          if capture_steps:
+            steps.append({
+              "type": "PRE_" + self.__identifyRebalanceCase(node, bf),
+              "node_codigo": node.codigo,
+              "tree_snapshot": self.toDict(),
+              "is_pre_rotation": True,
+            })
+
+          # Capture one rotation operation for this node.
+          rotation_batch = []
+          self.__rebalanceWithTracking(node, bf, rotation_batch)
+          # Keep full list in standard mode.
+          rotations.extend(rotation_batch)
+
+          # In step mode, store snapshot after each rotation.
+          if capture_steps:
+            for rotation_info in rotation_batch:
+              steps.append({
+                "type": rotation_info["type"],
+                "node_codigo": rotation_info["node_codigo"],
+                "tree_snapshot": self.toDict(),
+                "is_post_rotation": True,
+              })
+
+          # Mark that this pass changed the tree.
           changed = True
 
-    # Retornar resumen del rebalanceo global actual, no el total
+    # Return format used by animated frontend.
+    if capture_steps:
+      return {
+        "steps": steps,
+        "summary": self.rotationCountsLastGlobalRebalance,
+        "rebuildApplied": rebuild_applied,
+      }
+
+    # Return format used by standard endpoint.
     return {
-      "passes": passes, 
+      "passes": passes,
       "rotations": rotations,
       "summary": self.rotationCountsLastGlobalRebalance,
       "rebuildApplied": rebuild_applied,
     }
 
+  # Rechecks all nodes bottom-up and rebalances when needed.
+  def rebalanceGlobal(self):
+    return self.__runGlobalRebalance(capture_steps=False)
+
   def rebalanceGlobalStepByStep(self):
-    """Retorna información detallada para animar paso a paso.
-    Cada rotación incluye: tipo, nodo, y estado del árbol ANTES y DESPUÉS."""
-    if self.root is None:
-      return {
-        "steps": [],
-        "summary": {"LL": 0, "RR": 0, "LR": 0, "RL": 0},
-        "rebuildApplied": False,
-      }
-
-    passes = 0
-    changed = True
-    steps = []  # Lista de pasos con rotación y snapshots del árbol
-    rebuild_applied = False
-    self.rotationCountsLastGlobalRebalance = {"LL": 0, "RR": 0, "LR": 0, "RL": 0}
-    
-    # 🔑 AGREGAR ÁRBOL INICIAL COMO REFERENCIA
-    initial_tree_snapshot = {
-      "type": "INITIAL",
-      "node_codigo": self.root.codigo if self.root else None,
-      "tree_snapshot": self.toDict()
-    }
-    steps.append(initial_tree_snapshot)
-
-    if not self.__isBSTValid(self.root):
-      self.__rebuildTreeFromCurrentNodes()
-      rebuild_applied = True
-      steps.append({
-        "type": "BST_REBUILD",
-        "node_codigo": self.root.codigo if self.root else None,
-        "tree_snapshot": self.toDict(),
-        "is_structure_rebuild": True,
-      })
-    
-    while changed and passes < 100:
-      passes += 1
-      changed = False
-      rotations_in_pass = []
-      nodes = []
-      self.__collectPostOrderNodes(self.root, nodes)
-      for node in nodes:
-        bf = self.getBalanceFactor(node)
-        if bf > 1 or bf < -1:
-          # 🔑 AGREGAR SNAPSHOT PRE-ROTACIÓN (nodo desbalanceado visible)
-          steps.append({
-            "type": "PRE_" + self.__identifyRebalanceCase(node, bf),
-            "node_codigo": node.codigo,
-            "tree_snapshot": self.toDict(),
-            "is_pre_rotation": True  # Indicador para el frontend
-          })
-          
-          self.__rebalanceWithTrackingStepByStep(node, bf, rotations_in_pass)
-          changed = True
-          
-          # AGREGAR SNAPSHOT POST-ROTACIÓN (nodo balanceado tras rotación)
-          for rotation_info in rotations_in_pass:
-            steps.append({
-              "type": rotation_info["type"],
-              "node_codigo": rotation_info["node_codigo"],
-              "tree_snapshot": self.toDict(),
-              "is_post_rotation": True  # Indicador para el frontend
-            })
-          rotations_in_pass = []
-
-    return {
-      "steps": steps,
-      "summary": self.rotationCountsLastGlobalRebalance,
-      "rebuildApplied": rebuild_applied,
-    }
-
-  def __rebalanceWithTrackingStepByStep(self, node, bf, rotations):
-    """Similar a __rebalanceWithTracking pero para step-by-step."""
-    caseName = self.__identifyRebalanceCase(node, bf)
-    
-    # Registrar la rotación
-    rotations.append({"type": caseName, "node_codigo": node.codigo})
-    
-    # Incrementar contadores
-    self.rotationCountsLastGlobalRebalance[caseName] += 1
-    self.rotationCounts[caseName] += 1
-    
-    # Ejecutar la rotación
-    if caseName == "LL":
-      return self.__balanceLL(node)
-    elif caseName == "RR":
-      return self.__balanceRR(node)
-    elif caseName == "LR":
-      return self.__balanceLR(node)
-    else:  # RL
-      return self.__balanceRL(node)
+    """Return rotation snapshots for frontend animation."""
+    return self.__runGlobalRebalance(capture_steps=True)
 
   def __collectPostOrderNodes(self, node, result):
     if node is None:
@@ -544,7 +542,7 @@ class AVL:
       self.root = None
       return
 
-    # Ordenar por clave normalizada para reconstruir un BST válido.
+    # Sort with normalized key before rebuilding.
     nodes.sort(key=lambda node: self.__codeSortKey(node.getValue()))
 
     for node in nodes:
@@ -570,21 +568,28 @@ class AVL:
 
   # Applies depth penalty rule and marks critical nodes.
   def applyDepthPenalty(self, depthLimit):
+    """Mark nodes as critical if their depth exceeds limit, then recalculate prices."""
     self.__applyDepthPenalty(self.root, 0, depthLimit)
 
   def __applyDepthPenalty(self, node, depth, depthLimit):
-    if node is None:
-      return
+     """
+     Recursively traverse tree and mark nodes as critical based on depth.
+     - depth: current node's distance from root (root = 0)
+     - depthLimit: threshold; nodes with depth > depthLimit are marked critical
+     - After marking, recalculate price with critical penalty applied
+     """
+     if node is None:
+       return
 
-    if depth > depthLimit:
-      node.critico = True
-    else:
-      node.critico = False
+     # Mark critical if depth exceeds limit
+     node.critico = depth > depthLimit
+     
+     # Recalculate final price (applies critical penalty if marked)
+     node.recalculatePrecioFinal()
 
-    node.recalculatePrecioFinal()
-
-    self.__applyDepthPenalty(node.getLeftChild(), depth + 1, depthLimit)
-    self.__applyDepthPenalty(node.getRightChild(), depth + 1, depthLimit)
+     # Process left and right subtrees with incremented depth
+     self.__applyDepthPenalty(node.getLeftChild(), depth + 1, depthLimit)
+     self.__applyDepthPenalty(node.getRightChild(), depth + 1, depthLimit)
 
   # Removes the subtree with the least profitable root.
   def removeLeastProfitableSubtree(self):
@@ -593,8 +598,8 @@ class AVL:
     if len(candidates) == 0:
       return {"removed": 0}
 
-    # Sort by rentability ascending, depth descending, code descending.
-    # Extraer número del código para ordenamiento (ej: "SB050" -> 50)
+    # Sort by rentability ascending, depth descending, and code descending.
+    # Extract numeric part from code (example: "SB050" -> 50).
     def extract_code_number(codigo):
       return int(''.join(filter(str.isdigit, str(codigo)))) if codigo else 0
     
@@ -616,12 +621,8 @@ class AVL:
     self.__collectProfitCandidates(node.getRightChild(), depth + 1, result)
 
   # Returns a full report to validate the AVL property.
-  # Utiliza servicio de auditoría (Principio D - Dependency Inversion)
   def verifyAVLProperty(self):
-    """
-    Realiza auditoría completa del árbol AVL.
-    Retorna reporte detallado con todos los problemas encontrados.
-    """
+    """Run full AVL audit and return a simple report."""
     audit_result = self.auditService.audit_tree(self.root)
     return self.auditService.get_audit_report_summary(audit_result)
 
@@ -661,13 +662,13 @@ class AVL:
         "inOrder": self.inOrderTraversal(),
         "posOrder": self.posOrderTraversal(),
       },
-      # COMPATIBILIDAD: mantener 'rotaciones' como lo era, pero ahora reflejando datos acumulativos correctos
+      # Keep legacy key for frontend compatibility.
       "rotaciones": self.rotationCounts,
-      # NUEVO: información detallada de rotaciones
+      # Detailed rotation groups.
       "rotacionesDetallado": {
-        "sesionActual": self.rotationCounts,  # Total acumulativo de esta sesión
-        "historico": self.rotationCountsHistorical,  # Acumulativo histórico total
-        "ultimoRebalanceoGlobal": self.rotationCountsLastGlobalRebalance  # Del último rebalanceo global
+        "sesionActual": self.rotationCounts,
+        "historico": self.rotationCountsHistorical,
+        "ultimoRebalanceoGlobal": self.rotationCountsLastGlobalRebalance
       },
       "cancelacionesMasivas": self.massCancelations,
       "modoEstres": self.stressMode,
@@ -768,7 +769,7 @@ class AVL:
     node = Node(payload)
     node.setParent(parent)
 
-    # Soporta ambos nombres: left/right (inserción) e izquierdo/derecho (topología)
+    # Supports both naming styles: left/right and izquierdo/derecho.
     leftNode = self.__buildNodeFromTopology(data.get("left") or data.get("izquierdo"), node)
     rightNode = self.__buildNodeFromTopology(data.get("right") or data.get("derecho"), node)
     node.setLeftChild(leftNode)

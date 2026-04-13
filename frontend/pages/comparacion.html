@@ -29,22 +29,19 @@
     <main class="comparacion-container">
         <h1>Comparación BST vs AVL</h1>
 
-        <!-- Sección de carga de JSON -->
+        <!-- Estado sin árbol actual -->
         <section class="load-section" id="load-section">
             <div class="load-card">
-                <h2>Cargar árbol</h2>
-                <p class="load-hint">Selecciona un archivo JSON para construir el AVL y BST</p>
-                <div class="load-controls">
-                    <input type="file" id="file-picker" accept=".json">
-                    <label for="file-picker" class="btn btn-primary">
-                        <i class="fas fa-folder-open"></i> Seleccionar archivo
-                    </label>
-                    <span id="file-name">Ningún archivo seleccionado</span>
+                <h2>No hay árbol actual para comparar</h2>
+                <p class="load-hint">Esta vista usa el árbol actual del sistema. Primero crea o carga vuelos en modo INSERCION desde Inicio o Gestión de Nodos.</p>
+                <div class="controls">
+                    <a href="gestion-nodos.html" class="btn btn-primary">
+                        <i class="fas fa-sitemap"></i> Ir a Gestión de Nodos
+                    </a>
+                    <a href="../index.html" class="btn btn-secondary">
+                        <i class="fas fa-home"></i> Ir a Inicio
+                    </a>
                 </div>
-                <div id="load-error" class="load-error hidden"></div>
-                <button id="btn-cargar" class="btn btn-primary" disabled>
-                    <i class="fas fa-upload"></i> Cargar y comparar
-                </button>
             </div>
         </section>
 

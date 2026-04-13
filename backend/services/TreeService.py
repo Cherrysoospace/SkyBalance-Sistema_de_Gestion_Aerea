@@ -13,6 +13,7 @@ from tree.nodo import Node
 class TreeService:
 
 	def __init__(self):
+		"""Initialize trees, queue, undo stack, and runtime settings."""
 		self.avl = AVL()
 		self.bst = BST()
 		self.undoStack = ActionStack()
@@ -25,15 +26,53 @@ class TreeService:
 	def _push_undo_state(self):
 		self.undoStack.push(self.avl.toDict())
 
+	def _apply_depth_penalty(self):
+		"""Recalculate critical flags and prices in both trees."""
+		self.avl.applyDepthPenalty(self.depthLimit)
+		self.bst.applyDepthPenalty(self.depthLimit)
+
+	def _insert_in_both_trees(self, payload):
+		"""Insert one payload in AVL and BST and return created AVL node."""
+		avl_node = Node(payload)
+		bst_node = Node(payload)
+		self.avl.insert(avl_node)
+		self.bst.insert(bst_node)
+		return avl_node
+
+	def _build_exception_conflict(self, payload, exc):
+		"""Build normalized conflict entry for processing exceptions."""
+		return {
+			"codigo": payload.get("codigo"),
+			"code": payload.get("codigo"),
+			"tipo": "exception",
+			"type": "exception",
+			"error": str(exc),
+			"message": str(exc),
+		}
+
+	def _append_balance_conflicts(self, payload, balance_conflicts, conflicts):
+		"""Append normalized critical-balance conflicts to list."""
+		for balance_conflict in balance_conflicts:
+			conflicts.append({
+				"codigo": payload.get("codigo"),
+				"code": payload.get("codigo"),
+				"tipo": "critical_balance",
+				"type": "critical_balance",
+				"detalles": balance_conflict,
+				"details": balance_conflict,
+			})
+
 	def get_tree(self):
+		"""Return serialized AVL tree."""
 		return self.avl.toDict()
 
 	def get_metrics(self):
+		"""Return current AVL metrics."""
 		return self.avl.getMetrics()
 
 	def get_comparison(self):
-		"""Devuelve una comparación entre AVL y BST con sus métricas"""
-		# Validar que se cargó en modo INSERCION
+		"""Return AVL vs BST comparison with basic metrics."""
+		# Comparison is only available for insertion mode.
 		if self.loadMode == "TOPOLOGIA":
 			return {
 				"error": "La comparación solo está disponible para carga en modo INSERCION",
@@ -41,7 +80,7 @@ class TreeService:
 				"mode": "TOPOLOGIA"
 			}
 
-		# Si no se ha cargado nada aún, retornar estructura vacía
+		# Return empty trees when nothing is loaded.
 		if self.loadMode is None:
 			return {
 				"avl": {
@@ -64,7 +103,7 @@ class TreeService:
 				}
 			}
 
-		# Retornar comparación normal para INSERCION
+		# Return standard comparison for insertion mode.
 		return {
 			"avl": {
 				"tree": self.avl.toDict(),
@@ -87,132 +126,181 @@ class TreeService:
 		}
 
 	def set_stress_mode(self, enabled):
+		"""Enable or disable stress mode in AVL operations."""
 		self.avl.setStressMode(enabled)
 		return {"modoEstres": self.avl.getStressMode()}
 
 	def set_depth_limit(self, depth_limit):
+		"""
+		Set critical depth threshold and recalculate penalties.
+		All nodes deeper than limit are marked critical and charged 25% penalty.
+		"""
 		self.depthLimit = max(0, int(depth_limit))
-		self.avl.applyDepthPenalty(self.depthLimit)
-		self.bst.applyDepthPenalty(self.depthLimit)
+		self._apply_depth_penalty()
 		return {"depthLimit": self.depthLimit}
 
 	def insert_flight(self, payload):
+		"""Insert one flight and update penalties."""
 		self._push_undo_state()
-		avl_node = Node(payload)
-		bst_node = Node(payload)
-		self.avl.insert(avl_node)
-		self.bst.insert(bst_node)
-		self.avl.applyDepthPenalty(self.depthLimit)
-		self.bst.applyDepthPenalty(self.depthLimit)
+		self._insert_in_both_trees(payload)
+		self._apply_depth_penalty()
 		return {"ok": True}
 
 	def delete_node(self, codigo):
+		"""Delete one node from both trees by code."""
 		self._push_undo_state()
 		deleted = self.avl.delete(codigo)
 		if deleted:
 			self.bst.delete(codigo)
-		self.avl.applyDepthPenalty(self.depthLimit)
-		self.bst.applyDepthPenalty(self.depthLimit)
+		self._apply_depth_penalty()
 		return {"ok": deleted}
 
 	def modify_node(self, codigo, updates):
-		"""Modifica los campos de un nodo existente."""
+		"""Update fields of one existing node."""
 		self._push_undo_state()
 		updated_avl = self.avl.updateNode(codigo, updates)
 		if updated_avl:
 			self.bst.updateNode(codigo, updates)
-			self.avl.applyDepthPenalty(self.depthLimit)
-			self.bst.applyDepthPenalty(self.depthLimit)
+			self._apply_depth_penalty()
 			return {"ok": True}
 		return {"ok": False}
 
 	def cancel_subtree(self, codigo):
+		"""Delete subtree rooted at code and rebalance from root automatically."""
 		self._push_undo_state()
 		response = self.avl.cancelSubtree(codigo)
 		if response["removed"] > 0:
 			self.bst.delete(codigo)
-		self.avl.applyDepthPenalty(self.depthLimit)
-		self.bst.applyDepthPenalty(self.depthLimit)
+		self._apply_depth_penalty()
+		
+		# After canceling, trigger global rebalance from root automatically.
+		# Only rebalance if stress mode is off (auto-balance enabled).
+		if not self.avl.getStressMode():
+			self.avl.rebalanceGlobalStepByStep()
+			# Keep BST aligned after rebalance.
+			self.bst.loadFromTopology(self.avl.toDict())
+			# Reapply depth penalty after rebalancing (tree structure changed, depths may differ).
+			self._apply_depth_penalty()
+		
 		return response
 
 	def undo(self):
+		"""Restore last AVL snapshot from undo stack."""
 		snapshot = self.undoStack.pop()
 		if snapshot is None:
-			return {"ok": False, "message": "No hay acciones para deshacer."}
+			return {"ok": False, "message": "No actions available to undo."}
 		self.avl.loadFromTopology(snapshot)
 		self.bst.loadFromTopology(snapshot)
 		return {"ok": True}
 
 	def queue_insert(self, payload):
+		"""Enqueue one insertion payload."""
 		self.queue.enqueue(payload)
 		return {"ok": True, "pendientes": self.queue.size()}
 
+	def _process_single_queue_item(self, payload, conflicts, include_steps=False, step_number=0):
+		# Save current tree before mutating this item.
+		self._push_undo_state()
+		# Branch 1: return animation data for frontend when required.
+		if include_steps:
+			# Store current stress mode to restore it later.
+			stress_mode_was_on = self.avl.stressMode
+			# Force stress mode so insert does not auto-rotate.
+			self.avl.stressMode = True
+			# Insert item in AVL and BST and keep inserted AVL node.
+			avl_node = self._insert_in_both_trees(payload)
+			# Detect imbalances while tree is still unbalanced.
+			balance_conflicts = self._detect_critical_balance_conflicts(avl_node)
+			# Save pre-rotation tree snapshot for animation.
+			tree_pre_rotation = self.avl.toDict()
+
+			# Restore original stress mode.
+			self.avl.stressMode = stress_mode_was_on
+			# If conflicts exist, run rebalance and store conflict items.
+			if balance_conflicts:
+				self.avl.rebalanceFromNode(avl_node)
+				self._append_balance_conflicts(payload, balance_conflicts, conflicts)
+
+			# Save post-rotation tree snapshot for animation.
+			tree_post_rotation = self.avl.toDict()
+			# Recalculate critical flags and final prices.
+			self._apply_depth_penalty()
+
+			# Return one animation step payload.
+			return {
+				"step": step_number,
+				"codigo_insertado": payload.get("codigo"),
+				"inserted_code": payload.get("codigo"),
+				"tree_pre_rotation": tree_pre_rotation,
+				"tree": tree_post_rotation,
+				"tree_post_rotation": tree_post_rotation,
+				"metrics": self.avl.getMetrics(),
+				"conflictos": len(conflicts),
+				"conflicts_count": len(conflicts),
+				"balance_criticos": balance_conflicts if balance_conflicts else [],
+				"balance_conflicts": balance_conflicts if balance_conflicts else [],
+			}
+
+		# Branch 2: standard queue processing without animation payload.
+		# Insert item in both trees.
+		avl_node = self._insert_in_both_trees(payload)
+		# Detect critical balance conflicts.
+		balance_conflicts = self._detect_critical_balance_conflicts(avl_node)
+		# Append conflict items when they exist.
+		if balance_conflicts:
+			self._append_balance_conflicts(payload, balance_conflicts, conflicts)
+		# Recalculate critical flags and final prices.
+		self._apply_depth_penalty()
+		# Standard mode does not return step payload.
+		return None
+
 	def process_queue(self):
+		"""Process queue in normal mode and return summary."""
 		processed = 0
 		conflicts = []
 
 		while not self.queue.is_empty():
 			payload = self.queue.dequeue()
 			try:
-				self._push_undo_state()
-				avl_node = Node(payload)
-				bst_node = Node(payload)
-				self.avl.insert(avl_node)
-				self.bst.insert(bst_node)
+				self._process_single_queue_item(payload, conflicts)
 				processed += 1
-				
-				# 🔍 DETECCIÓN DE CONFLICTOS DE BALANCE CRÍTICO
-				balance_conflicts = self._detect_critical_balance_conflicts(avl_node)
-				if balance_conflicts:
-					for balance_conflict in balance_conflicts:
-						conflict_item = {
-							"codigo": payload.get("codigo"),
-							"tipo": "balance_crítico",
-							"detalles": balance_conflict
-						}
-						conflicts.append(conflict_item)
-				
-				self.avl.applyDepthPenalty(self.depthLimit)
 			except Exception as exc:
-				conflict_item = {
-					"codigo": payload.get("codigo"),
-					"tipo": "excepción",
-					"error": str(exc)
-				}
-				conflicts.append(conflict_item)
+				conflicts.append(self._build_exception_conflict(payload, exc))
 
 		return {
 			"processed": processed,
 			"conflicts": conflicts,
 			"pendientes": self.queue.size(),
+			"pending": self.queue.size(),
 		}
 
 	def _detect_critical_balance_conflicts(self, node):
-		"""
-		Verifica el camino desde el nodo insertado hacia la raíz,
-		detectando nodos con factor de balance crítico (±2 o peor).
-		Retorna una lista de conflictos detectados.
-		"""
+		"""Return critical balance nodes from inserted node to root."""
 		critical_imbalances = []
 		current = node
 		
 		while current is not None:
 			bf = self.avl.getBalanceFactor(current)
-			# Factor de balance crítico: fuera del rango [-1, 0, 1]
+			# Critical factor is outside the valid range [-1, 0, 1].
 			if bf > 1 or bf < -1:
 				critical_imbalances.append({
 					"codigo_nodo": current.getValue(),
+					"node_code": current.getValue(),
 					"factor_balance": bf,
+					"balance_factor": bf,
 					"altura_izquierda": self.avl.calculateHeight(current.getLeftChild()),
+					"left_height": self.avl.calculateHeight(current.getLeftChild()),
 					"altura_derecha": self.avl.calculateHeight(current.getRightChild()),
-					"tipo_desbalance": "izquierda pesada" if bf > 0 else "derecha pesada"
+					"right_height": self.avl.calculateHeight(current.getRightChild()),
+					"tipo_desbalance": "left_heavy" if bf > 0 else "right_heavy",
+					"imbalance_type": "left_heavy" if bf > 0 else "right_heavy"
 				})
 			current = current.getParent()
 		
 		return critical_imbalances
 
 	def process_queue_with_steps(self):
-		"""Procesa la cola pero retorna pasos intermedios para animación."""
+		"""Process queue and return steps for animation."""
 		steps = []
 		processed = 0
 		conflicts = []
@@ -220,70 +308,27 @@ class TreeService:
 		while not self.queue.is_empty():
 			payload = self.queue.dequeue()
 			try:
-				self._push_undo_state()
-				avl_node = Node(payload)
-				bst_node = Node(payload)
-				
-				# ACTIVAR STRESS MODE: Insertar SIN rebalancear automáticamente
-				stress_mode_was_on = self.avl.stressMode
-				self.avl.stressMode = True
-				
-				# Insertar nodo en stress mode (sin rotaciones automáticas)
-				self.avl.insert(avl_node)
-				self.bst.insert(bst_node)
-				
-				# 🔍 DETECTAR CONFLICTOS DE BALANCE mientras el árbol aún está desbalanceado
-				balance_conflicts = self._detect_critical_balance_conflicts(avl_node)
-				
-				# ✅ CAPTURAR ESTADO PRE-ROTACIÓN (desbalanceado)
-				tree_pre_rotation = self.avl.toDict()
-				
-				# DESACTIVAR STRESS MODE y aplicar rebalanceo si hay conflictos
-				self.avl.stressMode = stress_mode_was_on
-				if balance_conflicts:
-					# Si hay conflictos, aplicar checkBalance para rebalancear
-					self.avl._AVL__checkBalance(avl_node)
-					for balance_conflict in balance_conflicts:
-						conflict_item = {
-							"codigo": payload.get("codigo"),
-							"tipo": "balance_crítico",
-							"detalles": balance_conflict
-						}
-						conflicts.append(conflict_item)
-				
-				# ✅ CAPTURAR ESTADO POST-ROTACIÓN (balanceado)
-				tree_post_rotation = self.avl.toDict()
-				
 				processed += 1
-				self.avl.applyDepthPenalty(self.depthLimit)
-
-				# Capturar estado intermediario con AMBOS estados (pre y post rotación)
-				step_data = {
-					"step": processed,
-					"codigo_insertado": payload.get("codigo"),
-					"tree_pre_rotation": tree_pre_rotation,  # Estado ANTES de rotaciones
-					"tree": tree_post_rotation,              # Estado DESPUÉS de rotaciones (para compatibilidad)
-					"tree_post_rotation": tree_post_rotation, # Estado DESPUÉS de rotaciones (explícito)
-					"metrics": self.avl.getMetrics(),
-					"conflictos": len(conflicts),
-					"balance_criticos": balance_conflicts if balance_conflicts else [],  # Array vacío si no hay
-				}
-				
+				step_data = self._process_single_queue_item(
+					payload,
+					conflicts,
+					include_steps=True,
+					step_number=processed,
+				)
 				steps.append(step_data)
 			except Exception as exc:
-				conflict_item = {
-					"codigo": payload.get("codigo"),
-					"tipo": "excepción",
-					"error": str(exc)
-				}
+				conflict_item = self._build_exception_conflict(payload, exc)
 				conflicts.append(conflict_item)
 				steps.append({
 					"step": processed + 1,
 					"codigo_insertado": payload.get("codigo"),
+					"inserted_code": payload.get("codigo"),
 					"tree": self.avl.toDict(),
 					"metrics": self.avl.getMetrics(),
 					"conflictos": len(conflicts),
+					"conflicts_count": len(conflicts),
 					"conflicto": conflict_item,
+					"conflict": conflict_item,
 				})
 
 		return {
@@ -291,21 +336,18 @@ class TreeService:
 			"conflicts": conflicts,
 			"steps": steps,
 			"pendientes": self.queue.size(),
+			"pending": self.queue.size(),
 		}
 
 	def load_demo_conflict_scenario(self):
-		"""
-		Carga un escenario de demostración con datos que causarán desbalance observable.
-		Simula inserciones secuenciales sin rebalanceo para visualizar conflictos.
-		"""
-		# Limpiar estado actual
+		"""Load a simple scenario with deterministic balance conflicts."""
+		# Reset state.
 		self.avl = AVL()
 		self.bst = BST()
 		self.queue = InsertionQueue()
 		self.undoStack = ActionStack()
 		
-		# Datos que causarán desbalance en ambos lados
-		# El truco: usar códigos que generen búsqueda descendente/ascendente
+		# Values designed to trigger imbalances.
 		demo_flights = [
 			{"codigo": "SB050", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
 			{"codigo": "SB025", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
@@ -314,24 +356,26 @@ class TreeService:
 			{"codigo": "SB100", "origen": "Bogota", "destino": "Cali", "horaSalida": "06:00", "pasajeros": 100, "precioBase": 100, "precioFinal": 100, "promocion": 0, "prioridad": 1},
 		]
 		
-		# Encolar todos
+		# Enqueue all demo items.
 		for flight in demo_flights:
 			self.queue_insert(flight)
 		
-		# Procesar y retornar con steps para animación
+		# Process and return animation steps.
 		return self.process_queue_with_steps()
 
 	def get_queue(self):
+		"""Return queue size and queue items."""
 		return {
 			"pendientes": self.queue.size(),
 			"items": self.queue.to_list(),
 		}
 
-	# Loads tree from insertion list mode or topology mode.
+	# Load tree from insertion, topology, or export mode.
 	def load_from_json_data(self, data):
+		"""Load JSON payload in INSERCION, TOPOLOGIA, or SYSTEM_EXPORT mode."""
 		self._push_undo_state()
 
-		# LIMPIAR AMBOS ÁRBOLES antes de cargar nuevos datos
+		# Clear both trees before loading new content.
 		self.avl.clear()
 		self.bst.clear()
 
@@ -344,48 +388,38 @@ class TreeService:
 		# Handle each format
 		if format_type == "INSERCION":
 			# parsed_data is List[NodoVuelo]
-			# Insert each vuelo individually (with rebalancing)
 			nodos_count = len(parsed_data)
 			for nodo_vuelo in parsed_data:
-				# Convert NodoVuelo to dict for Node constructor
 				payload = nodo_vuelo.to_dict(include_tree=False)
-				node = Node(payload)
-				self.avl.insert(node)
-				bst_node = Node(payload)
-				self.bst.insert(bst_node)
+				self._insert_in_both_trees(payload)
 
-			self.avl.applyDepthPenalty(self.depthLimit)
-			self.bst.applyDepthPenalty(self.depthLimit)
-			self.loadMode = "INSERCION"  # Set load mode
+			self._apply_depth_penalty()
+			self.loadMode = "INSERCION"
 			return {"mode": "INSERCION", "nodos": nodos_count}
 
 		elif format_type == "TOPOLOGIA":
 			# parsed_data is NodoVuelo (root)
-			# Load pre-built structure (no rebalancing)
 			topology_dict = parsed_data.to_dict(include_tree=True) if parsed_data else None
 			self.avl.loadFromTopology(topology_dict)
 			self.bst.loadFromTopology(topology_dict)
 			nodos_count = len(self.avl.breadthFirstSearch()) if self.avl.getRoot() else 0
-			self.avl.applyDepthPenalty(self.depthLimit)
-			self.bst.applyDepthPenalty(self.depthLimit)
-			self.loadMode = "TOPOLOGIA"  # Set load mode
+			self._apply_depth_penalty()
+			self.loadMode = "TOPOLOGIA"
 			return {"mode": "TOPOLOGIA", "nodos": nodos_count}
 
 		elif format_type == "SYSTEM_EXPORT":
 			# parsed_data is NodoVuelo (root), historical_metrics is Dict
-			# Load topology first
 			topology_dict = parsed_data.to_dict(include_tree=True) if parsed_data else None
 			self.avl.loadFromTopology(topology_dict)
 			self.bst.loadFromTopology(topology_dict)
 
-			# Restore historical metrics (rotations, cancelations, etc.)
+			# Restore historical metrics when present.
 			if historical_metrics:
 				self.avl.restoreHistoricalMetrics(historical_metrics)
 
 			nodos_count = len(self.avl.breadthFirstSearch()) if self.avl.getRoot() else 0
-			self.avl.applyDepthPenalty(self.depthLimit)
-			self.bst.applyDepthPenalty(self.depthLimit)
-			self.loadMode = "SYSTEM_EXPORT"  # Set load mode
+			self._apply_depth_penalty()
+			self.loadMode = "SYSTEM_EXPORT"
 			return {"mode": "SYSTEM_EXPORT", "nodos": nodos_count, "metrics_restored": True}
 
 		else:
@@ -404,65 +438,78 @@ class TreeService:
 		}
 
 	def save_version(self, name):
+		"""
+		Create and save a named snapshot of current tree state.
+		Snapshot is deep-copied to prevent external mutations.
+		"""
 		snapshot = self.avl.toDict()
 		version = Version(name, snapshot)
 		self.versions[name] = version
 		return version.to_dict()
 
 	def list_versions(self):
+		"""
+		Return list of all saved version names and their timestamps.
+		Does not include full snapshots to optimize response size.
+		"""
 		return [
 			{"name": version.name, "timestamp": version.timestamp}
 			for version in self.versions.values()
 		]
 
 	def restore_version(self, name):
+		"""
+		Load a named snapshot into both AVL and BST trees.
+		Pushes current tree state to undo stack before restoration.
+		"""
 		version = self.versions.get(name)
 		if version is None:
-			return {"ok": False, "message": "Versión no encontrada."}
+			return {"ok": False, "message": "Version not found."}
 		self._push_undo_state()
 		self.avl.loadFromTopology(deepcopy(version.snapshot))
 		self.bst.loadFromTopology(deepcopy(version.snapshot))
 		return {"ok": True, "name": name}
 
 	def delete_version(self, name):
+		"""
+		Remove a saved version checkpoint from store.
+		Throws error if version not found.
+		"""
 		if name not in self.versions:
-			return {"ok": False, "message": "Versión no encontrada."}
+			return {"ok": False, "message": "Version not found."}
 		del self.versions[name]
 		return {"ok": True, "name": name}
 
 	def verify_avl(self):
+		"""Return AVL property verification report."""
 		return self.avl.verifyAVLProperty()
 
 	def rebalance_global(self):
+		"""Run full AVL global rebalance and sync BST."""
 		self._push_undo_state()
 		response = self.avl.rebalanceGlobal()
-		# Sincronizar BST con el nuevo estado del AVL
+		# Keep BST aligned after AVL rebalance.
 		self.bst.loadFromTopology(self.avl.toDict())
-		self.avl.applyDepthPenalty(self.depthLimit)
+		self._apply_depth_penalty()
 		return response
 
 	def rebalance_global_animated(self):
-		"""Rebalanceo global pero retornando snapshots para animación paso a paso."""
+		"""Run global rebalance and return snapshots for animation."""
 		self._push_undo_state()
 		response = self.avl.rebalanceGlobalStepByStep()
-		
-		# DEBUG: Loguear información
-		import sys
-		print(f"✅ DEBUG rebalance_global_animated - Total pasos: {len(response.get('steps', []))}", file=sys.stderr)
-		if response.get('steps'):
-			print(f"   Primer paso: {response['steps'][0]}", file=sys.stderr)
-		
-		# Sincronizar BST con el nuevo estado del AVL
+
+		# Keep BST aligned after AVL rebalance.
 		self.bst.loadFromTopology(self.avl.toDict())
-		self.avl.applyDepthPenalty(self.depthLimit)
+		self._apply_depth_penalty()
 		return response
 
 	def remove_least_profitable(self):
+		"""Remove least-profitable AVL subtree and sync BST."""
 		self._push_undo_state()
 		response = self.avl.removeLeastProfitableSubtree()
-		# Sincronizar BST con el nuevo estado del AVL
+		# Keep BST aligned after AVL subtree removal.
 		self.bst.loadFromTopology(self.avl.toDict())
-		self.avl.applyDepthPenalty(self.depthLimit)
+		self._apply_depth_penalty()
 		return response
 
 

@@ -3,7 +3,7 @@ from typing import Optional
 
 
 class TreeMetricsSchema(BaseModel):
-	"""Métricas específicas de un árbol"""
+	"""Metrics for one tree."""
 	raiz: Optional[str]
 	profundidad: int
 	hojas: int
@@ -11,13 +11,12 @@ class TreeMetricsSchema(BaseModel):
 
 
 class TreeStructureSchema(BaseModel):
-	"""Estructura de un árbol serializado"""
+	"""Serialized tree plus metrics."""
 	tree: Optional[dict]
 	metrics: TreeMetricsSchema
 
 
 class TreeComparisonResponseSchema(BaseModel):
-	"""Respuesta de comparación entre AVL y BST con gráficos y propiedades"""
+	"""Comparison response between AVL and BST."""
 	avl: TreeStructureSchema
 	bst: TreeStructureSchema
-	# DTO para devolver la comparación entre AVL y BST con sus estructuras, gráficos y propiedades

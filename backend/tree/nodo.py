@@ -28,31 +28,39 @@ class Node:
 
   # Parent reference helpers.
   def setParent(self, parentNode):
+    """Set parent reference."""
     self.parent = parentNode
 
   def getParent(self):
+    """Return parent reference."""
     return self.parent
 
   # Left child reference helpers.
   def setLeftChild(self, leftChildNode):
+    """Set left child reference."""
     self.leftChild = leftChildNode
 
   def getLeftChild(self):
+    """Return left child reference."""
     return self.leftChild
 
   # Right child reference helpers.
   def setRightChild(self, rightChildNode):
+    """Set right child reference."""
     self.rightChild = rightChildNode
 
   def getRightChild(self):
+    """Return right child reference."""
     return self.rightChild
 
   # Key used by tree operations.
   def getValue(self):
+    """Return key used for tree ordering."""
     return self.value
 
   # Setter required by delete-with-predecessor flow.
   def setValue(self, value):
+    """Update key value and synchronized code field."""
     self.value = value
     self.codigo = value
 
@@ -100,4 +108,5 @@ class Node:
     return round(precio_final, 2)
 
   def recalculatePrecioFinal(self):
+    """Recompute and store final price based on current flags."""
     self.precioFinal = self.calculatePrecioFinal()

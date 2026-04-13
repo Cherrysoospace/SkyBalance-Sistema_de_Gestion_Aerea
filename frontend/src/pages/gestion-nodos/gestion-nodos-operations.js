@@ -123,8 +123,22 @@ export class GestionNodosOperations {
                 this.selectedNode = null;
 
             } else if (action === 'modificar') {
-                await this.apiClient.updateNode(payload.codigo, payload);
-                console.log('✅ Nodo modificado:', payload.codigo);
+                const originalCode = this.selectedNode?.codigo;
+                if (!originalCode) {
+                    throw new Error('No hay nodo seleccionado para modificar.');
+                }
+
+                if (payload.codigo !== originalCode) {
+                    alert('⚠️ El ID del nodo no se puede modificar.');
+                }
+
+                const immutablePayload = {
+                    ...payload,
+                    codigo: originalCode,
+                };
+
+                await this.apiClient.updateNode(originalCode, immutablePayload);
+                console.log('✅ Nodo modificado:', originalCode);
 
             } else if (action === 'eliminar') {
                 await this.apiClient.deleteNode(payload.codigo);

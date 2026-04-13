@@ -1,39 +1,28 @@
-"""
-AVL Audit Service - Single Responsibility: Auditar la integridad del árbol AVL
-
-Principios SOLID aplicados:
-- S: Responsabilidad única: validar propiedades AVL
-- I: Interfaz segregada para validadores específicos
-- D: Inyección de dependencias para validadores
-"""
+"""AVL audit service with one clear responsibility: validate AVL integrity."""
 
 
 class AVLNodeValidator:
-    """Valida las propiedades de un nodo AVL individual"""
+    """Validate one AVL node."""
     
     def validate_node(self, node, calculated_height, parent_height=None):
-        """
-        Valida un nodo contra sus propiedades esperadas.
-        
-        Retorna: dict con detalles de validación
-        """
+        """Validate one node against AVL and BST ordering rules."""
         if node is None:
             return {"valid": True}
         
         issues = []
         
-        # Propiedad 1: Factor de balanceo debe estar en [-1, 0, 1]
+        # Rule 1: balance factor must stay in [-1, 0, 1].
         balance_factor = self._calculate_balance_factor(node)
         if balance_factor < -1 or balance_factor > 1:
             issues.append({
                 "type": "balance_factor",
                 "severity": "critical",
-                "message": f"Factor de balanceo fuera de rango: {balance_factor}",
+                "message": f"Balance factor is out of range: {balance_factor}",
                 "expected": "[-1, 0, 1]",
                 "actual": balance_factor
             })
         
-        # Propiedad 3: Validar orden BST (izquierda < nodo < derecha)
+        # Rule 2: BST ordering must hold (left < node < right).
         left_child = node.getLeftChild()
         right_child = node.getRightChild()
         
@@ -41,7 +30,7 @@ class AVLNodeValidator:
             issues.append({
                 "type": "bst_violation_left",
                 "severity": "critical",
-                "message": f"Hijo izquierdo ({left_child.getValue()}) >= nodo ({node.getValue()})",
+                "message": f"Left child ({left_child.getValue()}) >= node ({node.getValue()})",
                 "location": "left_child"
             })
         
@@ -49,7 +38,7 @@ class AVLNodeValidator:
             issues.append({
                 "type": "bst_violation_right",
                 "severity": "critical",
-                "message": f"Hijo derecho ({right_child.getValue()}) <= nodo ({node.getValue()})",
+                "message": f"Right child ({right_child.getValue()}) <= node ({node.getValue()})",
                 "location": "right_child"
             })
         
@@ -61,7 +50,7 @@ class AVLNodeValidator:
         }
     
     def _calculate_balance_factor(self, node):
-        """Calcula el factor de balanceo: altura_izq - altura_der"""
+        """Compute balance factor: left_height - right_height."""
         if node is None:
             return 0
         
@@ -70,14 +59,14 @@ class AVLNodeValidator:
         return left_height - right_height
     
     def _get_height(self, node):
-        """Obtiene la altura de un nodo"""
+        """Return node height."""
         if node is None:
             return 0
         return 1 + max(self._get_height(node.getLeftChild()), 
                       self._get_height(node.getRightChild()))
 
     def _compare_values(self, left, right):
-        """Compara valores de nodos de forma consistente para códigos numéricos y alfanuméricos."""
+        """Compare node values with one consistent sort strategy."""
         left_key = self._value_sort_key(left)
         right_key = self._value_sort_key(right)
 
@@ -101,24 +90,14 @@ class AVLNodeValidator:
 
 
 class AVLAuditService:
-    """
-    Servicio de auditoría para árboles AVL.
-    Responsabilidad única: realizar auditoría completa de integridad AVL.
-    """
+    """Run full AVL audits and build readable reports."""
     
     def __init__(self, node_validator=None):
-        """
-        Inyección de dependencia: permite usar validadores personalizados
-        Principio D (Dependency Inversion)
-        """
+        """Allow custom validators through dependency injection."""
         self.validator = node_validator or AVLNodeValidator()
     
     def audit_tree(self, root):
-        """
-        Realiza auditoría completa del árbol AVL.
-        
-        Retorna: dict con reporte detallado
-        """
+        """Run full tree audit and return structured details."""
         if root is None:
             return {
                 "isValid": True,
@@ -138,7 +117,7 @@ class AVLAuditService:
         nodes_data = []
         all_issues = []
         
-        # Recorrer árbol completo en DFS
+        # Traverse full tree with DFS.
         self._traverse_and_validate(
             root, 
             nodes_data, 
@@ -146,11 +125,11 @@ class AVLAuditService:
             depth=0
         )
         
-        # Separar problemas por severidad
+        # Split issues by severity.
         critical_issues = [i for i in all_issues if i.get("severity") == "critical"]
         major_issues = [i for i in all_issues if i.get("severity") == "major"]
         
-        # Generar resumen
+        # Build final summary.
         return {
             "isValid": len(critical_issues) == 0,
             "summary": {
@@ -167,14 +146,11 @@ class AVLAuditService:
         }
     
     def _traverse_and_validate(self, node, nodes_data, all_issues, depth=0):
-        """
-        Recorre el árbol y valida cada nodo.
-        DFS para mantener orden y validar estructura.
-        """
+        """Traverse tree in DFS order and validate each node."""
         if node is None:
-            return -1  # Altura de árbol vacío
+            return -1
         
-        # Validar subárboles primero (Post-order)
+        # Validate children first (post-order).
         left_height = self._traverse_and_validate(
             node.getLeftChild(), 
             nodes_data, 
@@ -189,13 +165,13 @@ class AVLAuditService:
             depth + 1
         )
         
-        # Calcular altura esperada
+        # Compute expected height.
         expected_height = 1 + max(left_height, right_height)
         
-        # Validar nodo actual
+        # Validate current node.
         validation = self.validator.validate_node(node, expected_height)
         
-        # Recopilar datos del nodo
+        # Build node report.
         node_info = {
             "codigo": node.codigo,
             "value": node.getValue(),
@@ -223,7 +199,7 @@ class AVLAuditService:
         return expected_height
     
     def _calculate_overall_severity(self, critical, major):
-        """Determina la severidad general del árbol"""
+        """Return overall severity level."""
         if len(critical) > 0:
             return "critical"
         elif len(major) > 0:
@@ -231,14 +207,12 @@ class AVLAuditService:
         return "ok"
     
     def get_audit_report_summary(self, audit_result):
-        """
-        Convierte el resultado de auditoría en un reporte legible.
-        Principio O (Open/Closed): extensible sin modificar método existente.
-        """
+        """Convert detailed audit result into compact API report."""
         summary = audit_result["summary"]
         
         return {
             "status": "VÁLIDO" if audit_result["isValid"] else "INVÁLIDO",
+            "statusText": "VALID" if audit_result["isValid"] else "INVALID",
             "resumen": {
                 "totalNodos": summary["totalNodes"],
                 "nodosInconsistentes": summary["inconsistentNodes"],
@@ -246,6 +220,15 @@ class AVLAuditService:
                 "problemasImportantes": summary["majorIssues"],
                 "severidad": summary.get("severity", "unknown")
             },
+            "summary": {
+                "totalNodes": summary["totalNodes"],
+                "inconsistentNodes": summary["inconsistentNodes"],
+                "criticalIssues": summary["criticalIssues"],
+                "majorIssues": summary["majorIssues"],
+                "severity": summary.get("severity", "unknown"),
+            },
             "nodosAuditados": audit_result["nodes"],
-            "problemasEncontrados": audit_result["allIssues"]
+            "auditedNodes": audit_result["nodes"],
+            "problemasEncontrados": audit_result["allIssues"],
+            "issues": audit_result["allIssues"],
         }

@@ -80,6 +80,9 @@ export class GestionNodosPageController {
             // 5️⃣ Cargar árbol inicial
             await this.loadTree();
 
+            // 5.1️⃣ Sync stress mode from backend to avoid hidden non-autobalance state
+            await this._syncStressModeFromBackend();
+
             // 6️⃣ Inicializar LeastProfitableNodeManager con árbol actual
             if (this.managers.leastProfitableNodeManager) {
                 try {
@@ -197,6 +200,24 @@ export class GestionNodosPageController {
         }
 
         console.log('✅ Todos los managers inicializados correctamente');
+    }
+
+    /**
+     * Read backend metrics and sync stress mode state in UI/manager.
+     * @private
+     */
+    async _syncStressModeFromBackend() {
+        try {
+            const metrics = await this.apiClient.getMetrics();
+            const stressEnabled = Boolean(metrics?.modoEstres);
+
+            if (this.managers.stressModeManager) {
+                this.managers.stressModeManager.setState(stressEnabled);
+                console.log(`✅ Modo Estrés sincronizado desde backend: ${stressEnabled ? 'ACTIVO' : 'INACTIVO'}`);
+            }
+        } catch (error) {
+            console.error('❌ Error sincronizando Modo Estrés desde backend:', error);
+        }
     }
 
     /**

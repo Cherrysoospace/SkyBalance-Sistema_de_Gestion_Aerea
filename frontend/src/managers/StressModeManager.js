@@ -73,6 +73,32 @@ class StressModeManager {
     }
 
     /**
+     * Synchronize manager and UI with backend stress mode state.
+     * @param {boolean} enabled - Backend stress mode status
+     */
+    setState(enabled) {
+        this.enabled = Boolean(enabled);
+
+        const btn = document.getElementById(this.config.stressModeButton);
+        if (btn) {
+            btn.classList.remove('activating');
+            if (this.enabled) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        if (this.enabled) {
+            this._enableAnalysisButtons();
+            this._disableConcurrencyButtons();
+        } else {
+            this._disableAnalysisButtons();
+            this._enableConcurrencyButtons();
+        }
+    }
+
+    /**
      * Habilita botones de análisis (solo en modo estrés)
      * @private
      */

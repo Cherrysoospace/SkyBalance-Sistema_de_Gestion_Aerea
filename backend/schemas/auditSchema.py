@@ -2,5 +2,5 @@ from pydantic import BaseModel
 
 
 class VersionSchema(BaseModel):
+	"""Payload that identifies one saved version by name."""
 	name: str
-# DTO con el reporte de verificación de la propiedad AVL
