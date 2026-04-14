@@ -1,16 +1,16 @@
 /**
  * TreeUIRenderer.js
- * Responsabilidad Única: Renderizar el árbol con D3
- * SOLID Compliance: SRP - Solo renderización visual
+ * Single Responsibility: Render the tree with D3
+ * SOLID Compliance: SRP - Visual rendering only
  *
- * Encapsula toda la lógica de visualización del árbol,
- * independiente de lógica CRUD o coordinación de página.
+ * Encapsulates all tree visualization logic,
+ * independent from CRUD logic or page coordination.
  */
 
 export class TreeUIRenderer {
     /**
-     * @param {string} containerId - ID del contenedor SVG
-     * @param {string} loadSectionId - ID de la sección de carga
+    * @param {string} containerId - SVG container ID
+    * @param {string} loadSectionId - Loading section ID
      */
     constructor(containerId = 'tree-container', loadSectionId = 'load-section') {
         this.containerId = containerId;
@@ -23,7 +23,7 @@ export class TreeUIRenderer {
     }
 
     /**
-     * Crear el elemento tooltip en el DOM
+        * Create the tooltip element in the DOM
      * @private
      */
     _createTooltip() {
@@ -39,7 +39,7 @@ export class TreeUIRenderer {
     }
 
     /**
-     * Mostrar tooltip con información del vuelo
+        * Show tooltip with flight information
      * @private
      */
     _showTooltip(event, nodeData) {
@@ -92,7 +92,7 @@ export class TreeUIRenderer {
     }
 
     /**
-     * Ocultar tooltip
+        * Hide tooltip
      * @private
      */
     _hideTooltip() {
@@ -100,11 +100,11 @@ export class TreeUIRenderer {
     }
 
     /**
-     * Renderizar el árbol con D3 - muestra estructura jerárquica con nodos clickeables
-     * SRP: Solo visualización, sin lógica de negocio
+        * Render the tree with D3 - shows a hierarchical structure with clickable nodes
+        * SRP: Visualization only, no business logic
      *
      * @param {Object} treeData - {tree: nodeRoot, metrics: {...}}
-     * @param {Function} onNodeClick - Callback cuando se selecciona un nodo
+        * @param {Function} onNodeClick - Callback when a node is selected
      */
     render(treeData, onNodeClick = null) {
         this.container.innerHTML = '';
@@ -164,7 +164,7 @@ export class TreeUIRenderer {
 
         const g = svg.append('g').attr('transform', `translate(${horizontalPadding / 2}, ${topPadding})`);
 
-        // Links (conexiones entre nodos)
+        // Links (connections between nodes)
         g.selectAll('.link')
             .data(root.links())
             .enter().append('path')
@@ -176,12 +176,12 @@ export class TreeUIRenderer {
                 .x(d => d.x)
                 .y(d => d.y));
 
-        // Nodes (nodos del árbol)
+        // Nodes (tree nodes)
         const node = g.selectAll('.node')
             .data(root.descendants())
             .enter().append('g')
             .attr('class', 'node')
-            .attr('data-node-code', d => d.data.codigo)  // ✨ Para animaciones FLIP
+            .attr('data-node-code', d => d.data.codigo)  // ✨ For FLIP animations
             .attr('transform', d => `translate(${d.x},${d.y})`)
             .style('cursor', 'pointer')
             .on('click', (event, d) => this._handleNodeClick(event, d, g))
@@ -190,7 +190,7 @@ export class TreeUIRenderer {
 
         node.append('circle')
             .attr('r', 28)
-            .attr('fill', d => d.data.critico ? '#e74c3c' : '#c084fc')  // rojo si crítico, lila si normal
+            .attr('fill', d => d.data.critico ? '#e74c3c' : '#c084fc')  // red if critical, lilac if normal
             .attr('stroke', '#333')
             .attr('stroke-width', 1.5);
 
@@ -209,7 +209,7 @@ export class TreeUIRenderer {
             .attr('fill', '#fff')
             .text(d => `$${d.data.precioFinal ?? d.data.precioBase ?? '?'}`);
 
-        // DEBUG: Verificar qué se renderizó
+        // DEBUG: Verify what got rendered
         const renderedTexts = this.container.querySelectorAll('text');
         const renderedCodes = Array.from(renderedTexts)
             .map(t => t.textContent.trim())
@@ -219,27 +219,27 @@ export class TreeUIRenderer {
     }
 
     /**
-     * Handler interno para clic en nodo
+     * Internal handler for node click
      * @private
      */
     _handleNodeClick(event, d, g) {
         this.selectedNode = d.data;
-        // Resetear color de todos los nodos
+        // Reset stroke for all nodes
         g.selectAll('circle').attr('stroke', '#333').attr('stroke-width', 1.5);
-        // Resaltar seleccionado
+        // Highlight selected
         d3.select(event.currentTarget).select('circle')
             .attr('stroke', '#fff')
             .attr('stroke-width', 3);
         console.log('📍 Nodo seleccionado:', this.selectedNode.codigo);
 
-        // Llamar callback externo si existe
+        // Call external callback if present
         if (this.onNodeClick) {
             this.onNodeClick(this.selectedNode);
         }
     }
 
     /**
-     * Mostrar sección de carga (cuando árbol está vacío)
+     * Show loading section (when the tree is empty)
      */
     showLoadingSection() {
         this.loadSection.classList.remove('hidden');
@@ -247,7 +247,7 @@ export class TreeUIRenderer {
     }
 
     /**
-     * Ocultar sección de carga
+        * Hide loading section
      */
     hideLoadingSection() {
         this.loadSection.classList.add('hidden');
@@ -255,14 +255,14 @@ export class TreeUIRenderer {
     }
 
     /**
-     * Getter del nodo seleccionado
+        * Selected node getter
      */
     getSelectedNode() {
         return this.selectedNode;
     }
 
     /**
-     * Limpiar renderizado
+        * Clear rendering
      */
     clear() {
         this.container.innerHTML = '';

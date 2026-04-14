@@ -1,6 +1,6 @@
 /* ============================================
    GESTION NODOS PAGE SCRIPT
-   Entry point minimalista - Delegación a PageController
+    Minimal entry point - Delegates to PageController
    ============================================ */
 
 // ========================================
@@ -11,20 +11,20 @@ import { modalManager } from '../../components/modalManager.js';
 import { GestionNodosPageController } from '../../controllers/GestionNodosPageController.js';
 import { initializeAuditManager } from '../../managers/AVLAuditManager.js';
 
-// D3 es cargado desde CDN en el HTML (disponible como global)
+// D3 is loaded from a CDN in the HTML (available as a global)
 
 // ========================================
-// INICIALIZACIÓN (Delegado a PageController)
+// INITIALIZATION (Delegated to PageController)
 // ========================================
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Inicializando Gestión de Nodos...');
 
     try {
-        // Inicializar AuditManager legacy
+        // Initialize legacy AuditManager
         const auditManager = initializeAuditManager(apiClient);
 
-        // Crear y ejecutar page controller
+        // Create and run page controller
         const controller = new GestionNodosPageController(apiClient, modalManager, auditManager);
         await controller.initialize();
 

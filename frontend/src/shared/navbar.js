@@ -1,9 +1,9 @@
 /* ============================================
-   NAVBAR SCRIPT - Lógica de la navegación
-   ============================================ */
+    NAVBAR SCRIPT - Navigation logic
+    ============================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Activar el link actual en el navbar
+    // Activate the current link in the navbar
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     const navLinks = document.querySelectorAll('.navbar-menu a');
 
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Smooth scroll para anclas
+    // Smooth scroll for anchors
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
@@ -27,24 +27,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ============================================
-    // STRESS MODE - Comunicación entre páginas
+    // STRESS MODE - Cross-page communication
     // ============================================
     applyStressModeState();
 });
 
 /**
- * Aplica el estado de modo estrés desde localStorage
+ * Applies the stress mode state from localStorage
  */
 function applyStressModeState() {
     const stressMode = localStorage.getItem('stressMode') === 'true';
 
-    // Buscar y actualizar el toggle de modo estrés si existe en esta página
+    // Find and update the stress mode toggle if it exists on this page
     const toggleStressMode = document.getElementById('toggle-stress-mode');
     if (toggleStressMode) {
         toggleStressMode.checked = stressMode;
     }
 
-    // Buscar y actualizar estado del botón de auditoría si existe
+    // Find and update the audit button state if it exists
     const btnAuditar = document.getElementById('btn-auditar');
     if (btnAuditar) {
         btnAuditar.disabled = !stressMode;
@@ -52,13 +52,13 @@ function applyStressModeState() {
 }
 
 /**
- * Actualiza el estado de modo estrés en la página actual y en localStorage
- * Esta función debe ser llamada desde modo-estres.js cuando el toggle se modifique
+ * Updates the stress mode state on the current page and in localStorage
+ * This function should be called from modo-estres.js when the toggle changes
  */
 function updateStressModeState(enabled) {
     localStorage.setItem('stressMode', enabled ? 'true' : 'false');
 
-    // Actualizar estado del botón de auditoría en la página actual
+    // Update the audit button state on the current page
     const btnAuditar = document.getElementById('btn-auditar');
     if (btnAuditar) {
         btnAuditar.disabled = !enabled;

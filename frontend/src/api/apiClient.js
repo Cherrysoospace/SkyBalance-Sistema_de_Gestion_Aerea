@@ -1,16 +1,16 @@
 /* ============================================
-   API CLIENT - Conectar con el backend FastAPI
-   ============================================ */
+    API CLIENT - Connect to the FastAPI backend
+    ============================================ */
 
 const API_BASE_URL = 'http://localhost:8000';
 
-// Clase para manejar todas las peticiones API
+// Class to handle all API requests
 export class ApiClient {
     constructor(baseURL = API_BASE_URL) {
         this.baseURL = baseURL;
     }
 
-    // Método genérico GET
+    // Generic GET method
     async get(endpoint) {
         try {
             const response = await fetch(`${this.baseURL}${endpoint}`);
@@ -24,7 +24,7 @@ export class ApiClient {
         }
     }
 
-    // Método genérico POST
+    // Generic POST method
     async post(endpoint, data) {
         try {
             const response = await fetch(`${this.baseURL}${endpoint}`, {
@@ -41,7 +41,7 @@ export class ApiClient {
                     console.log('📥 Error response body:', errorBody);
                     errorDetail = errorBody.detail || errorDetail;
                 } catch (e) {
-                    // Si no hay JSON, usa el mensaje por defecto
+                    // If there's no JSON, keep the default message
                 }
                 throw new Error(errorDetail);
             }
@@ -52,7 +52,7 @@ export class ApiClient {
         }
     }
 
-    // Método genérico DELETE
+    // Generic DELETE method
     async delete(endpoint) {
         try {
             const response = await fetch(`${this.baseURL}${endpoint}`, {
@@ -64,7 +64,7 @@ export class ApiClient {
                     const errorBody = await response.json();
                     errorDetail = errorBody.detail || errorDetail;
                 } catch (e) {
-                    // Si no hay JSON, usa el mensaje por defecto
+                    // If there's no JSON, keep the default message
                 }
                 throw new Error(errorDetail);
             }
@@ -75,7 +75,7 @@ export class ApiClient {
         }
     }
 
-    // Método genérico PATCH
+    // Generic PATCH method
     async patch(endpoint, data) {
         try {
             const response = await fetch(`${this.baseURL}${endpoint}`, {
@@ -91,7 +91,7 @@ export class ApiClient {
                     const errorBody = await response.json();
                     errorDetail = errorBody.detail || errorDetail;
                 } catch (e) {
-                    // Si no hay JSON, usa el mensaje por defecto
+                    // If there's no JSON, keep the default message
                 }
                 throw new Error(errorDetail);
             }
@@ -108,12 +108,12 @@ export class ApiClient {
     }
 
     async insertNode(payload) {
-        // Si se recibe un objeto completo, usarlo directamente
+        // If a full object is provided, use it directly
         if (typeof payload === 'object' && payload !== null) {
             return this.post('/tree/insert', payload);
         }
 
-        // Fallback: si se recibe como argumentos posicionales (compatibilidad)
+        // Fallback: if received as positional arguments (compatibility)
         const data = {
             codigo: arguments[0],
             origen: arguments[1],
@@ -145,7 +145,7 @@ export class ApiClient {
     }
 
     async getMetrics() {
-        // Obtener métricas del endpoint específico
+        // Get metrics from the dedicated endpoint
         return this.get('/metrics/');
     }
 
@@ -154,14 +154,14 @@ export class ApiClient {
     }
 
     // ============================================
-    // TREE - Modificación de nodos
+    // TREE - Node updates
     // ============================================
     async updateNode(codigo, payload) {
         return this.patch(`/tree/update/${codigo}`, payload);
     }
 
     // ============================================
-    // PERSISTENCE - Carga y exportación
+    // PERSISTENCE - Load and export
     // ============================================
     async loadTreeFromJSON(file, depthLimit) {
         try {
@@ -183,7 +183,7 @@ export class ApiClient {
                     const errorBody = await response.json();
                     errorDetail = errorBody.detail || errorDetail;
                 } catch (e) {
-                    // Si no hay JSON, usa el mensaje por defecto
+                    // If there's no JSON, keep the default message
                 }
                 throw new Error(errorDetail);
             }
@@ -265,5 +265,5 @@ export class ApiClient {
     }
 }
 
-// Instancia global exportada
+// Exported global instance
 export const apiClient = new ApiClient();

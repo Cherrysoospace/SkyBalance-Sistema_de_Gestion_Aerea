@@ -1,6 +1,6 @@
 /* ============================================
-   MODAL MANAGER - Lógica reutilizable de modales
-   ============================================ */
+    MODAL MANAGER - Reusable modal logic
+    ============================================ */
 
 export class ModalManager {
     constructor(modalId = 'modal-formulario', formId = 'formulario', titleId = 'modal-title') {
@@ -25,7 +25,7 @@ export class ModalManager {
         cancelBtn.addEventListener('click', () => this.close());
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
 
-        // Cerrar modal al hacer click fuera
+        // Close modal when clicking outside
         window.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.close();
@@ -40,7 +40,7 @@ export class ModalManager {
         this.form.reset();
         this.setupCodeField();
 
-        // Aplicar configuración (campos a mostrar/ocultar, pre-llenar datos, etc)
+        // Apply configuration (fields to show/hide, prefill data, etc.)
         if (config.visibleFields) {
             this.toggleFields(config.visibleFields);
         }
@@ -213,5 +213,5 @@ export class ModalManager {
     }
 }
 
-// Instancia global exportada
+// Exported global instance
 export const modalManager = new ModalManager();

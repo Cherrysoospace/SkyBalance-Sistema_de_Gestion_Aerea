@@ -1,26 +1,26 @@
 /**
  * LeastProfitableNodeManager.js
- * Responsabilidad Única: Gestionar la eliminación de nodos por menor rentabilidad
+ * Single Responsibility: Manage node deletion by lowest profitability
  * SOLID Compliance: SRP + OCP + DIP
  * 
- * Flujo:
- * 1. Calcular/obtener nodo de menor rentabilidad
- * 2. Resaltarlo visualmente en el árbol
- * 3. Mostrar confirmación con datos del nodo
- * 4. Si confirma: eliminar y actualizar árbol
+ * Flow:
+ * 1. Compute/fetch the least profitable node
+ * 2. Highlight it visually in the tree
+ * 3. Show a confirmation dialog with node details
+ * 4. If confirmed: delete and update the tree
  */
 
 class LeastProfitableNodeManager {
     /**
-     * @param {APIClient} apiClient - Cliente API inyectado
-     * @param {Object} config - Configuración personalizada
+     * @param {APIClient} apiClient - Injected API client
+     * @param {Object} config - Custom configuration
      */
     constructor(apiClient, config = {}) {
         this.apiClient = apiClient;
         this.config = {
             button: 'btnEliminarMenorRentabilidad',
-            highlightColor: '#ff6b6b',      // Color para resaltar nodo
-            highlightStroke: 4,              // Grosor del borde
+            highlightColor: '#ff6b6b',      // Node highlight color
+            highlightStroke: 4,              // Border width
             modalId: 'modal-confirm-elimination',
             ...config
         };
@@ -29,8 +29,8 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Inicializar el manager: obtener árbol y configurar listeners
-     * @param {Object} initialTreeData - Datos iniciales del árbol
+     * Initialize the manager: store tree and set up listeners
+     * @param {Object} initialTreeData - Initial tree data
      */
     async initialize(initialTreeData) {
         this.treeData = initialTreeData;
@@ -39,16 +39,16 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Actualizar los datos del árbol (se llama después de loadTree)
-     * @param {Object} newTreeData - Nuevos datos del árbol
+     * Update the tree data (called after loadTree)
+     * @param {Object} newTreeData - New tree data
      */
     updateTreeData(newTreeData) {
         this.treeData = newTreeData;
-        this.highlightedNode = null; // Limpiar resaltado anterior
+        this.highlightedNode = null; // Clear previous highlight
     }
 
     /**
-     * Configurar event listeners del botón
+     * Set up the button event listeners
      * @private
      */
     _setupEventListeners() {
@@ -59,7 +59,7 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Handler del botón - inicia el flujo completo
+     * Button handler - starts the full flow
      * @private
      */
     async _onButtonClick() {
@@ -69,7 +69,7 @@ class LeastProfitableNodeManager {
         }
 
         try {
-            // Paso 1: Encontrar el nodo de menor rentabilidad
+            // Step 1: Find the least profitable node
             const leastProfitableNode = this._findLeastProfitableNode(this.treeData.tree);
 
             if (!leastProfitableNode) {
@@ -77,13 +77,13 @@ class LeastProfitableNodeManager {
                 return;
             }
 
-            // Paso 2: Guardar en variable global para resaltado
+            // Step 2: Store it for highlighting
             this.highlightedNode = leastProfitableNode;
 
-            // Paso 3: Resaltar el nodo en el árbol
+            // Step 3: Highlight the node in the tree
             this._highlightNode(leastProfitableNode.codigo);
 
-            // Paso 4: Mostrar confirmación con datos
+            // Step 4: Show confirmation with details
             await this._showConfirmationModal(leastProfitableNode);
 
         } catch (error) {
@@ -93,23 +93,23 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Encontrar recursivamente el nodo de menor rentabilidad
-     * Fórmula: rentabilidad = pasajeros × precioBase – promoción + penalización
-     * Desempates: profundidad DESC, código DESC
+     * Recursively collect candidates to determine the least profitable node
+     * Formula: profitability = passengers × basePrice – promotionDiscount + penalty
+     * Ties: depth DESC, code DESC
      * 
      * @private
-     * @param {Object} node - Nodo a procesar
-     * @param {number} depth - Profundidad actual
-     * @param {Array} candidates - Array de candidatos acumulados
-     * @returns {Array} Candidatos en formato [rentabilidad, profundidad, código, nodo]
+     * @param {Object} node - Node to process
+     * @param {number} depth - Current depth
+     * @param {Array} candidates - Accumulated candidates
+     * @returns {Array} Candidate objects in the form { rentability, depth, codigo, node }
      */
     _collectCandidates(node, depth = 0, candidates = []) {
         if (!node) return candidates;
 
-        // Calcular rentabilidad según fórmula del requerimiento
+        // Compute profitability based on the requirement formula
         const rentability = this._calculateRentability(node);
 
-        // Almacenar: [rentabilidad, profundidad, código, referencia del nodo]
+        // Store: [profitability, depth, code, node reference]
         candidates.push({
             rentability,
             depth,
@@ -117,7 +117,7 @@ class LeastProfitableNodeManager {
             node: node
         });
 
-        // Procesar hijos recursivamente
+        // Process children recursively
         if (node.izquierdo) {
             this._collectCandidates(node.izquierdo, depth + 1, candidates);
         }
@@ -129,73 +129,73 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Calcular rentabilidad de un nodo
-     * Fórmula: rentabilidad = pasajeros × precioBase – promoción + penalización
+     * Compute node profitability
+     * Formula: profitability = passengers × basePrice – promotionDiscount + penalty
      * 
      * @private
-     * @param {Object} node - Nodo del árbol
-     * @returns {number} Rentabilidad calculada
+     * @param {Object} node - Tree node
+     * @returns {number} Computed profitability
      */
     _calculateRentability(node) {
         const pasajeros = node.pasajeros || 0;
         const precioBase = node.precioBase || 0;
         
-        // Descuento por promoción: 10% del precioBase si aplica
+        // Promotion discount: 10% of basePrice if applicable
         const descuentoPromocion = (node.promocion) ? precioBase * 0.1 : 0;
         
-        // Penalización: 25% del precioBase si es crítico
+        // Penalty: 25% of basePrice if critical
         const penalizacion = (node.critico) ? precioBase * 0.25 : 0;
         
-        // Fórmula final
+        // Final formula
         return (pasajeros * precioBase) - descuentoPromocion + penalizacion;
     }
 
     /**
-     * Encontrar el nodo de menor rentabilidad
-     * Desempates: 1) Mayor profundidad 2) Código más grande
+     * Find the least profitable node
+     * Ties: 1) Greater depth 2) Larger code
      * 
      * @private
-     * @param {Object} treeRoot - Raíz del árbol
-     * @returns {Object|null} Nodo de menor rentabilidad
+     * @param {Object} treeRoot - Tree root
+     * @returns {Object|null} Least profitable node
      */
     _findLeastProfitableNode(treeRoot) {
         if (!treeRoot) return null;
 
-        // Recopilar todos los candidatos
+        // Collect all candidates
         const candidates = this._collectCandidates(treeRoot);
 
         if (candidates.length === 0) return null;
 
-        // Ordenar por: rentabilidad ASC, profundidad DESC, código DESC
+        // Sort by: profitability ASC, depth DESC, code DESC
         candidates.sort((a, b) => {
             if (a.rentability !== b.rentability) {
-                return a.rentability - b.rentability; // Menor rentabilidad primero
+                return a.rentability - b.rentability; // Lower profitability first
             }
             if (a.depth !== b.depth) {
-                return b.depth - a.depth; // Mayor profundidad primero
+                return b.depth - a.depth; // Greater depth first
             }
-            // Comparación numérica para códigos (ej: SB050)
+            // Numeric comparison for codes (e.g., SB050)
             const codeA = parseInt(a.codigo.replace(/[^0-9]/g, '')) || 0;
             const codeB = parseInt(b.codigo.replace(/[^0-9]/g, '')) || 0;
-            return codeB - codeA; // Código más grande primero
+            return codeB - codeA; // Larger code first
         });
 
-        // Retornar el primero (menor rentabilidad con desempates aplicados)
+        // Return the first (lowest profitability with tie-breakers applied)
         return candidates[0].node;
     }
 
     /**
-     * Resaltar nodo en el árbol visualmente
+     * Visually highlight a node in the tree
      * @private
-     * @param {string} nodoCodigo - Código del nodo a resaltar
+     * @param {string} nodoCodigo - Code of the node to highlight
      */
     _highlightNode(nodoCodigo) {
-        // Buscar el círculo del nodo en el DOM
+        // Find the node circle in the DOM
         const nodeElements = document.querySelectorAll('[data-node-code]');
 
         nodeElements.forEach(el => {
             if (el.getAttribute('data-node-code') === nodoCodigo) {
-                // Resaltar: cambiar color de fondo y borde
+                // Highlight: change stroke and border styles
                 const circle = el.querySelector('circle');
                 if (circle) {
                     circle.style.stroke = this.config.highlightColor;
@@ -209,9 +209,9 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Mostrar modal de confirmación con datos del nodo
+     * Show a confirmation modal with node details
      * @private
-     * @param {Object} node - Nodo seleccionado
+     * @param {Object} node - Selected node
      */
     async _showConfirmationModal(node) {
         const rentability = this._calculateRentability(node);
@@ -258,12 +258,12 @@ class LeastProfitableNodeManager {
 </div>
         `;
 
-        // Crear elemento modal
+        // Create modal element
         const modalDiv = document.createElement('div');
         modalDiv.innerHTML = html;
         document.body.appendChild(modalDiv);
 
-        // Configurar botón de confirmación
+        // Wire up the confirmation button
         modalDiv.querySelector('.btn-confirm-elimination').addEventListener('click', async () => {
             modalDiv.remove();
             await this._executeElimination(node.codigo);
@@ -271,9 +271,9 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Ejecutar la eliminación del nodo
+     * Execute the node deletion
      * @private
-     * @param {string} codigo - Código del nodo a eliminar
+     * @param {string} codigo - Code of the node to delete
      */
     async _executeElimination(codigo) {
         const button = document.getElementById(this.config.button);
@@ -282,17 +282,17 @@ class LeastProfitableNodeManager {
             button.disabled = true;
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
 
-            // Llamar al endpoint del backend
+            // Call backend endpoint
             const response = await this.apiClient.removeLeastProfitable();
 
             if (response && response.result && response.result.removed > 0) {
                 console.log(`✅ Nodo ${codigo} eliminado exitosamente`);
                 console.log(`   Nodos removidos: ${response.result.removed}`);
 
-                // Mostrar notificación de éxito
+                // Show success notification
                 this._showSuccessNotification(response.result);
 
-                // Dispatchear evento personalizado para que gestion-nodos.js actualice
+                // Dispatch custom event so gestion-nodos.js can refresh
                 document.dispatchEvent(new CustomEvent('leastProfitableNodeRemoved', {
                     detail: {
                         codigo: codigo,
@@ -309,7 +309,7 @@ class LeastProfitableNodeManager {
         } catch (error) {
             console.error('❌ Error eliminando nodo:', error);
             
-            // Mejorar mensaje de error para el usuario
+            // Improve error message for the user
             let errorMessage = error.message;
             if (error.message === 'Failed to fetch') {
                 errorMessage = '❌ No se puede conectar con el backend\n\n' +
@@ -328,9 +328,9 @@ class LeastProfitableNodeManager {
     }
 
     /**
-     * Mostrar notificación de éxito
+     * Show a success notification
      * @private
-     * @param {Object} result - Resultado de la operación
+     * @param {Object} result - Operation result
      */
     _showSuccessNotification(result) {
         const notification = document.createElement('div');

@@ -1,18 +1,18 @@
 /**
  * AVL Audit Manager
  * 
- * Responsabilidad Única: Gestionar auditoría AVL (lógica + UI)
+ * Single Responsibility: Manage AVL audit (logic + UI)
  * 
- * Principios SOLID aplicados:
- * - S: Responsabilidad única - auditoría AVL (backend + frontend)
- * - I: Interfaz segregada - métodos específicos
- * - D: Inyección de dependencias - apiClient inyectado
- * - O: Abierto/Cerrado - fácil de extender
+ * SOLID principles applied:
+ * - S: Single responsibility - AVL audit (backend + frontend)
+ * - I: Interface segregation - specific methods
+ * - D: Dependency injection - injected apiClient
+ * - O: Open/Closed - easy to extend
  */
 
 class AVLAuditManager {
     constructor(apiClient, config = {}) {
-        // Dependency Injection: principio D (SOLID)
+        // Dependency Injection: principle D (SOLID)
         this.apiClient = apiClient;
         this.lastAuditResult = null;
         this.config = {
@@ -24,12 +24,12 @@ class AVLAuditManager {
     }
 
     // ========================================
-    // MÉTODOS PÚBLICOS - AUDITORÍA
+    // PUBLIC METHODS - AUDIT
     // ========================================
 
     /**
-     * Ejecuta la auditoría del árbol AVL
-     * SRP: Responsable solo de ejecutar auditoría
+        * Runs the AVL tree audit
+        * SRP: Responsible only for running the audit
      */
     async performAudit() {
         try {
@@ -45,8 +45,8 @@ class AVLAuditManager {
     }
 
     /**
-     * Handler completo para ejecutar auditoría desde la UI
-     * DIP: Maneja estado y UI
+        * Full handler to run an audit from the UI
+        * DIP: Manages state and UI
      */
     async executeWithUI(stressModeEnabled) {
         if (!stressModeEnabled) {
@@ -62,10 +62,10 @@ class AVLAuditManager {
 
             console.log('🔍 Ejecutando auditoría AVL...');
 
-            // Ejecutar auditoría
+            // Run audit
             const auditResult = await this.performAudit();
 
-            // Validar resultado
+            // Validate result
             if (!auditResult) {
                 throw new Error('La auditoría no retornó resultados');
             }
@@ -87,11 +87,11 @@ class AVLAuditManager {
     }
 
     // ========================================
-    // MÉTODOS PÚBLICOS - UI
+    // PUBLIC METHODS - UI
     // ========================================
 
     /**
-     * Renderiza el reporte de auditoría en el DOM
+        * Renders the audit report into the DOM
      */
     renderReport(auditResult, containerId = 'audit-report') {
         const container = document.getElementById(containerId);
@@ -103,7 +103,7 @@ class AVLAuditManager {
         const html = this._buildReportHTML(auditResult);
         container.innerHTML = html;
         
-        // Animar la aparición
+        // Animate appearance
         container.style.opacity = '0';
         setTimeout(() => {
             container.style.transition = 'opacity 0.5s ease-in';
@@ -112,8 +112,8 @@ class AVLAuditManager {
     }
 
     /**
-     * Abre modal con reporte de auditoría
-     * DIP: Renderiaza y muestra
+        * Opens a modal with the audit report
+        * DIP: Renders and shows
      */
     showReport(auditResult) {
         try {
@@ -124,10 +124,10 @@ class AVLAuditManager {
                 throw new Error('Elementos del modal de auditoría no encontrados');
             }
 
-            // Renderizar el reporte
+            // Render report
             this.renderReport(auditResult, this.config.auditReportDiv);
 
-            // Mostrar modal
+            // Show modal
             modal.classList.remove('hidden');
             modal.classList.add('show');
 
@@ -140,8 +140,8 @@ class AVLAuditManager {
     }
 
     /**
-     * Cierra modal de auditoría
-     * SRP: Responsable solo de cerrar
+        * Closes the audit modal
+        * SRP: Responsible only for closing
      */
     closeReport() {
         try {
@@ -155,7 +155,7 @@ class AVLAuditManager {
             modal.classList.remove('show');
             modal.classList.add('hidden');
 
-            // Limpiar reporte
+            // Clear report
             this.clearReport(this.config.auditReportDiv);
 
             console.log('✅ Modal de auditoría cerrado');
@@ -166,8 +166,8 @@ class AVLAuditManager {
     }
 
     /**
-     * Configura event listeners del modal
-     * DIP: Inyección de comportamiento
+        * Sets up modal event listeners
+        * DIP: Behavior injection
      */
     setupEventListeners(onClose) {
         try {
@@ -182,7 +182,7 @@ class AVLAuditManager {
                 closeBtn.addEventListener('click', onClose);
             }
 
-            // Click fuera del modal
+            // Click outside the modal
             const handleOutsideClick = (e) => {
                 if (e.target === modal) {
                     onClose();
@@ -198,7 +198,7 @@ class AVLAuditManager {
     }
 
     /**
-     * Limpia el reporte
+        * Clears the report
      */
     clearReport(containerId = 'audit-report') {
         const container = document.getElementById(containerId);
@@ -209,19 +209,19 @@ class AVLAuditManager {
     }
 
     /**
-     * Retorna el último resultado de auditoría
+        * Returns the last audit result
      */
     getLastResult() {
         return this.lastAuditResult;
     }
 
     // ========================================
-    // MÉTODOS PRIVADOS - Construcción de HTML
+    // PRIVATE METHODS - HTML building
     // ========================================
 
     /**
-     * Construye el HTML del reporte
-     * Principio O (Open/Closed): fácil de extender
+        * Builds the report HTML
+        * Principle O (Open/Closed): easy to extend
      */
     _buildReportHTML(auditResult) {
         const resumen = auditResult.resumen;
@@ -261,12 +261,12 @@ class AVLAuditManager {
                 </div>
         `;
 
-        // Sección de problemas
+        // Issues section
         if (auditResult.problemasEncontrados && auditResult.problemasEncontrados.length > 0) {
             html += this._buildIssuesSection(auditResult.problemasEncontrados);
         }
 
-        // Sección de nodos auditados
+        // Audited nodes section
         if (auditResult.nodosAuditados && auditResult.nodosAuditados.length > 0) {
             html += this._buildNodesSection(auditResult.nodosAuditados);
         }
@@ -276,7 +276,7 @@ class AVLAuditManager {
     }
 
     /**
-     * Construye la sección de problemas
+        * Builds the issues section
      */
     _buildIssuesSection(issues) {
         if (issues.length === 0) return '';
@@ -324,7 +324,7 @@ class AVLAuditManager {
     }
 
     /**
-     * Construye la sección de nodos auditados
+        * Builds the audited nodes section
      */
     _buildNodesSection(nodes) {
         if (nodes.length === 0) return '';
@@ -373,7 +373,7 @@ class AVLAuditManager {
     }
 }
 
-// Instancia global para uso en otros scripts
+// Global instance for use in other scripts
 let auditManager = null;
 
 function initializeAuditManager(apiClient) {

@@ -1,13 +1,13 @@
 /**
  * StressModeManager.js
- * Responsabilidad Única: Gestionar Modo Estrés y su estado
+ * Single Responsibility: Manage Stress Mode and its state
  * SOLID Compliance: SRP + DIP
  */
 
 class StressModeManager {
     /**
-     * @param {APIClient} apiClient - Cliente API inyectado
-     * @param {Object} config - Configuración de elementos DOM
+    * @param {APIClient} apiClient - Injected API client
+    * @param {Object} config - DOM element configuration
      */
     constructor(apiClient, config = {}) {
         this.apiClient = apiClient;
@@ -22,8 +22,8 @@ class StressModeManager {
     }
 
     /**
-     * Alterna el estado del Modo Estrés
-     * DIP: La lógica de UI actualización es delicada al callback
+        * Toggles Stress Mode state
+        * DIP: UI update logic is delegated via callback
      */
     async toggle(onStateChange) {
         try {
@@ -33,11 +33,11 @@ class StressModeManager {
             btn.classList.add('activating');
             this.enabled = !this.enabled;
 
-            // Cambio en API
+            // API change
             await this.apiClient.setStressMode(this.enabled);
             console.log('✅ Modo Estrés actualizado:', this.enabled);
 
-            // Actualizar UI a través de callback (DIP)
+            // Update UI through callback (DIP)
             if (onStateChange) {
                 onStateChange(this.enabled);
             }
@@ -58,7 +58,7 @@ class StressModeManager {
 
         } catch (error) {
             console.error('❌ Error al cambiar Modo Estrés:', error);
-            this.enabled = !this.enabled; // Revertir
+            this.enabled = !this.enabled; // Revert
             const btn = document.getElementById(this.config.stressModeButton);
             if (btn) btn.classList.remove('activating');
             throw error;
@@ -66,7 +66,7 @@ class StressModeManager {
     }
 
     /**
-     * Obtiene el estado actual del Modo Estrés
+     * Gets the current Stress Mode state
      */
     isEnabled() {
         return this.enabled;
@@ -99,7 +99,7 @@ class StressModeManager {
     }
 
     /**
-     * Habilita botones de análisis (solo en modo estrés)
+        * Enables analytics buttons (only in stress mode)
      * @private
      */
     _enableAnalysisButtons() {
@@ -113,7 +113,7 @@ class StressModeManager {
     }
 
     /**
-     * Desactiva botones de análisis (fuera del modo estrés)
+        * Disables analytics buttons (outside stress mode)
      * @private
      */
     _disableAnalysisButtons() {
@@ -127,7 +127,7 @@ class StressModeManager {
     }
 
     /**
-     * Desactiva botones de concurrencia (cuando modo estrés está activo)
+        * Disables concurrency buttons (when stress mode is active)
      * @private
      */
     _disableConcurrencyButtons() {
@@ -140,7 +140,7 @@ class StressModeManager {
     }
 
     /**
-     * Habilita botones de concurrencia (cuando modo estrés está inactivo)
+        * Enables concurrency buttons (when stress mode is inactive)
      * @private
      */
     _enableConcurrencyButtons() {

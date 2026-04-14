@@ -1,16 +1,16 @@
 /* ============================================
-   MOTOR DE ANIMACIÓN PARA REBALANCEO AVL
-   Interpolación suave de posiciones con requestAnimationFrame
-   ============================================ */
+    AVL REBALANCE ANIMATION ENGINE
+    Smooth position interpolation with requestAnimationFrame
+    ============================================ */
 
 /**
- * Easing functions para animaciones suaves
+ * Easing functions for smooth animations
  */
 const EasingFunctions = {
-    // Lineal
+    // Linear
     linear: (t) => t,
     
-    // Cubic ease-in-out (recomendado)
+    // Cubic ease-in-out (recommended)
     easeInOutCubic: (t) => {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     },
@@ -20,14 +20,14 @@ const EasingFunctions = {
         return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     },
     
-    // Cubic ease-out (rápido al principio, lento al final)
+    // Cubic ease-out (fast at the beginning, slow at the end)
     easeOutCubic: (t) => {
         return 1 - Math.pow(1 - t, 3);
     },
 };
 
 /**
- * Clase para gestionar animaciones de rebalanceo
+ * Class to manage rebalance animations
  */
 class RebalanceAnimationEngine {
     constructor(containerSelector) {
@@ -37,38 +37,38 @@ class RebalanceAnimationEngine {
         this.nodeElements = new Map();
         this.isAnimating = false;
         this.animationQueue = [];
-        this.treeRoot = null;  // Guardar estructura del árbol inicial
-        this.newTreeRoot = null;  // Guardar estructura del árbol NUEVO (después de rotación)
-        this.nodeParentMap = new Map();  // Mapeo nodo → padre para recálculo dinámico
-        this.nodePositions = new Map();  // Guardar posiciones para interpolación
+        this.treeRoot = null;  // Store initial tree structure
+        this.newTreeRoot = null;  // Store NEW tree structure (after rotation)
+        this.nodeParentMap = new Map();  // Node → parent mapping for dynamic link recalculation
+        this.nodePositions = new Map();  // Store positions for interpolation
     }
 
     /**
-     * Renderiza el árbol inicial sin animación
+     * Renders the initial tree without animation
      */
     renderInitialTree(treeData, dimensions = { width: 800, height: 500 }) {
         if (!this.container) return;
         
         this.container.innerHTML = '';
         
-        // Crear SVG
+        // Create SVG
         this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.svg.setAttribute('width', dimensions.width);
         this.svg.setAttribute('height', dimensions.height);
         this.container.appendChild(this.svg);
         
-        // Crear grupo principal
+        // Create main group
         this.g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         this.g.setAttribute('transform', 'translate(40, 60)');
         this.svg.appendChild(this.g);
         
-        // Usar D3 para layout
+        // Use D3 for layout
         const width = dimensions.width - 80;
         const height = dimensions.height - 100;
         
         const root = d3.hierarchy(treeData.tree ?? treeData, d => {
             const children = [];
-            // Soportar ambos formatos: left/right (inglés) e izquierdo/derecho (español)
+            // Support both formats: left/right (English) and izquierdo/derecho (Spanish)
             if (d.left) children.push(d.left);
             if (d.right) children.push(d.right);
             if (d.izquierdo && !d.left) children.push(d.izquierdo);
@@ -79,7 +79,7 @@ class RebalanceAnimationEngine {
         const treeLayout = d3.tree().size([width, height]);
         treeLayout(root);
         
-        // Almacenar posiciones iniciales
+        // Store initial positions
         this.nodePositions = new Map();
         root.descendants().forEach(node => {
             this.nodePositions.set(node.data.codigo, {
@@ -89,35 +89,35 @@ class RebalanceAnimationEngine {
             });
         });
         
-        // Guardar estructura de árbol inicial
+        // Store initial tree structure
         this.treeRoot = root;
-        this.newTreeRoot = root;  // Inicialmente son iguales
+        this.newTreeRoot = root;  // Initially they are the same
         
-        // Renderizar árbol inicial
+        // Render initial tree
         this._drawTree(root);
     }
 
     /**
-     * Dibuja el árbol en el SVG actual
+     * Draws the tree into the current SVG
      */
     _drawTree(root) {
         if (!this.g) return;
         
-        // Guardar estructura del árbol para recálculo dinámico de links
+        // Store tree structure for dynamic link recalculation
         this.treeRoot = root;
         this.nodeParentMap.clear();
         
-        // Limpiar grupo
+        // Clear group
         while (this.g.firstChild) {
             this.g.removeChild(this.g.firstChild);
         }
         
         this.nodeElements.clear();
         
-        // Usar d3 para dibujar
+        // Use d3 to draw
         const gSelection = d3.select(this.g);
         
-        // Recorrer todos los nodos para mapear relaciones padre-hijo
+        // Walk all nodes to map parent-child relationships
         root.descendants().forEach(node => {
             if (node.parent) {
                 this.nodeParentMap.set(node.data.codigo, {
@@ -128,11 +128,11 @@ class RebalanceAnimationEngine {
             }
         });
         
-        // Dibujar links (inicialmente vacíos, se actualizarán dinámicamente)
+        // Draw links (initially empty, will be updated dynamically)
         const linkGroup = gSelection.append('g').attr('class', 'links-group');
         this._createLinkElements(gSelection, root.links());
         
-        // Dibujar nodos
+        // Draw nodes
         const nodes = gSelection.selectAll('.node')
             .data(root.descendants())
             .enter().append('g')
@@ -140,7 +140,7 @@ class RebalanceAnimationEngine {
             .attr('data-codigo', d => d.data.codigo)
             .attr('transform', d => `translate(${d.x},${d.y})`);
         
-        // Almacenar referencias a elementos
+        // Store element references
         nodes.each((d, i, elements) => {
             this.nodeElements.set(d.data.codigo, {
                 element: elements[i],
@@ -151,14 +151,14 @@ class RebalanceAnimationEngine {
             });
         });
         
-        // Círculos de nodos
+        // Node circles
         nodes.append('circle')
             .attr('r', 28)
             .attr('fill', d => d.data.critico ? '#e74c3c' : '#c084fc')
             .attr('stroke', '#333')
             .attr('stroke-width', 1.5);
         
-        // Texto del código
+        // Code text
         nodes.append('text')
             .attr('text-anchor', 'middle')
             .attr('dy', '-0.2em')
@@ -167,7 +167,7 @@ class RebalanceAnimationEngine {
             .attr('font-weight', '600')
             .text(d => d.data.codigo);
         
-        // Texto del precio
+        // Price text
         nodes.append('text')
             .attr('text-anchor', 'middle')
             .attr('dy', '1em')
@@ -177,7 +177,7 @@ class RebalanceAnimationEngine {
     }
 
     /**
-     * Crea elementos de links en el SVG
+     * Creates link elements in the SVG
      */
     _createLinkElements(gSelection, links) {
         gSelection.selectAll('.link').remove();
@@ -195,11 +195,11 @@ class RebalanceAnimationEngine {
     }
 
     /**
-     * Anima la transición del árbol de una estructura a otra
-     * @param {Object} newTreeData - Estructura del árbol nuevo
-     * @param {number} duration - Duración en ms (si no especifica, usa configuración)
-     * @param {string} easingName - Nombre de la función de easing (si no especifica, usa configuración)
-     * @returns {Promise} Resuelve cuando termina la animación
+     * Animates the tree transition from one structure to another
+     * @param {Object} newTreeData - New tree structure
+     * @param {number} duration - Duration in ms (if not specified, uses config)
+     * @param {string} easingName - Easing function name (if not specified, uses config)
+     * @returns {Promise} Resolves when the animation completes
      */
     async animateTreeTransition(newTreeData, duration = null, easingName = null) {
         if (this.isAnimating) {
@@ -207,7 +207,7 @@ class RebalanceAnimationEngine {
             return;
         }
 
-        // Usar valores de configuración si no se especifican
+        // Use config values if not provided
         if (duration === null) {
             duration = typeof REBALANCE_ANIMATION_CONFIG !== 'undefined' 
                 ? REBALANCE_ANIMATION_CONFIG.ROTATION_ANIMATION_DURATION 
@@ -223,13 +223,13 @@ class RebalanceAnimationEngine {
         return new Promise((resolve) => {
             this.isAnimating = true;
             
-            // Calcular nuevas posiciones
+            // Compute new positions
             const width = 800 - 80;
             const height = 500 - 100;
             
             const newRoot = d3.hierarchy(newTreeData.tree ?? newTreeData, d => {
                 const children = [];
-                // Soportar ambos formatos: left/right (inglés) e izquierdo/derecho (español)
+                // Support both formats: left/right (English) and izquierdo/derecho (Spanish)
                 if (d.left) children.push(d.left);
                 if (d.right) children.push(d.right);
                 if (d.izquierdo && !d.left) children.push(d.izquierdo);
@@ -240,7 +240,7 @@ class RebalanceAnimationEngine {
             const treeLayout = d3.tree().size([width, height]);
             treeLayout(newRoot);
             
-            // Mapeo de posiciones nuevas
+            // Map new positions
             const newPositions = new Map();
             newRoot.descendants().forEach(node => {
                 newPositions.set(node.data.codigo, {
@@ -250,9 +250,9 @@ class RebalanceAnimationEngine {
                 });
             });
             
-            // 🔑 PASO CRÍTICO: Actualizar la estructura de links ANTES de animar
-            // Esto asegura que los links reflejen la NUEVA estructura del árbol
-            // después de la rotación (no la estructura antigua)
+            // 🔑 CRITICAL STEP: Update the link structure BEFORE animating
+            // This ensures links reflect the NEW tree structure
+            // after rotation (not the old structure)
             this.nodeParentMap.clear();
             newRoot.descendants().forEach(node => {
                 if (node.parent) {
@@ -263,54 +263,54 @@ class RebalanceAnimationEngine {
                     });
                 }
             });
-            this.newTreeRoot = newRoot;  // Guardar nueva estructura para _updateLinks
+            this.newTreeRoot = newRoot;  // Store new structure for _updateLinks
             
-            // Obtener función de easing
+            // Get easing function
             const easing = EasingFunctions[easingName] || EasingFunctions.easeInOutCubic;
             
-            // Log para debug
+            // Debug log
             if (typeof REBALANCE_ANIMATION_CONFIG !== 'undefined' && REBALANCE_ANIMATION_CONFIG.DEBUG_MODE) {
                 console.log(`🎬 Animando ${this.nodeElements.size} nodos durante ${duration}ms con easing: ${easingName}`);
                 console.log(`🔗 Estructura de links actualizada: ${this.nodeParentMap.size} relaciones padre-hijo`);
             }
             
-            // Tiempo de inicio
+            // Start time
             const startTime = performance.now();
             
-            // Función de animación con requestAnimationFrame
+            // Animation loop with requestAnimationFrame
             const animate = (currentTime) => {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1); // 0 a 1
                 const easedProgress = easing(progress);
                 
-                // Interpolar posiciones de cada nodo (SIN animar los links)
+                // Interpolate node positions (WITHOUT animating links)
                 this.nodeElements.forEach((nodeInfo, codigo) => {
                     const oldPos = this.nodePositions.get(codigo);
                     const newPos = newPositions.get(codigo);
                     
                     if (oldPos && newPos) {
-                        // Interpolación suave usando easing
+                        // Smooth interpolation using easing
                         const x = oldPos.x + (newPos.x - oldPos.x) * easedProgress;
                         const y = oldPos.y + (newPos.y - oldPos.y) * easedProgress;
                         
-                        // Actualizar posición del grupo SVG del NODO
+                        // Update SVG group position for the NODE
                         nodeInfo.group.attr('transform', `translate(${x},${y})`);
                         
-                        // Guardar posición actual (importante para _updateLinks)
+                        // Store current position (important for _updateLinks)
                         nodeInfo.x = x;
                         nodeInfo.y = y;
                     }
                 });
                 
-                // Redibujar links dinámicamente en función de posiciones actuales
-                // Los links NO están animados, solo se recalculan cada frame
+                // Re-draw links dynamically based on current positions
+                // Links are NOT animated; they are recalculated each frame
                 this._updateLinks();
                 
-                // Continuar animación si no ha terminado
+                // Continue if not finished
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    // Animación completada
+                    // Animation completed
                     this.nodePositions = newPositions;
                     this.isAnimating = false;
                     
@@ -322,35 +322,35 @@ class RebalanceAnimationEngine {
                 }
             };
             
-            // Iniciar animación
+            // Start animation
             requestAnimationFrame(animate);
         });
     }
 
     /**
-     * Actualiza los links (conexiones) entre nodos durante la animación
-     * ¡IMPORTANTE! Se recalculan dinámicamente en CADA FRAME basándose en 
-     * las posiciones ACTUALES de los nodos, no se animan como entidades independientes.
-     * 
-     * Los links NO son entidades independientes que se animan.
-     * Son DERIVADAS de las posiciones actuales de los nodos.
-     * Cuando los nodos se mueven, los links simplemente se recalculan.
+     * Updates links (connections) between nodes during the animation
+     * IMPORTANT: They are recalculated dynamically on EVERY FRAME based on
+     * the CURRENT node positions; they are not animated as independent entities.
+     *
+     * Links are NOT independent entities that animate.
+     * They are DERIVED from the current node positions.
+     * When nodes move, links are simply recalculated.
      */
     _updateLinks() {
         if (!this.g || !this.newTreeRoot) return;
         
         const gSelection = d3.select(this.g);
         
-        // Obtener los links del árbol ACTUAL (puede haber cambiado por rotación)
+        // Get links from the CURRENT tree (it may have changed due to rotation)
         const currentLinks = this.newTreeRoot.links();
         
-        // Seleccionar TODOS los elementos <path> de links (pueden ser más o menos que antes)
+        // Select ALL <path> link elements (there may be more or fewer than before)
         const links = gSelection.selectAll('.link').data(currentLinks, (d, i) => i);
         
-        // Eliminar links que ya no existan
+        // Remove links that no longer exist
         links.exit().remove();
         
-        // Agregar nuevos links si es necesario
+        // Add new links if needed
         links.enter().append('path')
             .attr('class', 'link')
             .attr('fill', 'none')
@@ -358,10 +358,10 @@ class RebalanceAnimationEngine {
             .attr('stroke-width', 1.5)
             .merge(links)
             .attr('d', (linkData) => {
-                // linkData es: { source: d3Node, target: d3Node }
-                // donde d3Node tiene .data.codigo
+                // linkData is: { source: d3Node, target: d3Node }
+                // where d3Node has .data.codigo
                 
-                // Obtener posiciones ACTUALES interpoladas de los nodos
+                // Get CURRENT interpolated positions of nodes
                 const sourceInfo = this.nodeElements.get(linkData.source.data.codigo);
                 const targetInfo = this.nodeElements.get(linkData.target.data.codigo);
                 
@@ -369,9 +369,9 @@ class RebalanceAnimationEngine {
                     return '';
                 }
                 
-                // Generar path conectando posiciones ACTUALES
-                // IMPORTANTE: Estas posiciones se actualizan CADA FRAME en animateTreeTransition()
-                // Los links no se animan, solo se recalculan basándose en las posiciones de nodos
+                // Generate path connecting CURRENT positions
+                // IMPORTANT: These positions are updated EVERY FRAME in animateTreeTransition()
+                // Links are not animated; they are recalculated based on node positions
                 return d3.linkVertical()
                     .source(() => [sourceInfo.x, sourceInfo.y])
                     .target(() => [targetInfo.x, targetInfo.y])
@@ -380,7 +380,7 @@ class RebalanceAnimationEngine {
     }
 
     /**
-     * Resalta un nodo durante la animación
+     * Highlights a node during the animation
      */
     highlightNode(codigo, duration = 500, color = '#fbbf24') {
         const nodeInfo = this.nodeElements.get(codigo);
@@ -406,7 +406,7 @@ class RebalanceAnimationEngine {
     }
 
     /**
-     * Limpia la animación actual
+     * Clears the current animation
      */
     clear() {
         if (this.container) {
@@ -419,7 +419,7 @@ class RebalanceAnimationEngine {
 }
 
 /**
- * Gestor de cola de rotaciones animadas
+ * Animated rotation queue manager
  */
 class RotationQueueAnimator {
     constructor(engine) {
@@ -429,16 +429,16 @@ class RotationQueueAnimator {
     }
 
     /**
-     * Agrega una rotación a la cola
+     * Adds a rotation step to the queue
      */
     enqueue(step, duration = null) {
-        // Si no se especifica duración, usa null para que use la del config
+        // If duration is not specified, keep null so the config duration is used
         this.queue.push({ step, duration });
     }
 
     /**
-     * Procesa todas las rotaciones en la cola de forma secuencial
-     * Ahora soporta pares PRE/POST para mostrar desbalance ANTES de rotación
+     * Processes all rotations in the queue sequentially
+     * Now supports PRE/POST pairs to show imbalance BEFORE rotation
      */
     async processQueue(onStepComplete = null) {
         if (this.isProcessing) {
@@ -454,37 +454,37 @@ class RotationQueueAnimator {
                 const { step, duration } = this.queue[i];
 
                 if (step.isRotationPair) {
-                    // 🔑 NUEVA LÓGICA: Pares PRE/POST
+                    // 🔑 NEW LOGIC: PRE/POST pairs
                     console.log(`🔄 Animando rotación ${step.type} (PAR PRE/POST)`);
                     console.log(`  1️⃣  Mostrando árbol DESBALANCEADO (PRE)`);
                     
-                    // FASE 1: Animar a PRE (árbol desbalanceado)
+                    // PHASE 1: Animate to PRE (imbalanced tree)
                     await this.engine.animateTreeTransition(
                         { tree: step.preStep.tree_snapshot },
-                        500,  // Más rápido para mostrar desbalance
+                        500,  // Faster to show imbalance
                         null
                     );
 
-                    // Resaltar el nodo desbalanceado
+                    // Highlight the imbalanced node
                     this.engine.highlightNode(step.node_codigo, 800);
                     
-                    // Esperar a que se vea el desbalance
+                    // Wait so the imbalance is visible
                     await this._sleep(1000);
 
                     console.log(`  2️⃣  Animando ROTACIÓN a árbol balanceado (POST)`);
                     
-                    // FASE 2: Animar a POST (árbol balanceado con rotación)
+                    // PHASE 2: Animate to POST (balanced tree with rotation)
                     await this.engine.animateTreeTransition(
                         { tree: step.postStep.tree_snapshot },
-                        duration,  // null → usa duración del config (2500ms)
+                        duration,  // null → uses config duration (2500ms)
                         null
                     );
 
-                    // Esperar pausa entre rotaciones
+                    // Wait between rotations
                     await this._sleep(700);
 
                 } else {
-                    // Lógica antigua para pasos individuales (fallback)
+                    // Legacy logic for individual steps (fallback)
                     await this.engine.animateTreeTransition(
                         { tree: step.tree_snapshot },
                         duration,
@@ -495,7 +495,7 @@ class RotationQueueAnimator {
                     await this._sleep(700);
                 }
 
-                // Callback con progreso
+                // Progress callback
                 if (onStepComplete) {
                     await onStepComplete({
                         current: i + 1,
@@ -511,14 +511,14 @@ class RotationQueueAnimator {
     }
 
     /**
-     * Pausa auxiliar
+     * Helper pause
      */
     _sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     /**
-     * Limpia la cola
+     * Clears the queue
      */
     clear() {
         this.queue = [];

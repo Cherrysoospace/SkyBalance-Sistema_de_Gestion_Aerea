@@ -1,6 +1,6 @@
 /**
  * RebalanceAnimationManager.js
- * Responsabilidad Única: Gestionar animación de rebalanceo global
+ * Single Responsibility: Manage global rebalance animation
  * SOLID Compliance: SRP + OCP + DIP
  */
 
@@ -9,8 +9,8 @@ import { REBALANCE_ANIMATION_CONFIG } from '../utils/animation-config.js';
 
 class RebalanceAnimationManager {
     /**
-     * @param {APIClient} apiClient - Cliente API inyectado
-     * @param {Object} config - Configuración de elementos DOM y animación
+    * @param {APIClient} apiClient - Injected API client
+    * @param {Object} config - DOM elements and animation configuration
      */
     constructor(apiClient, config = {}) {
         this.apiClient = apiClient;
@@ -28,8 +28,8 @@ class RebalanceAnimationManager {
     }
 
     /**
-     * Ejecuta rebalanceo global con animación paso a paso
-     * SRP: Responsable solo de orquestar la animación
+        * Execute global rebalance with step-by-step animation
+        * SRP: Only responsible for orchestrating the animation
      */
     async execute(stressModeEnabled, onComplete) {
         if (!stressModeEnabled) {
@@ -47,7 +47,7 @@ class RebalanceAnimationManager {
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rebalanceando...';
 
-            // Obtener detalles de rebalanceo
+            // Fetch rebalance details
             const response = await this.apiClient.globalRebalanceAnimated();
             console.log('✅ Respuesta de rebalanceo:', response);
 
@@ -60,10 +60,10 @@ class RebalanceAnimationManager {
                 return true;
             }
 
-            // Ejecutar animación
+            // Run animation
             await this._animateRotations(steps, summary, response.tree);
 
-            // Callback de finalización
+            // Completion callback
             if (onComplete) {
                 await onComplete();
             }
@@ -81,8 +81,8 @@ class RebalanceAnimationManager {
     }
 
     /**
-     * Anima las rotaciones paso a paso
-     * OCP: Extensible para diferentes estrategias de animación
+        * Animate rotations step by step
+        * OCP: Extensible for different animation strategies
      * @private
      */
     async _animateRotations(steps, summary, initialTree) {
@@ -98,8 +98,8 @@ class RebalanceAnimationManager {
         panel.classList.add('active');
         rotationsList.innerHTML = '';
 
-        // 🔑 NUEVA LÓGICA: Agrupar pasos PRE_XX con XX
-        // Saltar INITIAL y agrupar pares de desbalance-rotación
+        // 🔑 NEW LOGIC: Group PRE_XX steps with XX
+        // Skip INITIAL and group imbalance-rotation pairs
         let rotationPairs = this._groupPrePostSteps(steps);
         const hasStructureRebuild = steps.some(step => step.type === 'BST_REBUILD');
         const initialSnapshot = steps.find(step => step.type === 'INITIAL')?.tree_snapshot;
@@ -110,7 +110,7 @@ class RebalanceAnimationManager {
         console.log(`📊 DEBUG - Total steps del backend: ${steps.length}, Rotaciones agrupadas: ${totalRotations}`);
         console.log(`📊 DEBUG - Snapshot inicial encontrado:`, !!initialSnapshot);
 
-        // Inicializar motor de animación si no existe
+        // Initialize animation engine if needed
         if (!this.rebalanceEngine) {
             this.rebalanceEngine = new RebalanceAnimationEngine('#tree-container');
         }
@@ -138,7 +138,7 @@ class RebalanceAnimationManager {
             return;
         }
 
-        // Renderizar árbol inicial
+        // Render initial tree
         const treeToRender = initialSnapshot || initialTree; 
         console.log(`🌳 Árbol inicial para animación:`, treeToRender);
         
@@ -147,10 +147,10 @@ class RebalanceAnimationManager {
             { width: 800, height: 500 }
         );
 
-        // Crear cola de rotaciones (OCP: Extensible)
+        // Create rotation queue (OCP: Extensible)
         this.rotationQueueAnimator = new RotationQueueAnimator(this.rebalanceEngine);
 
-        // Encolar pares PRE/POST
+        // Enqueue PRE/POST pairs
         console.log(`📝 Encolando ${totalRotations} pares de rotación PRE/POST...`);
         for (const pair of rotationPairs) {
             console.log(`  - Rotación: ${pair.type} | Nodo: ${pair.node_codigo}`);
@@ -158,26 +158,26 @@ class RebalanceAnimationManager {
             this.rotationQueueAnimator.enqueue(pair);
         }
 
-        // Procesar cola con callbacks de progreso
+        // Process the queue with progress callbacks
         await this.rotationQueueAnimator.processQueue(
             async (progress) => this._onRotationProgress(progress, progressBar, rotationCounter, rotationsList)
         );
 
-        // Mostrar resumen
+        // Show summary
         this._showSummaryInPanel(summary, rotationsList);
 
-        // Mantener panel visible
+        // Keep panel visible
         await this._sleep(this.config.animationConfig.PANEL_DISPLAY_TIME_AFTER_COMPLETE);
 
-        // Mostrar alerta final si está configurado
+        // Show final alert if enabled
         if (this.config.animationConfig.SHOW_FINAL_ALERT) {
             this._showRebalanceSummary(rotationPairs, summary);
         }
     }
 
     /**
-     * Maneja actualización de progreso de rotación
-     * DIP: Callback desacoplado
+        * Handle rotation progress updates
+        * DIP: Decoupled callback
      * @private
      */
     async _onRotationProgress(progress, progressBar, rotationCounter, rotationsList) {
@@ -185,7 +185,7 @@ class RebalanceAnimationManager {
         progressBar.style.width = percent + '%';
         rotationCounter.textContent = `${progress.current}/${progress.total} rotaciones`;
 
-        // Crear elemento visual
+        // Create visual element
         const messageEl = this._createRotationMessage(progress.step, progress.current === progress.total);
         rotationsList.appendChild(messageEl);
 
@@ -195,14 +195,14 @@ class RebalanceAnimationManager {
 
         console.log(`✅ Rotación ${progress.current}/${progress.total}: ${progress.step.type}`);
 
-        // Aplicar animación (se marca después de procesar)
+        // Apply state styling (marked after processing)
         messageEl.classList.remove('processing');
         messageEl.classList.add('done');
     }
 
     /**
-     * Crea elemento HTML para mensaje de rotación
-     * SRP: Responsable solo de crear elemento visual
+        * Create the HTML element for a rotation message
+        * SRP: Only responsible for creating the visual element
      * @private
      */
     _createRotationMessage(rotation, isLast) {
@@ -224,7 +224,7 @@ class RebalanceAnimationManager {
     }
 
     /**
-     * Muestra resumen de rotaciones en el panel
+        * Show rotation summary inside the panel
      * @private
      */
     _showSummaryInPanel(summary, container) {
@@ -243,7 +243,7 @@ class RebalanceAnimationManager {
             summaryDiv.appendChild(row);
         }
 
-        // Fila de total
+        // Total row
         const totalRow = this._createTotalRow(summary);
         summaryDiv.appendChild(totalRow);
 
@@ -251,7 +251,7 @@ class RebalanceAnimationManager {
     }
 
     /**
-     * Crea fila de resumen individual
+        * Create a single summary row
      * @private
      */
     _createSummaryRow(type, count) {
@@ -272,7 +272,7 @@ class RebalanceAnimationManager {
     }
 
     /**
-     * Crea fila de total
+        * Create the total row
      * @private
      */
     _createTotalRow(summary) {
@@ -301,7 +301,7 @@ class RebalanceAnimationManager {
     }
 
     /**
-     * Muestra alerta final con resumen
+        * Show the final summary alert
      * @private
      */
     _showRebalanceSummary(rotations, summary) {
@@ -336,14 +336,14 @@ El árbol ha sido rebalanceado exitosamente.
     }
 
     /**
-     * Cierra el panel de rebalanceo
-     * SRP: Responsable de limpiar la UI del panel
+     * Close the rebalance panel
+     * SRP: Responsible for cleaning up the panel UI
      */
     closePanel() {
         const panel = document.getElementById(this.config.rebalancePanel);
         if (panel) {
             panel.classList.remove('active');
-            // Limpiar contenido del panel
+            // Clear panel content
             const rotationsList = document.getElementById(this.config.rotationsList);
             if (rotationsList) {
                 rotationsList.innerHTML = '';
@@ -353,8 +353,8 @@ El árbol ha sido rebalanceado exitosamente.
     }
 
     /**
-     * Inicializa event listeners para el panel de rebalanceo
-     * DIP: Descacopla la lógica de eventos
+     * Initialize event listeners for the rebalance panel
+     * DIP: Decouples event logic
      */
     setupCloseButton() {
         const closeBtn = document.getElementById('btn-close-rebalance');
@@ -365,8 +365,8 @@ El árbol ha sido rebalanceado exitosamente.
     }
 
     /**
-     * Agrupa pasos PRE_XX con sus correspondientes XX
-     * Esto permite mostrar el desbalance ANTES de la rotación
+        * Group PRE_XX steps with their corresponding XX steps
+        * This allows showing the imbalance BEFORE the rotation
      * @private
      */
     _groupPrePostSteps(steps) {
@@ -376,33 +376,33 @@ El árbol ha sido rebalanceado exitosamente.
         while (i < steps.length) {
             const current = steps[i];
 
-            // Saltar INITIAL
+            // Skip INITIAL
             if (current.type === 'INITIAL') {
                 i++;
                 continue;
             }
 
-            // Si es un paso PRE_XX, agrupar con el siguiente XX
+            // If it's a PRE_XX step, group it with the next XX
             if (current.type.startsWith('PRE_')) {
-                const rotationType = current.type.substring(4); // Remover "PRE_"
+                const rotationType = current.type.substring(4); // Remove "PRE_"
                 const nextStep = steps[i + 1];
 
                 if (nextStep && nextStep.type === rotationType) {
                     pairs.push({
                         type: rotationType,
                         node_codigo: current.node_codigo,
-                        preStep: current,       // Árbol CON desbalance
-                        postStep: nextStep,     // Árbol DESPUÉS rotación
+                        preStep: current,       // Tree WITH imbalance
+                        postStep: nextStep,     // Tree AFTER rotation
                         isRotationPair: true
                     });
                     i += 2;
                 } else {
-                    // Si no hay POST después de PRE, omitir
+                    // If there is no POST after PRE, skip
                     console.warn(`⚠️ PRE_${rotationType} sin POST correspondiente`);
                     i++;
                 }
             } else {
-                // Si encuentra un paso XX sin PRE, omitir (caso edge)
+                // If it finds an XX step without PRE, skip (edge case)
                 console.warn(`⚠️ Paso ${current.type} sin PRE- correspondiente, omitido`);
                 i++;
             }
@@ -412,7 +412,7 @@ El árbol ha sido rebalanceado exitosamente.
     }
 
     /**
-     * Obtiene configuración fallback si no está cargada
+     * Get fallback config if none is loaded
      * @private
      */
     _getFallbackConfig() {

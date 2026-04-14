@@ -1,12 +1,12 @@
 /**
  * QueueState.js
- * Responsabilidad Única: Gestionar estado de la cola
- * SOLID Compliance: SRP - Solo datos y getters/setters
+ * Single Responsibility: Manage queue state
+ * SOLID Compliance: SRP - Data + getters/setters only
  *
- * Encapsula:
- * - items: Array de vuelos en cola
- * - isProcessing: Flag de procesamiento
- * - Métodos para modificar estado de forma controlada
+ * Encapsulates:
+ * - items: Array of queued flights
+ * - isProcessing: Processing flag
+ * - Methods to update state in a controlled way
  */
 
 export class QueueState {
@@ -16,7 +16,7 @@ export class QueueState {
     }
 
     /**
-     * Agregar vuelo a la cola
+        * Add a flight to the queue
      */
     add(flightData) {
         this.items.push(flightData);
@@ -24,7 +24,7 @@ export class QueueState {
     }
 
     /**
-     * Remover vuelo de la cola
+        * Remove a flight from the queue
      */
     remove(code) {
         this.items = this.items.filter(item => item.codigo !== code);
@@ -32,7 +32,7 @@ export class QueueState {
     }
 
     /**
-     * Reemplazar estado completo de la cola
+        * Replace the entire queue state
      */
     setItems(items) {
         this.items = items || [];
@@ -40,21 +40,21 @@ export class QueueState {
     }
 
     /**
-     * Obtener todos los items
+        * Get all items
      */
     getItems() {
         return this.items;
     }
 
     /**
-     * Obtener cantidad de items
+        * Get item count
      */
     getCount() {
         return this.items.length;
     }
 
     /**
-     * Establecer flag de procesamiento
+        * Set processing flag
      */
     setProcessing(value) {
         this.isProcessing = value;
@@ -62,14 +62,14 @@ export class QueueState {
     }
 
     /**
-     * Verificar si la cola está siendo procesada
+        * Check whether the queue is being processed
      */
     isProcessingQueue() {
         return this.isProcessing;
     }
 
     /**
-     * Limpiar cola
+        * Clear the queue
      */
     clear() {
         this.items = [];
@@ -78,7 +78,7 @@ export class QueueState {
     }
 
     /**
-     * Obtener estado completo
+        * Get full state
      */
     getState() {
         return {
@@ -89,7 +89,7 @@ export class QueueState {
     }
 
     /**
-     * Verificar si la cola está vacía
+     * Check whether the queue is empty
      */
     isEmpty() {
         return this.items.length === 0;

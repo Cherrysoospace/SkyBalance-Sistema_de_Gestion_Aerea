@@ -1,12 +1,12 @@
 /**
  * DepthLimitManager.js
- * Responsabilidad Única: Gestionar la profundidad máxima del árbol
- * SOLID Compliance: SRP - Solo gestión de depth limit
+ * Single Responsibility: Manage the tree's maximum depth
+ * SOLID Compliance: SRP - Depth limit management only
  *
- * Encapsula:
- * - Modal para capturar profundidad
- * - Persistencia en localStorage
- * - Validación
+ * Encapsulates:
+ * - Modal to capture depth
+ * - Persistence in localStorage
+ * - Validation
  */
 
 export class DepthLimitManager {
@@ -17,12 +17,12 @@ export class DepthLimitManager {
     }
 
     /**
-     * Mostrar modal pidiendo la profundidad máxima del árbol
-     * Obligatorio antes de cargar cualquier archivo
+        * Show a modal asking for the tree maximum depth
+        * Required before loading any file
      *
-     * @param {File} file - Archivo a cargar
-     * @param {HTMLElement} button - Botón "Cargar" para actualizar estado
-     * @returns {Promise<number>} profundidad ingresada
+        * @param {File} file - File to load
+        * @param {HTMLElement} button - "Load" button to update state
+        * @returns {Promise<number>} entered depth
      */
     async showModal(file, button) {
         return new Promise((resolve) => {
@@ -49,7 +49,7 @@ export class DepthLimitManager {
             const submitBtn = modal.querySelector('.btn-submit');
             const cancelBtn = modal.querySelector('.btn-cancel');
 
-            // Enfocar en el input automáticamente
+            // Auto-focus the input
             depthInput.focus();
             console.log('📍 Modal de profundidad abierto, input listo para entrada');
 
@@ -71,11 +71,11 @@ export class DepthLimitManager {
                 button.textContent = 'Cargando...';
 
                 try {
-                    // Cargar el archivo con profundidad
+                    // Load the file with the depth limit
                     const response = await this.apiClient.loadTreeFromJSON(file, depthLimit);
                     console.log('✅ JSON cargado. depthLimit retornado:', response?.depthLimit);
 
-                    // Guardar en localStorage
+                    // Save to localStorage
                     this.saveToStorage(depthLimit);
                     console.log('💾 depthLimit guardado en localStorage:', depthLimit);
 
@@ -96,7 +96,7 @@ export class DepthLimitManager {
                 resolve(null);
             });
 
-            // Permitir Enter para confirmar
+            // Allow Enter to confirm
             depthInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') submitBtn.click();
             });
@@ -104,8 +104,8 @@ export class DepthLimitManager {
     }
 
     /**
-     * Cargar depth limit desde localStorage
-     * @returns {number|null} profundidad guardada o null
+     * Load depth limit from localStorage
+     * @returns {number|null} saved depth or null
      */
     loadFromStorage() {
         const saved = localStorage.getItem(this.STORAGE_KEY);
@@ -118,8 +118,8 @@ export class DepthLimitManager {
     }
 
     /**
-     * Guardar depth limit en localStorage
-     * @param {number} value - profundidad a guardar
+        * Save depth limit to localStorage
+        * @param {number} value - depth to save
      */
     saveToStorage(value) {
         localStorage.setItem(this.STORAGE_KEY, value.toString());
@@ -127,8 +127,8 @@ export class DepthLimitManager {
     }
 
     /**
-     * Actualizar el input de profundidad en la UI
-     * @param {number} value - valor a asignar
+        * Update the depth input in the UI
+        * @param {number} value - value to set
      */
     updateInputUI(value) {
         const inputDepthLimit = document.getElementById('input-depth-limit');
@@ -139,9 +139,9 @@ export class DepthLimitManager {
     }
 
     /**
-     * Validar un valor de profundidad
-     * @param {number} value - valor a validar
-     * @returns {boolean} true si es válido
+        * Validate a depth value
+        * @param {number} value - value to validate
+        * @returns {boolean} true if valid
      */
     isValid(value) {
         const num = parseInt(value);

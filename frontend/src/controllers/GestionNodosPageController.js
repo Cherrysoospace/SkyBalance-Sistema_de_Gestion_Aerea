@@ -1,14 +1,14 @@
 /**
  * GestionNodosPageController.js
- * Responsabilidad Única: Orquestar toda la página de Gestión de Nodos
- * SOLID Compliance: SRP + DIP - Coordinador central
+ * Single Responsibility: Orchestrate the entire Node Management page
+ * SOLID Compliance: SRP + DIP - Central coordinator
  *
- * Este es el orquestador que:
- * - Inicializa managers
- * - Configura event listeners
- * - Coordina flujos de negocio
- * - Maneja eventos personalizados
- * - Delega responsabilidades específicas a sus módulos
+ * This is the orchestrator that:
+ * - Initializes managers
+ * - Sets up event listeners
+ * - Coordinates business flows
+ * - Handles custom events
+ * - Delegates specific responsibilities to its modules
  */
 
 import { TreeUIRenderer } from '../renderers/TreeUIRenderer.js';
@@ -24,21 +24,21 @@ import { LeastProfitableNodeManager } from '../managers/LeastProfitableNodeManag
 
 export class GestionNodosPageController {
     /**
-     * @param {ApiClient} apiClient - Cliente API inyectado
-     * @param {ModalManager} modalManager - Gestor de modales inyectado
-     * @param {AVLAuditManager} auditManager - Auditor AVL inyectado
+    * @param {ApiClient} apiClient - Injected API client
+    * @param {ModalManager} modalManager - Injected modal manager
+    * @param {AVLAuditManager} auditManager - Injected AVL auditor
      */
     constructor(apiClient, modalManager, auditManager) {
         this.apiClient = apiClient;
         this.modalManager = modalManager;
         this.auditManager = auditManager;
 
-        // Inicializar componentes de la página
+        // Initialize page components
         this.treeRenderer = new TreeUIRenderer('tree-container', 'load-section');
         this.depthLimitManager = new DepthLimitManager(apiClient);
-        this.operations = new GestionNodosOperations(apiClient, modalManager, null); // QueueManager se inyecta después
+        this.operations = new GestionNodosOperations(apiClient, modalManager, null); // QueueManager is injected later
 
-        // Managers especializados
+        // Specialized managers
         this.managers = {
             metricsManager: null,
             stressModeManager: null,
@@ -54,36 +54,36 @@ export class GestionNodosPageController {
     }
 
     /**
-     * Inicialización principal de la página
-     * Llamar en DOMContentLoaded
+        * Main page initialization
+        * Call on DOMContentLoaded
      */
     async initialize() {
         console.log('🚀 Inicializando página de Gestión de Nodos...');
 
         try {
-            // 1️⃣ Verificar conectividad con backend
+            // 1️⃣ Verify backend connectivity
             await this.apiClient.healthCheck();
             console.log('✅ Conexión con backend exitosa');
 
-            // 2️⃣ Inicializar todos los managers
+            // 2️⃣ Initialize all managers
             await this._initializeManagers();
 
-            // 3️⃣ Inyectar queueManager en operations
+            // 3️⃣ Inject queueManager into operations
             this.operations.queueManager = this.managers.queueManager;
 
-            // 4️⃣ Restaurar depth limit desde localStorage
+            // 4️⃣ Restore depth limit from localStorage
             const savedDepthLimit = this.depthLimitManager.loadFromStorage();
             if (savedDepthLimit) {
                 this.depthLimitManager.updateInputUI(savedDepthLimit);
             }
 
-            // 5️⃣ Cargar árbol inicial
+            // 5️⃣ Load initial tree
             await this.loadTree();
 
             // 5.1️⃣ Sync stress mode from backend to avoid hidden non-autobalance state
             await this._syncStressModeFromBackend();
 
-            // 6️⃣ Inicializar LeastProfitableNodeManager con árbol actual
+            // 6️⃣ Initialize LeastProfitableNodeManager with the current tree
             if (this.managers.leastProfitableNodeManager) {
                 try {
                     const treeData = await this.apiClient.getTree();
@@ -93,13 +93,13 @@ export class GestionNodosPageController {
                 }
             }
 
-            // 7️⃣ Configurar event listeners
+            // 7️⃣ Set up event listeners
             this._setupEventListeners();
 
-            // 8️⃣ Escuchar eventos personalizados
+            // 8️⃣ Listen for custom events
             this._setupCustomEventListeners();
 
-            // 9️⃣ Exponer managers globalmente para debugging
+            // 9️⃣ Expose managers globally for debugging
             this._exposeManagersForDebugging();
 
         } catch (error) {
@@ -109,7 +109,7 @@ export class GestionNodosPageController {
     }
 
     /**
-     * Cargar árbol desde la API y renderizar
+        * Load the tree from the API and render it
      */
     async loadTree() {
         try {
@@ -124,7 +124,7 @@ export class GestionNodosPageController {
             this.treeRenderer.render(data, (node) => this._handleNodeSelection(node));
             await this.managers.metricsManager.updateMetricsPanel();
 
-            // Actualizar datos en el LeastProfitableNodeManager
+            // Update data in LeastProfitableNodeManager
             if (this.managers.leastProfitableNodeManager) {
                 this.managers.leastProfitableNodeManager.updateTreeData(data);
             }
@@ -138,7 +138,7 @@ export class GestionNodosPageController {
     }
 
     /**
-     * INICIALIZACIÓN DE MANAGERS
+        * MANAGER INITIALIZATION
      * @private
      */
     async _initializeManagers() {
@@ -221,11 +221,11 @@ export class GestionNodosPageController {
     }
 
     /**
-     * SETUP DE EVENT LISTENERS
+     * EVENT LISTENER SETUP
      * @private
      */
     _setupEventListeners() {
-        // --- BOTONES CRUD ---
+        // --- CRUD BUTTONS ---
         this._setupButton('btnDeshacer', () => this._handleUndo());
         this._setupButton('btnAdicionar', () => this.operations.openAddForm());
         this._setupButton('btnModificar', () => this.operations.openEditForm());
@@ -233,46 +233,46 @@ export class GestionNodosPageController {
         this._setupButton('btnCancelar', () => this._handleCancelFlight());
         this._setupButton('btnExportar', () => this.operations.exportTree());
 
-        // --- BOTONES CONCURRENCIA ---
+        // --- CONCURRENCY BUTTONS ---
         this._setupButton('btnProgramarInsercion', () => this.operations.openEnqueueForm());
         this._setupButton('btnProcesarCola', () => this._handleProcessQueue());
 
-        // --- PROFUNDIDAD MÁXIMA ---
+        // --- MAX DEPTH ---
         this._setupDepthLimitControls();
 
-        // --- BOTONES ANÁLISIS ---
+        // --- ANALYTICS BUTTONS ---
         this._setupButton('btnModoEstres', () => this._handleToggleStressMode());
         this._setupButton('btnRebalanceo', () => this._handleExecuteRebalance());
         this._setupButton('btnAuditar', () => this._handleExecuteAudit());
         this._setupButton('btnMetricas', () => this._handleOpenMetrics());
         this._setupButton('btnVersionado', () => this._handleOpenVersioning());
 
-        // --- CONFIGURAR MODALES ---
+        // --- MODAL SETUP ---
         this.managers.metricsManager.setupEventListeners(() => this.managers.metricsManager.closeMetricsModal());
         this.auditManager.setupEventListeners(() => this.auditManager.closeReport());
 
-        // --- FORMULARIO MODAL ---
+        // --- FORM MODAL ---
         this.modalManager.setSubmitHandler((action, formData) => this._handleFormSubmit(action, formData));
 
-        // --- CARGA DE JSON ---
+        // --- JSON LOAD ---
         this._setupFileLoading();
 
         console.log('✅ Event listeners configurados');
     }
 
     /**
-     * SETUP DE EVENTOS PERSONALIZADOS
+     * CUSTOM EVENT SETUP
      * @private
      */
     _setupCustomEventListeners() {
-        // Evento: Versión restaurada
+        // Event: Version restored
         document.addEventListener('versionRestored', async (event) => {
             console.log('📢 Evento versionRestored:', event.detail.versionName);
             await this.loadTree();
             await this.managers.metricsManager.updateMetricsPanel();
         });
 
-        // Evento: Nodo eliminado por menor rentabilidad
+        // Event: Node removed due to lowest profitability
         document.addEventListener('leastProfitableNodeRemoved', async (event) => {
             console.log('📢 Evento leastProfitableNodeRemoved:', event.detail);
             await this.loadTree();
@@ -283,7 +283,7 @@ export class GestionNodosPageController {
     }
 
     /**
-     * HANDLERS DE EVENTOS
+        * EVENT HANDLERS
      */
 
     async _handleUndo() {
@@ -479,7 +479,7 @@ export class GestionNodosPageController {
                 }
             });
 
-            // Permitir Enter para actualizar
+            // Allow Enter to trigger update
             inputDepthLimit.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') btnUpdateDepth.click();
             });
@@ -509,7 +509,7 @@ export class GestionNodosPageController {
     }
 
     /**
-     * DEBUG: Exponer managers globalmente
+     * DEBUG: Expose managers globally
      * @private
      */
     _exposeManagersForDebugging() {

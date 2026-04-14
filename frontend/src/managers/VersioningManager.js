@@ -1,25 +1,25 @@
 /**
  * VersioningManager.js
- * Responsabilidad Única: Gestionar el versionado persistente del árbol
+ * Single Responsibility: Manage persistent tree versioning
  * SOLID Compliance: SRP + DIP + Open/Closed
  * 
- * Este componente es responsable de:
- * - Guardar versiones del árbol con nombres específicos
- * - Listar versiones disponibles
- * - Restaurar versiones guardadas
- * - Actualizar la UI de versionado
+ * This component is responsible for:
+ * - Saving tree versions with specific names
+ * - Listing available versions
+ * - Restoring saved versions
+ * - Updating the versioning UI
  */
 
 export class VersioningManager {
     /**
-     * Constructor con inyección de dependencia
-     * @param {ApiClient} apiClient - Cliente API inyectado
-     * @param {Object} config - Configuración de elementos DOM
+     * Constructor with dependency injection
+     * @param {ApiClient} apiClient - Injected API client
+     * @param {Object} config - DOM element configuration
      */
     constructor(apiClient, config = {}) {
         this.apiClient = apiClient;
         
-        // Configuración de elementos DOM
+        // DOM element configuration
         this.config = {
             versioningPanel: 'versioning-panel',
             versioningModal: 'modal-versioning',
@@ -30,7 +30,7 @@ export class VersioningManager {
             ...config
         };
 
-        // Estado local
+        // Local state
         this.versions = [];
         this.selectedVersionName = null;
 
@@ -38,8 +38,8 @@ export class VersioningManager {
     }
 
     /**
-     * Configura los event listeners del componente
-     * SRP: Responsable solo de configurar handlers
+        * Sets up component event listeners
+        * SRP: Responsible only for wiring handlers
      */
     setupHandlers() {
         const saveBtn = document.getElementById(this.config.saveVersionBtn);
@@ -68,7 +68,7 @@ export class VersioningManager {
             listContainer.addEventListener('click', (e) => this._handleListActions(e));
         }
 
-        // Cerrar modal
+        // Close modal
         const modal = document.getElementById(this.config.versioningModal);
         if (modal) {
             const closeBtn = modal.querySelector('.close-modal');
@@ -81,7 +81,7 @@ export class VersioningManager {
                 closeBtnFooter.addEventListener('click', () => this.closeVersioningPanel());
             }
 
-            // Cerrar al hacer clic fuera
+            // Close when clicking outside
             window.addEventListener('click', (e) => {
                 if (e.target === modal) {
                     this.closeVersioningPanel();
@@ -91,8 +91,8 @@ export class VersioningManager {
     }
 
     /**
-     * Abre el panel/modal de versionado
-     * SRP: Responsable de mostrar la interfaz
+        * Opens the versioning panel/modal
+        * SRP: Responsible for showing the UI
      */
     async openVersioningPanel() {
         try {
@@ -101,17 +101,17 @@ export class VersioningManager {
                 throw new Error('Modal de versionado no encontrado en el DOM');
             }
 
-            // Limpiar input
+            // Clear input
             const nameInput = document.getElementById(this.config.versionNameInput);
             if (nameInput) {
                 nameInput.value = '';
                 nameInput.focus();
             }
 
-            // Cargar versiones
+            // Load versions
             await this.refreshVersionsList();
 
-            // Mostrar modal
+            // Show modal
             modal.classList.remove('hidden');
             modal.classList.add('show');
             console.log('✅ Panel de versionado abierto');
@@ -123,8 +123,8 @@ export class VersioningManager {
     }
 
     /**
-     * Cierra el panel/modal de versionado
-     * SRP: Responsable solo de cerrar modal
+        * Closes the versioning panel/modal
+        * SRP: Responsible only for closing the modal
      */
     closeVersioningPanel() {
         const modal = document.getElementById(this.config.versioningModal);
@@ -136,8 +136,8 @@ export class VersioningManager {
     }
 
     /**
-     * Maneja el evento de guardar versión
-     * DIP: Delega en apiClient para la petición
+        * Handles the save version event
+        * DIP: Delegates the request to apiClient
      */
     async handleSaveVersion() {
         try {
@@ -150,7 +150,7 @@ export class VersioningManager {
                 return;
             }
 
-            // Validar que el nombre sea único
+            // Validate that the name is unique
             if (this.versions.some(v => v.name === versionName)) {
                 alert(`Ya existe una versión con el nombre "${versionName}"`);
                 return;
@@ -162,13 +162,13 @@ export class VersioningManager {
             saveBtn.disabled = true;
             saveBtn.textContent = 'Guardando...';
 
-            // Llamar API
+            // Call API
             const response = await this.apiClient.post('/versions/', { name: versionName });
 
-            // Limpiar input
+            // Clear input
             nameInput.value = '';
 
-            // Actualizar lista
+            // Update list
             await this.refreshVersionsList();
 
             saveBtn.disabled = false;
@@ -187,8 +187,8 @@ export class VersioningManager {
     }
 
     /**
-     * Recarga la lista de versiones disponibles
-     * SRP: Responsable de actualizar la lista
+        * Reloads the list of available versions
+        * SRP: Responsible for updating the list
      */
     async refreshVersionsList() {
         try {
@@ -207,7 +207,7 @@ export class VersioningManager {
                 return;
             }
 
-            // Construir lista de versiones
+            // Build versions list
             const html = this.versions
                 .map((version, index) => this._buildVersionItemHTML(version, index))
                 .join('');
@@ -226,8 +226,8 @@ export class VersioningManager {
     }
 
     /**
-     * Maneja el evento de restauración de versión
-     * DIP: Delega en apiClient para la petición
+        * Handles the restore version event
+        * DIP: Delegates the request to apiClient
      */
     async handleRestoreVersion(versionName) {
         try {
@@ -244,7 +244,7 @@ export class VersioningManager {
                 restoreBtn.textContent = 'Restaurando...';
             }
 
-            // Llamar API
+            // Call API
             const response = await this.apiClient.post('/versions/restore', { name: versionName });
 
             if (restoreBtn) {
@@ -254,7 +254,7 @@ export class VersioningManager {
 
             console.log('✅ Versión restaurada:', response);
 
-            // Emitir evento para que gestion-nodos.js recargue el árbol
+            // Emit event so gestion-nodos.js reloads the tree
             this._emitVersionRestored(versionName);
 
             alert(`✅ Versión "${versionName}" restaurada correctamente`);
@@ -271,8 +271,8 @@ export class VersioningManager {
     }
 
     /**
-     * Maneja eliminación de versión (extensión futura - Open/Closed Principle)
-     * Nota: Actualmente no hay endpoint DELETE en el backend, pero está preparado
+        * Handles version deletion (future extension - Open/Closed Principle)
+        * Note: There is currently no DELETE endpoint in the backend, but this is ready for it
      */
     async handleDeleteVersion(versionName) {
         try {
@@ -283,8 +283,8 @@ export class VersioningManager {
 
             console.log('🗑️ Eliminando versión:', versionName);
 
-            // Nota: Este endpoint no existe en el backend actual
-            // Se puede agregar sin modificar esta clase (Open/Closed Principle)
+            // Note: This endpoint does not exist in the current backend
+            // It can be added without modifying this class (Open/Closed Principle)
             if (this.apiClient.delete) {
                 await this.apiClient.delete(`/versions/${versionName}`);
                 console.log('✅ Versión eliminada');
@@ -302,8 +302,8 @@ export class VersioningManager {
     }
 
     /**
-     * Emite evento customizado para notificar que se restauró una versión
-     * Patrón de comunicación entre componentes sin acoplamiento directo
+        * Emits a custom event to notify that a version was restored
+        * Communication pattern between components without direct coupling
      */
     _emitVersionRestored(versionName) {
         const event = new CustomEvent('versionRestored', {
@@ -313,8 +313,8 @@ export class VersioningManager {
     }
 
     /**
-     * Construye el HTML de un elemento de versión
-     * SRP: Método privado para generar markup
+        * Builds the HTML for a version item
+        * SRP: Private method to generate markup
      */
     _buildVersionItemHTML(version, index) {
         const timestamp = new Date(version.timestamp).toLocaleString('es-ES');
@@ -382,8 +382,8 @@ export class VersioningManager {
     }
 
     /**
-     * Limpia los event listeners
-     * Patrón de limpieza para evitar memory leaks (Open/Closed - extensible)
+        * Cleans up event listeners
+        * Cleanup pattern to avoid memory leaks (Open/Closed - extensible)
      */
     cleanup() {
         const saveBtn = document.getElementById(this.config.saveVersionBtn);

@@ -1,9 +1,9 @@
 /* ============================================
    VERSIONING STYLES
-   Estilos para el componente de versionado persistente
+    Styles for the persistent versioning component
    ============================================ */
 
-/* Modal del versionado */
+/* Versioning modal */
 #modal-versioning {
     position: fixed;
     top: 0;
@@ -35,7 +35,7 @@
     }
 }
 
-/* Contenedor del modal */
+/* Modal container */
 .versioning-modal {
     background: white;
     border-radius: 12px;
@@ -59,7 +59,7 @@
     }
 }
 
-/* Header del modal */
+/* Modal header */
 .versioning-modal .modal-header {
     padding: 24px 24px 20px;
     border-bottom: 2px solid var(--primary-color);
@@ -103,7 +103,7 @@
     color: var(--text-primary);
 }
 
-/* Cuerpo del modal */
+/* Modal body */
 .versioning-modal .modal-body {
     padding: 24px;
     display: flex;
@@ -111,7 +111,7 @@
     gap: 20px;
 }
 
-/* Sección de guardar versión */
+/* Save version section */
 .save-version-section {
     background: linear-gradient(
         135deg,
@@ -160,7 +160,7 @@
     color: var(--text-muted);
 }
 
-/* Botones de acción */
+/* Action buttons */
 .btn-action-versioning {
     padding: 12px 16px;
     border: none;
@@ -206,7 +206,7 @@
     cursor: not-allowed;
 }
 
-/* Lista de versiones */
+/* Versions list */
 .versions-section {
     flex: 1;
     min-height: 200px;
@@ -241,7 +241,7 @@
     gap: 12px;
 }
 
-/* Elemento de versión */
+/* Version item */
 .version-item {
     background: white;
     border: 1px solid #e0e0e0;
@@ -356,7 +356,7 @@
     cursor: not-allowed;
 }
 
-/* Estados especiales */
+/* Special states */
 .no-versions {
     text-align: center;
     color: var(--text-muted);
@@ -372,7 +372,7 @@
     border-radius: 6px;
 }
 
-/* Footer del modal */
+/* Modal footer */
 .versioning-modal .modal-footer {
     padding: 16px 24px;
     border-top: 1px solid var(--border-color);

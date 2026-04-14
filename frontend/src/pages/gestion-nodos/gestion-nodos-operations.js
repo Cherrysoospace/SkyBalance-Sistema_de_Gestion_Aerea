@@ -1,20 +1,20 @@
 /**
  * GestionNodosOperations.js
- * Responsabilidad Única: Operaciones CRUD de nodos
- * SOLID Compliance: SRP - Solo operaciones y formularios
+ * Single Responsibility: Node CRUD operations
+ * SOLID Compliance: SRP - Operations and forms only
  *
- * Encapsula:
- * - Abrir formularios modales
- * - Procesar envíos
- * - Operaciones de API (insert, update, delete)
- * - Exportación
+ * Encapsulates:
+ * - Opening modal forms
+ * - Processing submissions
+ * - API operations (insert, update, delete)
+ * - Export
  */
 
 export class GestionNodosOperations {
     /**
-     * @param {ApiClient} apiClient - Cliente API
-     * @param {ModalManager} modalManager - Gestor de modales
-     * @param {QueueManager} queueManager - Gestor de cola
+    * @param {ApiClient} apiClient - API client
+    * @param {ModalManager} modalManager - Modal manager
+    * @param {QueueManager} queueManager - Queue manager
      */
     constructor(apiClient, modalManager, queueManager) {
         this.apiClient = apiClient;
@@ -24,22 +24,22 @@ export class GestionNodosOperations {
     }
 
     /**
-     * Setter para el nodo seleccionado
-     * @param {Object} node - nodo del árbol seleccionado
+        * Selected node setter
+        * @param {Object} node - selected tree node
      */
     setSelectedNode(node) {
         this.selectedNode = node;
     }
 
     /**
-     * Getter para el nodo seleccionado
+        * Selected node getter
      */
     getSelectedNode() {
         return this.selectedNode;
     }
 
     /**
-     * CRUD: Abrir formulario para ADICIONAR nodo
+        * CRUD: Open form to ADD a node
      */
     openAddForm() {
         this.modalManager.open('adicionar', 'Adicionar Nodo', {
@@ -50,7 +50,7 @@ export class GestionNodosOperations {
     }
 
     /**
-     * CRUD: Abrir formulario para MODIFICAR nodo
+        * CRUD: Open form to EDIT a node
      */
     openEditForm() {
         if (!this.selectedNode) {
@@ -77,7 +77,7 @@ export class GestionNodosOperations {
     }
 
     /**
-     * CRUD: Abrir formulario para ELIMINAR nodo
+        * CRUD: Open form to DELETE a node
      */
     openDeleteForm() {
         if (!this.selectedNode) {
@@ -94,7 +94,7 @@ export class GestionNodosOperations {
     }
 
     /**
-     * Operaciones Concurrentes: Abrir formulario para PROGRAMAR INSERCIÓN en cola
+        * Concurrent operations: Open form to SCHEDULE an INSERTION into the queue
      */
     openEnqueueForm() {
         this.modalManager.open('enqueue', 'Programar Inserción de Vuelo', {
@@ -105,12 +105,12 @@ export class GestionNodosOperations {
     }
 
     /**
-     * Procesar envío de formulario CRUD
-     * Router central que maneja todas las operaciones
+        * Process CRUD form submission
+        * Central router that handles all operations
      *
      * @param {string} action - 'adicionar' | 'modificar' | 'eliminar' | 'enqueue'
-     * @param {Object} formData - datos del formulario
-     * @returns {Promise<Object>} resultado de la operación
+        * @param {Object} formData - form data
+        * @returns {Promise<Object>} operation result
      */
     async processFormSubmit(action, formData) {
         try {
@@ -146,14 +146,14 @@ export class GestionNodosOperations {
                 this.selectedNode = null;
 
             } else if (action === 'enqueue') {
-                // Simulación de Concurrencia: Encolar vuelo
+                // Concurrency simulation: enqueue flight
                 await this.queueManager.enqueueInsertion(payload);
                 console.log('✅ Vuelo programado en cola:', payload.codigo);
 
-                // Actualizar lista de vuelos en cola
+                // Update queued flights list
                 await this.queueManager.updateQueueDisplay();
 
-                // Habilitar botón de procesamiento
+                // Enable processing button
                 const btnProcesar = document.getElementById('btnProcesarCola');
                 if (btnProcesar) {
                     btnProcesar.disabled = false;
@@ -173,7 +173,7 @@ export class GestionNodosOperations {
     }
 
     /**
-     * Operación: CANCELAR vuelo (cancela nodo y descendencia)
+        * Operation: CANCEL flight (cancels node and descendants)
      */
     async cancelFlight() {
         if (!this.selectedNode) {
@@ -199,7 +199,7 @@ export class GestionNodosOperations {
     }
 
     /**
-     * Operación: EXPORTAR árbol a JSON
+        * Operation: EXPORT tree to JSON
      */
     async exportTree() {
         try {
@@ -221,7 +221,7 @@ export class GestionNodosOperations {
     }
 
     /**
-     * Normalizar datos del formulario a tipos correctos
+        * Normalize form data into correct types
      * @private
      */
     _normalizeFormData(formData) {

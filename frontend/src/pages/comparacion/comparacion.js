@@ -7,7 +7,7 @@
 // ========================================
 import { apiClient } from '../../api/apiClient.js';
 
-// D3 es cargado desde CDN en el HTML (disponible como global)
+// D3 is loaded from a CDN in the HTML (available as a global)
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Cargando página de Comparación BST vs AVL...');
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Listener navegación
+    // Navigation listener
     const btnVolver = document.getElementById('btn-volver');
 
     if (btnVolver) {
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Intentar cargar árbol existente en el backend silenciosamente
+    // Try to silently load an existing tree from the backend
     await tryLoadExisting();
 });
 
@@ -47,7 +47,7 @@ async function tryLoadExisting() {
                 showLoadSection();
             }
         } else {
-            // No hay árbol, mostrar sección de carga
+            // No tree available, show the load section
             showLoadSection();
         }
     } catch (e) {
@@ -56,25 +56,25 @@ async function tryLoadExisting() {
     }
 }
 
-// Muestra la sección de resultados y oculta la de carga
+// Show results section and hide the load section
 function showResults() {
     document.getElementById('load-section').classList.add('hidden');
     document.getElementById('results-section').classList.remove('hidden');
 }
 
-// Muestra la sección de carga y oculta resultados
+// Show load section and hide results
 function showLoadSection() {
     document.getElementById('load-section').classList.remove('hidden');
     document.getElementById('results-section').classList.add('hidden');
 }
 
-// Carga AVL y BST para mostrar lado a lado
+// Load AVL and BST to show side-by-side
 async function loadComparison(currentState = null) {
     try {
         const comparisonData = await apiClient.getComparison();
         console.log('📊 Datos de comparación recibidos:', comparisonData);
 
-        // Verificar si hay error (carga de TOPOLOGIA)
+        // Check for errors (TOPOLOGIA load)
         if (comparisonData.error) {
             // Fallback: render current AVL tree even when BST comparison is unavailable.
             const state = currentState || await apiClient.getTree();
@@ -155,9 +155,9 @@ function clearInlineNotice() {
     }
 }
 
-// Muestra popup de error cuando se intenta comparación con TOPOLOGIA
+// Shows an error popup when trying to compare with TOPOLOGIA
 function showComparisonError(errorData) {
-    // Crear modal
+    // Create modal
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed;
@@ -216,19 +216,19 @@ function showComparisonError(errorData) {
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
 
-    // Agregar evento al botón
+    // Attach event to the button
     document.getElementById('close-error-popup').addEventListener('click', () => {
         modal.remove();
     });
 
-    // Cerrar al hacer click fuera
+    // Close when clicking outside
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             modal.remove();
         }
     });
 
-    // Agregar animación
+    // Add animation
     const style = document.createElement('style');
     style.textContent = `
         @keyframes slideIn {
@@ -261,7 +261,7 @@ function updateComparisonStats(data) {
     }
 }
 
-// Función unificada para renderizar árbol con D3 (AVL o BST)
+// Unified function to render a tree with D3 (AVL or BST)
 function renderTree(treeData, containerId, label) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -306,7 +306,7 @@ function renderTree(treeData, containerId, label) {
         .append('g')
         .attr('transform', d => `translate(${d.x},${d.y})`);
 
-    // Color: rojo=crítico, lila=AVL normal, azul=BST normal
+    // Color: red=critical, lilac=normal AVL, blue=normal BST
     const nodeColor = d => {
         if (d.data.critico) return '#e74c3c';
         return label === 'BST' ? '#3b82f6' : '#c084fc';

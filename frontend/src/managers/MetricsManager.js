@@ -1,13 +1,13 @@
 /**
  * MetricsManager.js
- * Responsabilidad Única: Gestionar métricas y su visualización
+ * Single Responsibility: Manage metrics and their visualization
  * SOLID Compliance: SRP + DIP
  */
 
 class MetricsManager {
     /**
-     * @param {APIClient} apiClient - Cliente API inyectado
-     * @param {Object} config - Configuración de elementos DOM
+    * @param {APIClient} apiClient - Injected API client
+    * @param {Object} config - DOM element configuration
      */
     constructor(apiClient, config = {}) {
         this.apiClient = apiClient;
@@ -20,8 +20,8 @@ class MetricsManager {
     }
 
     /**
-     * Actualiza las métricas condensadas en el panel superior
-     * SRP: Responsable solo de actualizar el panel rápido
+        * Updates condensed metrics in the top panel
+        * SRP: Responsible only for updating the quick panel
      */
     async updateMetricsPanel() {
         try {
@@ -46,8 +46,8 @@ class MetricsManager {
     }
 
     /**
-     * Abre el modal completo de métricas analíticas
-     * SRP: Responsable de cargar y mostrar modal
+        * Opens the full analytics metrics modal
+        * SRP: Responsible for loading and showing the modal
      */
     async openMetricsModal() {
         try {
@@ -63,10 +63,10 @@ class MetricsManager {
                 throw new Error('Elementos DOM no encontrados');
             }
 
-            // Construir contenido HTML
+            // Build HTML content
             content.innerHTML = this._buildMetricsHTML(metrics);
 
-            // Mostrar modal
+            // Show modal
             modal.classList.remove('hidden');
             modal.classList.add('show');
             console.log('✅ Modal de métricas abierto');
@@ -78,8 +78,8 @@ class MetricsManager {
     }
 
     /**
-     * Cierra el modal de métricas
-     * SRP: Responsable solo de cerrar modal
+        * Closes the metrics modal
+        * SRP: Responsible only for closing the modal
      */
     closeMetricsModal() {
         const modal = document.getElementById(this.config.metricsModal);
@@ -91,8 +91,8 @@ class MetricsManager {
     }
 
     /**
-     * Configura los event listeners del modal
-     * DIP: Sebe al controller cómo conectar eventos
+        * Sets up modal event listeners
+        * DIP: Tells the controller how to wire events
      */
     setupEventListeners(onClose) {
         const modal = document.getElementById(this.config.metricsModal);
@@ -111,11 +111,11 @@ class MetricsManager {
     }
 
     // ========================================
-    // MÉTODOS PRIVADOS - Construcción de HTML
+    // PRIVATE METHODS - HTML building
     // ========================================
 
     /**
-     * Construye HTML del panel rápido de métricas
+        * Builds HTML for the quick metrics panel
      * @private
      */
     _buildPanelHTML(metrics, totalRotations) {
@@ -133,7 +133,7 @@ class MetricsManager {
     }
 
     /**
-     * Construye HTML completo del modal de métricas
+        * Builds full HTML for the metrics modal
      * @private
      */
     _buildMetricsHTML(metrics) {

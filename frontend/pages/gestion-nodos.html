@@ -26,9 +26,9 @@
         </div>
     </nav>
 
-    <!-- Contenido -->
+    <!-- Content -->
     <main class="gestion-container">
-        <!-- Sidebar Izquierdo -->
+        <!-- Left sidebar -->
         <aside class="sidebar-left">
             <button class="btn-action deshacer" id="btnDeshacer">
                 <i class="fas fa-arrow-left-right"></i> Deshacer
@@ -85,7 +85,7 @@
             </button>
         </aside>
 
-        <!-- Sección de carga — visible solo cuando no hay árbol -->
+        <!-- Load section — visible only when there is no tree -->
         <div id="load-section" class="load-section hidden">
             <div class="load-card">
                 <h2>No hay árbol cargado</h2>
@@ -105,24 +105,24 @@
             </div>
         </div>
 
-        <!-- Contenido Central -->
+        <!-- Main content -->
         <section class="content-center">
             <h1>Gestión de nodos</h1>
             <div id="metrics-panel" class="metrics-panel">
-                <!-- Se llena dinámicamente -->
+                <!-- Filled dynamically -->
             </div>
             <div id="tree-container" class="tree-visualization">
-                <!-- SVG se renderiza aquí -->
+                <!-- SVG is rendered here -->
             </div>
         </section>
 
-        <!-- Sidebar Derecho -->
+        <!-- Right sidebar -->
         <aside class="sidebar-right">
             <button class="btn-export" id="btnExportar">
                 <i class="fas fa-download"></i> Exportar
             </button>
 
-            <!-- SIMULACIÓN DE CONCURRENCIA: Sección de programación de inserciones -->
+            <!-- CONCURRENCY SIMULATION: Insertion scheduling section -->
             <div class="separator"></div>
             <h3 class="sidebar-section-title">Simulación de Concurrencia</h3>
             
@@ -130,7 +130,7 @@
                 <i class="fas fa-hourglass-end"></i> Programar Inserción
             </button>
 
-            <!-- Lista de vuelos pendientes en cola -->
+            <!-- List of pending flights in queue -->
             <div class="queue-section">
                 <h4 class="queue-title">
                     <i class="fas fa-tasks"></i> Cola Pendiente
@@ -141,20 +141,20 @@
                 </div>
             </div>
 
-            <!-- Botón para procesar la cola -->
+            <!-- Button to process the queue -->
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <button class="btn-action procesar-cola" id="btnProcesarCola" disabled>
                     <i class="fas fa-play"></i> Procesar Cola
                 </button>
             </div>
 
-            <!-- Indicador de progreso de procesamiento -->
+            <!-- Processing progress indicator -->
             <div id="queue-processing-indicator" class="queue-processing-indicator" style="display: none;">
                 <div class="spinner"></div>
                 <span>Procesando...</span>
             </div>
 
-            <!-- Panel de conflictos detectados (oculto por defecto) -->
+            <!-- Detected conflicts panel (hidden by default) -->
             <div id="queue-conflicts-panel" class="queue-conflicts-panel" style="display: none;">
                 <h4><i class="fas fa-exclamation-triangle"></i> ⚠️ Conflictos de Balance Detectados</h4>
                 <div id="conflicts-list" class="conflicts-list"></div>
@@ -162,7 +162,7 @@
         </aside>
     </main>
 
-    <!-- Panel de Animación de Rebalanceo Global -->
+    <!-- Global rebalance animation panel -->
     <div id="rebalance-panel" class="rebalance-animation-panel">
         <div class="rebalance-header">
             <div class="rebalance-header-content">
@@ -183,29 +183,29 @@
         </div>
     </div>
 
-    <!-- Modal para Métricas Analíticas -->
+    <!-- Analytics metrics modal -->
     <div id="modal-metricas" class="modal hidden">
         <div class="modal-content metrics-modal">
             <span class="close-modal">&times;</span>
             <h2>Métricas Analíticas del Árbol AVL</h2>
             <div id="metrics-content" class="metrics-content">
-                <!-- Se rellena dinámicamente -->
+                <!-- Filled dynamically -->
             </div>
         </div>
     </div>
 
-    <!-- Modal para Auditoría AVL -->
+    <!-- AVL audit modal -->
     <div id="modal-audit" class="modal hidden">
         <div class="modal-content audit-modal">
             <span class="close-modal">&times;</span>
             <h2>📋 Reporte de Auditoría AVL</h2>
             <div id="audit-report-modal" class="audit-report">
-                <!-- Se rellena dinámicamente -->
+                <!-- Filled dynamically -->
             </div>
         </div>
     </div>
 
-    <!-- Modal para formularios -->
+    <!-- Form modal -->
     <div id="modal-formulario" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -255,7 +255,7 @@
         </div>
     </div>
 
-    <!-- Modal para Versionado Persistente -->
+    <!-- Persistent versioning modal -->
     <div id="modal-versioning" class="modal hidden">
         <div class="modal-content versioning-modal">
             <div class="modal-header">
@@ -263,7 +263,7 @@
                 <span class="close-modal">&times;</span>
             </div>
             <div class="modal-body">
-                <!-- Sección de Guardar Versión -->
+                <!-- Save version section -->
                 <div class="save-version-section">
                     <h3><i class="fas fa-floppy-disk"></i> Guardar Nueva Versión</h3>
                     <div class="version-input-group">
@@ -280,7 +280,7 @@
                     </div>
                 </div>
 
-                <!-- Sección de Versiones Guardadas -->
+                <!-- Saved versions section -->
                 <div class="versions-section">
                     <h3>
                         <i class="fas fa-history"></i> Versiones Guardadas
@@ -289,7 +289,7 @@
                         </button>
                     </h3>
                     <div id="versions-list-container">
-                        <!-- Se llena dinámicamente -->
+                        <!-- Filled dynamically -->
                     </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 /**
  * managers/queue/index.js
- * Exports centralizados para el módulo queue
- * Proporciona factory para instanciación simplificada
+ * Centralized exports for the queue module
+ * Provides a factory for simplified instantiation
  */
 
 import { QueueState } from './QueueState.js';
@@ -12,14 +12,14 @@ import { QueueOrchestrator } from './QueueOrchestrator.js';
 export { QueueState, QueueAPIClient, QueueUIRenderer, QueueOrchestrator };
 
 /**
- * Factory: Crear instancia completa y lista de QueueOrchestrator
- * Uso:
+ * Factory: Create a complete, ready-to-use QueueOrchestrator instance
+ * Usage:
  *   import { createQueueManager } from './managers/queue/index.js';
  *   const queueManager = createQueueManager(apiClient);
  *
- * @param {ApiClient} apiClient - Cliente API global
- * @param {string} containerId - ID del container DOM para la cola (default: 'queue-list-container')
- * @returns {QueueOrchestrator} Instancia fully initialized
+ * @param {ApiClient} apiClient - Global API client
+ * @param {string} containerId - Queue container DOM id (default: 'queue-list-container')
+ * @returns {QueueOrchestrator} Fully initialized instance
  */
 export function createQueueManager(apiClient, containerId = 'queue-list-container') {
     const state = new QueueState();
@@ -33,8 +33,8 @@ export function createQueueManager(apiClient, containerId = 'queue-list-containe
 }
 
 /**
- * Alternativa compatible con patrón anterior (nueva QueueManager)
- * Allows: new QueueManager(apiClient) - mantiene compatibilidad
+ * Backwards-compatible alternative (new QueueManager)
+ * Allows: new QueueManager(apiClient) - keeps compatibility
  */
 export class QueueManager extends QueueOrchestrator {
     constructor(apiClient, containerId = 'queue-list-container') {
@@ -46,33 +46,33 @@ export class QueueManager extends QueueOrchestrator {
 }
 
 /**
- * Resumen de arquitectura:
+ * Architecture summary:
  *
  * QueueState
- *   - Solo datos (items, isProcessing)
- *   - Getters/setters puros
- *   - 89 líneas
+ *   - Data only (items, isProcessing)
+ *   - Pure getters/setters
+ *   - 89 lines
  *
  * QueueAPIClient
- *   - Solo HTTP calls
- *   - Comunicación con backend
- *   - 68 líneas
+ *   - HTTP calls only
+ *   - Backend communication
+ *   - 68 lines
  *
  * QueueUIRenderer
- *   - Solo manipulación DOM
- *   - Renderización visual
- *   - 93 líneas
+ *   - DOM manipulation only
+ *   - Visual rendering
+ *   - 93 lines
  *
  * QueueOrchestrator
- *   - Coordina las 3 anteriores
- *   - API pública compatible
- *   - 130 líneas
+ *   - Coordinates the three above
+ *   - Compatible public API
+ *   - 130 lines
  *
  * QueueManager (clase alias)
  *   - Extends QueueOrchestrator
- *   - Compatibilidad con código anterior
- *   - Permite "new QueueManager(apiClient)"
+ *   - Backwards compatibility
+ *   - Allows "new QueueManager(apiClient)"
  *
- * TOTAL: ~380 líneas en 5 archivos (antes: 140 líneas en 1 archivo)
- * BENEFICIO: SRP completo, testeable, mantenible
+ * TOTAL: ~380 lines across 5 files (before: 140 lines in 1 file)
+ * BENEFIT: Full SRP, testable, maintainable
  */

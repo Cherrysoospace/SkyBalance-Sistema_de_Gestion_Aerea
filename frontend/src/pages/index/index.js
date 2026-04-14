@@ -11,7 +11,7 @@ import { apiClient } from '../../api/apiClient.js';
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 FAC Airways iniciando...');
 
-    // Verificar conectividad con backend
+    // Verify backend connectivity
     try {
         await apiClient.healthCheck();
         console.log('✅ Backend conectado');
@@ -24,21 +24,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const filePicker = document.getElementById('file-picker');
     const btnCargar  = document.getElementById('btn-cargar');
 
-    // Habilitar botón solo cuando hay archivo seleccionado
+    // Enable button only when a file is selected
     filePicker.addEventListener('change', () => {
         btnCargar.disabled = !filePicker.files[0];
-        // Mostrar nombre del archivo si existe un label para eso
+        // Show the file name if there is a label for it
         const nameEl = document.getElementById('file-name');
         if (nameEl) nameEl.textContent = filePicker.files[0]?.name ?? '';
     });
 
     btnCargar.addEventListener('click', handleLoad);
 
-    // Si ya hay un árbol cargado en el backend, mostrar botones de navegación rápida
+    // If a tree is already loaded in the backend, show quick navigation
     await checkExistingTree();
 });
 
-// Verifica si ya existe un árbol en el backend y muestra accesos rápidos
+// Checks whether a tree already exists in the backend and shows quick access
 async function checkExistingTree() {
     try {
         const data = await apiClient.getTree();
@@ -47,11 +47,11 @@ async function checkExistingTree() {
             showQuickAccess();
         }
     } catch (e) {
-        // No hay árbol cargado, flujo normal
+        // No tree loaded, normal flow
     }
 }
 
-// Maneja la carga del JSON y redirige según el modo detectado por el backend
+// Handles JSON load and redirects based on the mode detected by the backend
 async function handleLoad() {
     const file       = document.getElementById('file-picker').files[0];
     const depthEl    = document.getElementById('depth-limit');
@@ -70,20 +70,20 @@ async function handleLoad() {
     hideError();
 
     try {
-        // Enviar archivo + depthLimit al backend
+        // Send file + depthLimit to the backend
         const response = await apiClient.loadTreeFromJSON(file, depthLimit);
         const mode = response?.info?.mode;
         console.log(`✅ JSON cargado — modo detectado: ${mode}, nodos: ${response?.info?.nodos}, depthLimit: ${depthLimit}`);
 
-        // ✅ GUARDAR depthLimit en localStorage ANTES de redirigir
+        // ✅ Store depthLimit in localStorage BEFORE redirecting
         localStorage.setItem('currentDepthLimit', depthLimit);
         console.log('💾 depthLimit guardado en localStorage:', depthLimit);
 
-        // Redirigir según el modo retornado por el backend
+        // Redirect based on the mode returned by the backend
         if (mode === 'INSERCION') {
             window.location.href = './pages/comparacion.html';
         } else {
-            // TOPOLOGIA u otro → gestión de nodos
+            // TOPOLOGIA or other → node management
             window.location.href = './pages/gestion-nodos.html';
         }
 
@@ -95,7 +95,7 @@ async function handleLoad() {
     }
 }
 
-// Muestra accesos rápidos cuando ya hay árbol cargado
+// Shows quick access when a tree is already loaded
 function showQuickAccess() {
     const heroButtons = document.querySelector('.hero-buttons');
     if (!heroButtons) return;
@@ -106,7 +106,7 @@ function showQuickAccess() {
     heroButtons.appendChild(notice);
 }
 
-// Muestra mensaje de error en la UI
+// Shows an error message in the UI
 function showError(msg) {
     let errorEl = document.getElementById('load-error');
     if (!errorEl) {

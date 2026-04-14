@@ -1,12 +1,12 @@
 /**
  * QueueUIRenderer.js
- * Responsabilidad Única: Renderizar lista visual de la cola
- * SOLID Compliance: SRP - Solo manipulación DOM
+ * Single Responsibility: Render the queue list UI
+ * SOLID Compliance: SRP - DOM manipulation only
  *
- * Encapsula:
- * - Selecciones de elementos DOM
- * - Generación de HTML
- * - Updates de UI
+ * Encapsulates:
+ * - DOM element selection
+ * - HTML generation
+ * - UI updates
  */
 
 export class QueueUIRenderer {
@@ -16,7 +16,7 @@ export class QueueUIRenderer {
     }
 
     /**
-     * Renderizar lista de items
+        * Render item list
      */
     render(items) {
         if (!this.container) {
@@ -42,7 +42,7 @@ export class QueueUIRenderer {
     }
 
     /**
-     * Remover un item individual de la cola
+        * Remove a single item from the queue
      */
     removeItem(code) {
         if (!this.container) return;
@@ -55,7 +55,7 @@ export class QueueUIRenderer {
     }
 
     /**
-     * Limpiar completamente el container
+        * Clear the container completely
      */
     clear() {
         if (!this.container) return;
@@ -65,21 +65,21 @@ export class QueueUIRenderer {
     }
 
     /**
-     * Verificar si el container existe
+        * Check whether the container exists
      */
     isReady() {
         return !!this.container;
     }
 
     /**
-     * Obtener elemento del container
+        * Get the container element
      */
     getContainer() {
         return this.container;
     }
 
     /**
-     * Mostrar estado de procesamiento en UI
+        * Show processing state in the UI
      */
     setProcessing(isProcessing) {
         if (!this.container) return;

@@ -1,6 +1,6 @@
 /**
- * QueueProcessingAnimationManager - Gestor de animaciones para procesamiento de cola
- * Orquesta la visualización paso a paso de inserciones en árbol AVL con rotaciones
+ * QueueProcessingAnimationManager - Animation manager for queue processing
+ * Orchestrates step-by-step visualization of AVL tree insertions with rotations
  */
 
 import { QUEUE_ANIMATION_CONFIG } from '../utils/animation-config.js';
@@ -13,7 +13,7 @@ export class QueueProcessingAnimationManager {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // API & COMUNICACIÓN
+    // API & COMMUNICATION
     // ════════════════════════════════════════════════════════════════
 
     async fetchSteps() {
@@ -36,7 +36,7 @@ export class QueueProcessingAnimationManager {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // ORQUESTACIÓN PRINCIPAL
+    // MAIN ORCHESTRATION
     // ════════════════════════════════════════════════════════════════
 
     async processStepsSequentially(steps, callbacks = {}) {
@@ -67,10 +67,10 @@ export class QueueProcessingAnimationManager {
         try {
             console.log(`\n📍 PASO ${stepIndex + 1}/${totalSteps}: ${step.codigo_insertado}`);
 
-            // 1. Detectar si hay desbalances
+            // 1. Detect imbalances
             const hasConflicts = step.balance_criticos?.length > 0;
 
-            // 2. Renderizar árbol DESBALANCEADO (PRE-ROTACIÓN) si hay conflictos
+            // 2. Render the IMBALANCED tree (PRE-ROTATION) if there are conflicts
             if (hasConflicts && step.tree_pre_rotation && callbacks.onUpdateTree) {
                 console.log(`🌳 Renderizando árbol DESBALANCEADO con nuevo nodo...`);
                 await callbacks.onUpdateTree({ 
@@ -79,21 +79,21 @@ export class QueueProcessingAnimationManager {
                 });
                 await this._delay(150);
             } else if (!hasConflicts && callbacks.onUpdateTree) {
-                // Si no hay conflictos, renderizar el árbol normalmente
+                // If there are no conflicts, render the tree normally
                 await callbacks.onUpdateTree(step);
                 await this._delay(150);
             }
 
-            // 3. Capturar posiciones ANTES de cualquier animación
+            // 3. Capture positions BEFORE any animation
             const initialPositions = this._captureNodePositions();
 
-            // 4. Animar entrada del nodo
+            // 4. Animate node entry
             if (callbacks.onAnimateNodeEntry) {
                 console.log(`✨ Animando entrada del nodo...`);
                 await callbacks.onAnimateNodeEntry(step.codigo_insertado, this.config.NODE_ENTRY_DURATION_MS);
             }
 
-            // 5. MOSTRAR ALERTA DE DESBALANCE PRIMERO (sobre árbol desbalanceado)
+            // 5. SHOW IMBALANCE ALERT FIRST (on the imbalanced tree)
             if (hasConflicts) {
                 console.log(`⚠️ MOSTRANDO DESBALANCE: Detectados ${step.balance_criticos.length} conflicto(s)`);
                 for (const conflict of step.balance_criticos) {
@@ -107,7 +107,7 @@ export class QueueProcessingAnimationManager {
                 console.log(`✅ Alerta de desbalance completada - Factor de balance WAS VISIBLE`);
             }
 
-            // 6. SOLO DESPUÉS de mostrar la alerta, renderizar árbol POST-ROTACIÓN
+            // 6. ONLY AFTER showing the alert, render the POST-ROTATION tree
             if (hasConflicts && step.tree_post_rotation && callbacks.onUpdateTree) {
                 console.log(`🔄 Actualizando a árbol REBALANCEADO...`);
                 await callbacks.onUpdateTree({ 
@@ -117,7 +117,7 @@ export class QueueProcessingAnimationManager {
                 await this._delay(150);
             }
 
-            // 7. Animar rotaciones (FLIP)
+            // 7. Animate rotations (FLIP)
             if (step.rotaciones?.length > 0) {
                 console.log(`🔄 ${step.rotaciones.length} rotación(es) a animar`);
                 for (const rotation of step.rotaciones) {
@@ -131,7 +131,7 @@ export class QueueProcessingAnimationManager {
                 }
             }
 
-            // 5. Limpiar: remover de cola y actualizar métricas
+            // 5. Cleanup: remove from queue and update metrics
             if (callbacks.onRemoveFromQueue) {
                 await callbacks.onRemoveFromQueue(step.codigo_insertado, this.config.QUEUE_ITEM_REMOVAL_DURATION_MS);
             }
@@ -147,7 +147,7 @@ export class QueueProcessingAnimationManager {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // ANIMACIONES DE NODOS
+    // NODE ANIMATIONS
     // ════════════════════════════════════════════════════════════════
 
     async animateNodeEntry(nodeCode, duration = this.config.NODE_ENTRY_DURATION_MS) {
@@ -160,7 +160,7 @@ export class QueueProcessingAnimationManager {
                     const allTexts = svgContainer.querySelectorAll('text');
                     let targetCircle = null;
 
-                    // Buscar elemento por código exacto
+                    // Find element by exact code
                     for (let textEl of allTexts) {
                         if (textEl.textContent.trim() === nodeCode.trim()) {
                             const parent = textEl.closest('g');
@@ -220,7 +220,7 @@ export class QueueProcessingAnimationManager {
                     return resolve();
                 }
 
-                // Mostrar alerta visual
+                // Show visual alert
                 nodeElement.classList.add('conflict-node-alert');
                 
                 const tooltip = document.createElement('div');
@@ -260,7 +260,7 @@ export class QueueProcessingAnimationManager {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // UI & METRICAS
+    // UI & METRICS
     // ════════════════════════════════════════════════════════════════
 
     async removeFromQueueDisplay(flightCode, duration = this.config.QUEUE_ITEM_REMOVAL_DURATION_MS) {
@@ -345,7 +345,7 @@ export class QueueProcessingAnimationManager {
     }
 
     // ════════════════════════════════════════════════════════════════
-    // ROTACIONES Y UTILIDADES
+    // ROTATIONS & UTILITIES
     // ════════════════════════════════════════════════════════════════
 
     _captureNodePositions() {

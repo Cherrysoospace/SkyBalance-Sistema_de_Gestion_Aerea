@@ -911,7 +911,7 @@
     overflow: hidden;
 }
 
-/* Estado desactivado (default) */
+/* Disabled state (default) */
 .btn-stress-mode {
     background: linear-gradient(135deg, #d1d5db, #9ca3af);
     border-color: #9ca3af;
@@ -927,7 +927,7 @@
     transform: translateY(-1px);
 }
 
-/* Estado activado (con clase active) */
+/* Enabled state (with 'active' class) */
 .btn-stress-mode.active {
     background: linear-gradient(135deg, #86efac, #22c55e);
     border-color: #22c55e;
@@ -944,7 +944,7 @@
     transform: translateY(-1px);
 }
 
-/* Iconos del botón */
+/* Button icons */
 .stress-icon-off,
 .stress-icon-on {
     display: flex;
@@ -981,14 +981,14 @@
     display: none;
 }
 
-/* Etiqueta del botón */
+/* Button label */
 .stress-label {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     font-weight: 600;
 }
 
-/* Animación del icono */
+/* Icon animation */
 @keyframes iconPulse {
     0% {
         transform: scale(0.8) rotate(90deg);
@@ -1012,12 +1012,12 @@
     }
 }
 
-/* Animación de activación */
+/* Activation animation */
 .btn-stress-mode.activating {
     animation: toggleGlow 0.6s ease-in-out;
 }
 
-/* Responsive para el switch */
+/* Responsive styles for the switch */
 @media (max-width: 768px) {
     .btn-stress-mode {
         padding: 0.6rem 0.8rem;
@@ -1150,7 +1150,7 @@
 }
 
 /* ============================================
-   Modo Estres y Rebalanceo Global - Nuevos Botones
+    Stress Mode and Global Rebalance - New Buttons
    ============================================ */
 
 .separator {
@@ -1159,7 +1159,7 @@
     margin: 0.5rem 0;
 }
 
-/* Control de Profundidad Máxima */
+/* Maximum Depth Control */
 .depth-limit-control {
     display: flex;
     flex-direction: column;
@@ -1228,7 +1228,7 @@
     transform: translateY(0);
 }
 
-/* Botón Modo Estrés */
+/* Stress Mode Button */
 .btn-action.stress-mode {
     background: linear-gradient(135deg, #f97316, #ea580c);
     border-color: #ea580c;
@@ -1252,13 +1252,13 @@
     transform: translateY(-3px);
 }
 
-/* Botón Rebalanceo Global */
+/* Global Rebalance Button */
 .btn-action.rebalance {
     background: linear-gradient(135deg, #7c3aed, #6d28d9);
     border-color: #6d28d9;
 }
 
-/* Botón Ver Métricas Analíticas */
+/* View Analytics Metrics Button */
 .btn-action.analytics {
     background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
     border-color: var(--primary-color);
@@ -1270,7 +1270,7 @@
     box-shadow: var(--shadow-lg);
 }
 
-/* Botón Auditoría AVL */
+/* AVL Audit Button */
 .btn-action.audit {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     border-color: #d97706;
@@ -1296,7 +1296,7 @@
     transform: translateY(-1px);
 }
 
-/* Estado deshabilitado para botones */
+/* Disabled state for buttons */
 .btn-action:disabled,
 .btn-export:disabled {
     opacity: 0.5;
@@ -1312,7 +1312,7 @@
     box-shadow: var(--shadow-sm);
 }
 
-/* Animación de alerta pulsante */
+/* Pulsing alert animation */
 @keyframes pulse-alert {
     0%, 100% {
         opacity: 1;
@@ -1322,7 +1322,7 @@
     }
 }
 
-/* Desglose de Rotaciones */
+/* Rotation breakdown */
 .rotations-breakdown {
     background: white;
     padding: 1rem;
@@ -1625,8 +1625,8 @@
    ============================================ */
 
 /**
- * ANIMACIÓN 1: Entrada de Nodo (Fade-in + Scale)
- * Aplicada cuando un nodo nuevo se inserta en el árbol
+ * ANIMATION 1: Node Entry (Fade-in + Scale)
+ * Applied when a new node is inserted into the tree
  */
 @keyframes nodeEntryAnimation {
     0% {
@@ -1646,8 +1646,8 @@
 }
 
 /**
- * ANIMACIÓN 2: Remoción de Item de Cola (Slide-out + Fade-out)
- * El vuelo desaparece de la cola cuando se procesa
+ * ANIMATION 2: Queue Item Removal (Slide-out + Fade-out)
+ * The flight disappears from the queue when it is processed
  */
 @keyframes queueItemRemoval {
     0% {
@@ -1665,8 +1665,8 @@
 }
 
 /**
- * ANIMACIÓN 3: Badge de Rotación - Entrada (Slide-in + Fade)
- * Badge flotante que indica qué tipo de rotación ocurrió
+ * ANIMATION 3: Rotation Badge - Enter (Slide-in + Fade)
+ * Floating badge indicating which rotation type occurred
  */
 @keyframes rotateBadgeIn {
     0% {
@@ -1680,7 +1680,7 @@
 }
 
 /**
- * ANIMACIÓN 4: Badge de Rotación - Salida (Slide-out + Fade)
+ * ANIMATION 4: Rotation Badge - Exit (Slide-out + Fade)
  */
 @keyframes rotateBadgeOut {
     0% {
@@ -1694,8 +1694,8 @@
 }
 
 /**
- * ANIMACIÓN 5: Alerta de Conflicto - Entrada
- * Alerta visual cuando se detecta un desbalance crítico
+ * ANIMATION 5: Conflict Alert - Enter
+ * Visual alert when a critical imbalance is detected
  */
 @keyframes conflictAlertIn {
     0% {
@@ -1709,7 +1709,7 @@
 }
 
 /**
- * ANIMACIÓN 6: Alerta de Conflicto - Salida
+ * ANIMATION 6: Conflict Alert - Exit
  */
 @keyframes conflictAlertOut {
     0% {
@@ -1723,8 +1723,8 @@
 }
 
 /**
- * ANIMACIÓN 7: Pulso de Nodo en Conflicto
- * Efecto de alerta pulsante
+ * ANIMATION 7: Conflict Node Pulse
+ * Pulsing alert effect
  */
 @keyframes conflictNodePulse {
     0%, 100% {
@@ -1736,7 +1736,7 @@
 }
 
 /**
- * ANIMACIÓN 8: Resumen - Entrada
+ * ANIMATION 8: Summary - Enter
  */
 @keyframes summarySlidIn {
     0% {
@@ -1750,7 +1750,7 @@
 }
 
 /**
- * ANIMACIÓN 9: Resumen - Salida
+ * ANIMATION 9: Summary - Exit
  */
 @keyframes summarySlideOut {
     0% {
@@ -1764,8 +1764,8 @@
 }
 
 /**
- * ESTILOS: Badge de Rotación Flotante
- * Elemento visual que flota sobre el árbol indicando tipo de rotación
+ * STYLES: Floating Rotation Badge
+ * Visual element floating over the tree indicating rotation type
  */
 .rotation-badge-floating {
     position: fixed;
@@ -1787,8 +1787,8 @@
 }
 
 /**
- * ESTILOS: Alerta de Conflicto Animada
- * Elemento visual que muestra información del desbalance detectado
+ * STYLES: Animated Conflict Alert
+ * Visual element showing information about the detected imbalance
  */
 .conflict-alert-animated {
     position: fixed;
@@ -1831,8 +1831,8 @@
 }
 
 /**
- * ESTILOS: Contenedor de Resumen Final
- * Modal que muestra estadísticas del procesamiento
+ * STYLES: Final Summary Container
+ * Modal that shows processing statistics
  */
 #queue-summary-container {
     position: fixed;
@@ -2016,20 +2016,20 @@
 }
 
 /* ============================================
-   CONFLICTO EN NODO - Eventos SVG del Árbol
+    NODE CONFLICT - Tree SVG Events
    ============================================
    
-   Visualización de desbalance en nodos durante
-   el procesamiento de cola. Aplica:
-   1. Pulso visual en nodo desbalanceado
-   2. Tooltip/badge flotante con factor de balance
-   3. Transición suave a resolución
+    Imbalance visualization on nodes during
+    queue processing. Applies:
+    1. Visual pulse on imbalanced node
+    2. Floating tooltip/badge with balance factor
+    3. Smooth transition to resolved state
 */
 
 /**
- * CLASE 1: Nodo en estado de ALERTA
- * Aplicada cuando se detecta factor de balance fuera de {-1, 0, 1}
- * Dispara animación de pulso + cambio de color
+ * CLASS 1: Node in ALERT state
+ * Applied when a balance factor outside {-1, 0, 1} is detected
+ * Triggers pulse animation + color change
  */
 g.conflict-node-alert circle {
     fill: #fee2e2 !important;
@@ -2044,9 +2044,9 @@ g.conflict-node-alert text {
 }
 
 /**
- * ANIMACIÓN: Pulso de Nodo en Conflicto
- * Efecto de alerta pulsante con glow progresivo
- * Duración: 500ms (configurable)
+ * ANIMATION: Conflict Node Pulse
+ * Pulsing alert effect with progressive glow
+ * Duration: 500ms (configurable)
  */
 @keyframes conflictNodePulse {
     0% {
@@ -2064,9 +2064,9 @@ g.conflict-node-alert text {
 }
 
 /**
- * ELEMENTO: Tooltip Flotante de Balance
- * Muestra el factor de balance actual del nodo ANTES de rotación
- * Se posiciona sobre el nodo desbalanceado usando fixed positioning
+ * ELEMENT: Floating Balance Tooltip
+ * Shows the node's current balance factor BEFORE rotation
+ * Positioned over the imbalanced node using fixed positioning
  */
 .conflict-node-tooltip {
     position: fixed;
@@ -2093,9 +2093,9 @@ g.conflict-node-alert text {
 }
 
 /**
- * ESTADO: Tooltip Visible
- * Aplicado después de crear el tooltip
- * Anima entrada con fade + slide + scale
+ * STATE: Tooltip Visible
+ * Applied after creating the tooltip
+ * Animates entry with fade + slide + scale
  */
 .conflict-node-tooltip.tooltip-visible {
     opacity: 1;
@@ -2104,9 +2104,9 @@ g.conflict-node-alert text {
 }
 
 /**
- * ESTADO: Tooltip Oculto
- * Aplicado antes de remover el tooltip
- * Anima salida suave
+ * STATE: Tooltip Hidden
+ * Applied before removing the tooltip
+ * Animates a smooth exit
  */
 .conflict-node-tooltip.tooltip-hidden {
     opacity: 0;
@@ -2115,9 +2115,9 @@ g.conflict-node-alert text {
 }
 
 /**
- * ANIMACIÓN: Entrada del Tooltip
- * Bounce suave para captar atención
- * Duración: 400ms
+ * ANIMATION: Tooltip Enter
+ * Subtle bounce to grab attention
+ * Duration: 400ms
  */
 @keyframes conflictTooltipEnter {
     0% {
@@ -2135,9 +2135,9 @@ g.conflict-node-alert text {
 }
 
 /**
- * ANIMACIÓN: Salida del Tooltip
- * Fade-out suave siguiendo la misma dirección
- * Duración: 300ms
+ * ANIMATION: Tooltip Exit
+ * Smooth fade-out in the same direction
+ * Duration: 300ms
  */
 @keyframes conflictTooltipExit {
     0% {
@@ -2151,8 +2151,8 @@ g.conflict-node-alert text {
 }
 
 /**
- * CONTENIDO DEL TOOLTIP - Estructura vertical
- * Flexbox para alinear contenido vertical
+ * TOOLTIP CONTENT - Vertical layout
+ * Flexbox to align content vertically
  */
 .conflict-node-tooltip .tooltip-content {
     display: flex;
@@ -2163,8 +2163,8 @@ g.conflict-node-alert text {
 }
 
 /**
- * ETIQUETA DEL FACTOR DE BALANCE
- * Texto pequeño explicativo
+ * BALANCE FACTOR LABEL
+ * Small explanatory text
  */
 .conflict-node-tooltip .tooltip-label {
     font-size: 0.7rem;
@@ -2175,8 +2175,8 @@ g.conflict-node-alert text {
 }
 
 /**
- * VALOR DEL FACTOR DE BALANCE
- * Número muy prominente que indica desbalance
+ * BALANCE FACTOR VALUE
+ * Very prominent number indicating imbalance
  */
 .conflict-node-tooltip .tooltip-value {
     font-size: 28px;
@@ -2187,8 +2187,8 @@ g.conflict-node-alert text {
 }
 
 /**
- * TIPO DE DESBALANCE
- * Descripción del tipo (izquierda pesada / derecha pesada)
+ * IMBALANCE TYPE
+ * Type description (left-heavy / right-heavy)
  */
 .conflict-node-tooltip .tooltip-type {
     font-size: 0.75rem;
@@ -2199,8 +2199,8 @@ g.conflict-node-alert text {
 }
 
 /**
- * ICONO DE ADVERTENCIA EN TOOLTIP
- * Animación adicional de parpadeo
+ * WARNING ICON IN TOOLTIP
+ * Additional blink animation
  */
 .conflict-node-tooltip .tooltip-icon {
     display: inline-block;
@@ -2210,7 +2210,7 @@ g.conflict-node-alert text {
 }
 
 /**
- * ANIMACIÓN: Parpadeo del Icono de Advertencia
+ * ANIMATION: Warning Icon Blink
  */
 @keyframes tooltipIconBlink {
     0%, 100% {
@@ -2224,9 +2224,9 @@ g.conflict-node-alert text {
 }
 
 /**
- * CLASE 2: Nodo en estado de RESOLUCIÓN
- * Aplicada después de completar rotación
- * Transiciona el nodo de vuelta a su estado normal
+ * CLASS 2: Node in RESOLVED state
+ * Applied after completing rotation
+ * Transitions the node back to its normal state
  */
 g.conflict-node-resolved circle {
     animation: conflictNodeResolve 0.5s ease-out forwards !important;
@@ -2238,9 +2238,9 @@ g.conflict-node-resolved text {
 }
 
 /**
- * ANIMACIÓN: Resolución del Nodo
- * Transiciona suavemente de rojo a color normal
- * Duración: 500ms (configurable)
+ * ANIMATION: Node Resolve
+ * Smoothly transitions from red to normal color
+ * Duration: 500ms (configurable)
  */
 @keyframes conflictNodeResolve {
     0% {
@@ -2284,7 +2284,7 @@ g.conflict-node-resolved text {
     transform: none;
 }
 
-/* Modal para confirmaci ón de eliminación */
+/* Elimination confirmation modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -2365,7 +2365,7 @@ g.conflict-node-resolved text {
     margin: 0;
 }
 
-/* Notificación de éxito */
+/* Success notification */
 @keyframes slideIn {
     from {
         transform: translateX(400px);

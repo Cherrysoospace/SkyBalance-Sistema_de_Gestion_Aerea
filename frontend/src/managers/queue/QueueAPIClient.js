@@ -1,11 +1,11 @@
 /**
  * QueueAPIClient.js
- * Responsabilidad Única: Comunicación con backend
- * SOLID Compliance: SRP - Solo llamadas HTTP
+ * Single Responsibility: Backend communication
+ * SOLID Compliance: SRP - HTTP calls only
  *
- * Encapsula:
- * - Llamadas a /queue/* endpoints
- * - Manejo de errores de API
+ * Encapsulates:
+ * - Calls to /queue/* endpoints
+ * - API error handling
  * - Request/response normalization
  */
 
@@ -15,7 +15,7 @@ export class QueueAPIClient {
     }
 
     /**
-     * Encolar un vuelo en el backend
+        * Enqueue a flight in the backend
      */
     async enqueue(flightData) {
         try {
@@ -29,7 +29,7 @@ export class QueueAPIClient {
     }
 
     /**
-     * Obtener lista actual de la cola
+        * Fetch current queue items
      */
     async fetchQueue() {
         try {
@@ -44,7 +44,7 @@ export class QueueAPIClient {
     }
 
     /**
-     * Obtener pasos de procesamiento de la cola
+        * Fetch queue processing steps
      */
     async processQueueWithSteps() {
         try {
@@ -58,7 +58,7 @@ export class QueueAPIClient {
     }
 
     /**
-     * Limpiar cola en backend
+        * Clear the backend queue
      */
     async clearRemote() {
         try {

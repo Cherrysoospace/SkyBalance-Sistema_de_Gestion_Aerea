@@ -1,14 +1,14 @@
 /**
  * QueueOrchestrator.js
- * Responsabilidad Única: Orquestar flujo de cola
+ * Single Responsibility: Orchestrate queue flow
  * SOLID Compliance: SRP + Facade Pattern
  *
- * Coordina:
- * - QueueState: Estado
- * - QueueAPIClient: Comunicación
- * - QueueUIRenderer: Visualización
+ * Coordinates:
+ * - QueueState: State
+ * - QueueAPIClient: Communication
+ * - QueueUIRenderer: Rendering
  *
- * Mantiene compatibilidad con API pública del antiguo QueueManager
+ * Keeps compatibility with the legacy QueueManager public API
  */
 
 export class QueueOrchestrator {
@@ -19,18 +19,18 @@ export class QueueOrchestrator {
     }
 
     /**
-     * Encolar un vuelo
-     * Llamada API + actualizar estado + actualizar UI
+     * Enqueue a flight
+     * API call + update state + update UI
      */
     async enqueueInsertion(flightData) {
         try {
-            // 1. Comunicar con backend
+            // 1. Talk to backend
             await this.apiClient.enqueue(flightData);
 
-            // 2. Actualizar estado interno
+            // 2. Update internal state
             this.state.add(flightData);
 
-            // 3. Actualizar UI
+            // 3. Update UI
             await this.updateQueueDisplay();
 
             console.log(`✅ Flujo: Vuelo ${flightData.codigo} encolado completamente`);
@@ -41,18 +41,18 @@ export class QueueOrchestrator {
     }
 
     /**
-     * Actualizar display de la cola
-     * Obtener lista del backend, actualizar estado, renderizar UI
+     * Update queue display
+     * Fetch from backend, update state, render UI
      */
     async updateQueueDisplay() {
         try {
-            // 1. Obtener cola del backend
+            // 1. Fetch queue from backend
             const items = await this.apiClient.fetchQueue();
 
-            // 2. Actualizar estado
+            // 2. Update state
             this.state.setItems(items);
 
-            // 3. Renderizar UI
+            // 3. Render UI
             this.uiRenderer.render(items);
 
             console.log(`✅ Flujo: Display actualizado (${items.length} items)`);
@@ -62,8 +62,8 @@ export class QueueOrchestrator {
     }
 
     /**
-     * Procesar cola con pasos (obtener steps para animación)
-     * Retorna pasos para que QueueProcessingAnimationManager los procese
+        * Process queue with steps (fetch steps for animation)
+        * Returns steps so QueueProcessingAnimationManager can process them
      */
     async processQueueWithSteps() {
         if (this.state.isProcessingQueue()) {
@@ -85,18 +85,18 @@ export class QueueOrchestrator {
     }
 
     /**
-     * Limpiar cola completamente
-     * Backend + estado + UI
+     * Clear queue completely
+     * Backend + state + UI
      */
     async clearQueue() {
         try {
-            // 1. Limpiar en backend (si es necesario)
+            // 1. Clear in backend (if needed)
             await this.apiClient.clearRemote();
 
-            // 2. Limpiar estado
+            // 2. Clear state
             this.state.clear();
 
-            // 3. Limpiar UI
+            // 3. Clear UI
             this.uiRenderer.clear();
 
             console.log(`✅ Flujo: Cola limpiada completamente`);
@@ -106,32 +106,32 @@ export class QueueOrchestrator {
     }
 
     /**
-     * Obtener estado actual de la cola
-     * Compatible con API pública anterior
+        * Get current queue state
+        * Compatible with the legacy public API
      */
     getQueueState() {
         return this.state.getState();
     }
 
     /**
-     * Getter para acceso directo al estado
-     * (útil para debugging)
+        * Getter for direct state access
+        * (useful for debugging)
      */
     getState() {
         return this.state;
     }
 
     /**
-     * Getter para acceso directo al renderer
-     * (útil para debugging o control fino)
+        * Getter for direct renderer access
+        * (useful for debugging or fine-grained control)
      */
     getUIRenderer() {
         return this.uiRenderer;
     }
 
     /**
-     * Getter para acceso directo al API client
-     * (útil para debugging o control fino)
+        * Getter for direct API client access
+        * (useful for debugging or fine-grained control)
      */
     getAPIClient() {
         return this.apiClient;
